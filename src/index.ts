@@ -2,7 +2,7 @@ import "reflect-metadata";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchemaSync } from "type-graphql";
-import { UserResolver } from "./resolvers/user.resolver";
+import { CheckoutResolver } from "./resolvers/checkout.resolver";
 import models from './models';
 import { checkForMigrations } from "./sequelize/helpers/migrations";
 import { log } from "./utils";
@@ -15,7 +15,7 @@ async function bootstrap() {
 
     const migrations = await checkForMigrations();
     if (migrations.length) {
-      log.info(
+      console.log(
         'Pending migrations need to be run:\n',
         migrations.map((migration) => migration.name).join('\n '),
         '\nUse this command to run migrations:\n yarn sequelize db:migrate',
@@ -33,7 +33,7 @@ async function bootstrap() {
   log.info('Sequelize Database Connected');
 
   const schema = buildSchemaSync({
-    resolvers: [UserResolver],
+    resolvers: [CheckoutResolver],
   });
 
   const server = new ApolloServer({

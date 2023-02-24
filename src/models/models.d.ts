@@ -1,5 +1,5 @@
-import { User } from './User';
+import { Checkout } from './Checkout';
 
 export interface IDbModels {
-  User: typeof User;
+  Checkout: typeof Checkout;
 }
