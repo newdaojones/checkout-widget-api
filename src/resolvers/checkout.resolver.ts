@@ -21,6 +21,6 @@ export class CheckoutResolver {
     @Arg('password') password: string,
     @Arg('token') token: string
   ) {
-    return await Checkout.create({ name, email, password });
+    // return await Checkout.create({ name, email, password });
   }
 }

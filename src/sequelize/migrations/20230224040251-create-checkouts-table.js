@@ -1,6 +1,6 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('transactions', {
+    await queryInterface.createTable('checkouts', {
       id: {
         type: Sequelize.INTEGER(11).UNSIGNED,
         primaryKey: true,
@@ -33,12 +33,12 @@ module.exports = {
         allowNull: false,
         defaultValue: 0,
       },
-      fee: {
+      tip: {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0,
       },
-      tip: {
+      fee: {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0,
@@ -67,27 +67,42 @@ module.exports = {
       country: {
         allowNull: true,
         defaultValue: null,
-        type: Sequelize.STRING(2),
+        type: Sequelize.STRING(255),
       },
       checkoutChargeId: {
         allowNull: true,
         defaultValue: null,
         type: Sequelize.STRING(255)
       },
+      checkoutStatus: {
+        allowNull: false,
+        defaultValue: 'processing',
+        type: Sequelize.ENUM('processing', 'paid', 'postponed', 'error')
+      },
+      checkoutPaidAt: {
+        allowNull: true,
+        defaultValue: null,
+        type: Sequelize.DATE
+      },
       primeTrustId: {
         allowNull: true,
         defaultValue: null,
         type: Sequelize.STRING(255)
       },
-      checkoutStatus: {
-        allowNull: false,
-        defaultValue: 'unpaid',
-        type: Sequelize.ENUM('unpaid', 'paid', 'postponed', 'error')
-      },
       primeTrustStatus: {
         allowNull: false,
-        defaultValue: 'unpaid',
-        type: Sequelize.ENUM('unpaid', 'paid', 'postponed', 'error')
+        defaultValue: 'postponed',
+        type: Sequelize.ENUM('processing', 'paid', 'postponed', 'error')
+      },
+      primeTrustPaidAt: {
+        allowNull: true,
+        defaultValue: null,
+        type: Sequelize.DATE
+      },
+      logs: {
+        allowNull: true,
+        defaultValue: null,
+        type: Sequelize.JSON
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -106,6 +121,6 @@ module.exports = {
   },
   // eslint-disable-next-line no-unused-vars
   down: async (queryInterface, DataTypes) => {
-    await queryInterface.dropTable('transactions');
+    await queryInterface.dropTable('checkouts');
   },
 };
