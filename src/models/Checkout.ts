@@ -1,4 +1,7 @@
-import { Model, Table, Column, PrimaryKey, AutoIncrement, AllowNull, DataType, Default } from 'sequelize-typescript';
+import { Model, Table, Column, PrimaryKey, AutoIncrement, AllowNull, DataType, Default, IsEmail } from 'sequelize-typescript';
+import { PaidStatus } from '../types/paidStatus.type';
+import { TipType } from '../types/tip.type';
+import { newDinero } from '../utils/dinero';
 
 @Table
 export class Checkout extends Model<Checkout> {
@@ -17,6 +20,7 @@ export class Checkout extends Model<Checkout> {
   lastName!: string;
 
   @AllowNull(false)
+  @IsEmail
   @Column(DataType.STRING(100))
   email!: string;
 
@@ -37,6 +41,11 @@ export class Checkout extends Model<Checkout> {
   @Default(0)
   @Column(DataType.DECIMAL(10, 2))
   tip!: number
+
+  @AllowNull(false)
+  @Default('cash')
+  @Column(DataType.ENUM('cash', 'percent'))
+  tipType!: TipType
 
   @AllowNull(false)
   @Default(0)
@@ -69,6 +78,10 @@ export class Checkout extends Model<Checkout> {
   @Column(DataType.STRING(255))
   country!: string;
 
+  @AllowNull(false)
+  @Column(DataType.STRING(255))
+  checkoutTokenId!: string;
+
   @AllowNull(true)
   @Default(null)
   @Column(DataType.STRING(255))
@@ -77,7 +90,7 @@ export class Checkout extends Model<Checkout> {
   @AllowNull(false)
   @Default('processing')
   @Column(DataType.ENUM('processing', 'paid', 'postponed', 'error'))
-  checkoutStatus!: string;
+  checkoutStatus!: PaidStatus;
 
   @AllowNull(true)
   @Default(null)
@@ -92,7 +105,7 @@ export class Checkout extends Model<Checkout> {
   @AllowNull(false)
   @Default('postponed')
   @Column(DataType.ENUM('processing', 'paid', 'postponed', 'error'))
-  primeTrustStatus!: string;
+  primeTrustStatus!: PaidStatus;
 
   @AllowNull(true)
   @Default(null)
@@ -109,4 +122,32 @@ export class Checkout extends Model<Checkout> {
 
   @Column(DataType.DATE)
   updatedAt!: Date;
+
+  get fullName() {
+    return `${this.firstName} ${this.lastName}`
+  }
+
+  get zeroMoney() {
+    return newDinero(0, this.currency)
+  }
+
+  get amountMoney() {
+    return newDinero(this.amount * 100, this.currency)
+  }
+
+  get tipAmountMoney() {
+    if (!this.tip) {
+      return this.zeroMoney;
+    }
+
+    if (this.tipType === TipType.Cash) {
+      return newDinero(this.tip * 100, this.currency)
+    }
+
+    return this.amountMoney.multiply(this.tipAmountMoney / 100)
+  }
+
+  get chargeAmountMoney() {
+    return this.amountMoney.add(this.tipAmountMoney)
+  }
 }

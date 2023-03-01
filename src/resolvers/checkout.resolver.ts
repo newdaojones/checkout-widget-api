@@ -1,6 +1,8 @@
 import { Resolver, Query, Arg, Mutation } from 'type-graphql';
 import { Checkout } from '../models/Checkout';
+import { CheckoutInputType } from '../types/checkout-input.type';
 import { CheckoutType } from '../types/checkout.type';
+import { log } from '../utils';
 
 @Resolver()
 export class CheckoutResolver {
@@ -16,11 +18,13 @@ export class CheckoutResolver {
 
   @Mutation(() => CheckoutType)
   async createCheckout(
-    @Arg('name') name: string,
-    @Arg('email') email: string,
-    @Arg('password') password: string,
-    @Arg('token') token: string
+    @Arg('data') data: CheckoutInputType,
   ) {
-    // return await Checkout.create({ name, email, password });
+    log.info({
+      func: 'createCheckout',
+      data
+    })
+
+    const checkout = await Checkout.create(data);
   }
 }
