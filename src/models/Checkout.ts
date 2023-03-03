@@ -144,7 +144,7 @@ export class Checkout extends Model<Checkout> {
       return newDinero(this.tip * 100, this.currency)
     }
 
-    return this.amountMoney.multiply(this.tipAmountMoney / 100)
+    return this.amountMoney.multiply(this.tip / 100)
   }
 
   get chargeAmountMoney() {

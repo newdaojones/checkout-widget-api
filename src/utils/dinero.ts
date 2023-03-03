@@ -1,4 +1,4 @@
-import * as Dinero from 'dinero.js';
+import Dinero from 'dinero.js';
 
 export const isInstanceOfDinero = (money: Dinero.Dinero): boolean => {
   // Lets assume that money is Dinero instance if the money has getAmount and getCurrency property

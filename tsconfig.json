@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2018",
+    "lib": ["es2018", "esnext.asynciterable"],
     "module": "commonjs",
     "outDir": "./dist",
     "esModuleInterop": true,
     "sourceMap": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
   },
   "include": [
     "./src/**/*"

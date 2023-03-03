@@ -1,47 +1,64 @@
+import { IsNumber, isNumber, IsOptional, IsString } from "class-validator";
 import { Field, InputType } from "type-graphql";
 import { TipType } from "./tip.type";
 
 @InputType()
 export class CheckoutInputType {
+  @IsString()
   @Field()
   checkoutTokenId: string;
 
+  @IsString()
   @Field()
   firstName: string;
 
+  @IsString()
   @Field()
   lastName: string;
 
+  @IsString()
   @Field()
   email: string;
 
+  @IsString()
   @Field()
   phoneNumber: string;
 
+  @IsNumber()
   @Field()
   amount: number;
 
+  @IsNumber()
   @Field()
   tip: number;
 
+  @IsString()
   @Field()
   tipType: TipType;
 
+  @IsString()
   @Field()
   streetAddress: string;
 
+  @IsString()
+  @IsOptional()
   @Field({ nullable: true })
   streetAddress2: string;
 
+  @IsString()
   @Field()
   city: string;
 
+  @IsString()
   @Field()
   state: string;
 
+  @IsString()
   @Field()
   zip: string;
 
+  @IsString()
+  @IsOptional()
   @Field({ nullable: true })
   country: string;
 }
