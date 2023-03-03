@@ -15,20 +15,24 @@ export class CheckoutService {
   async charge(checkout: Checkout) {
     try {
       const res = await cko.payments.request({
-        token: checkout.checkoutTokenId,
-        billing_address: {
-          address_line1: checkout.streetAddress,
-          address_line2: checkout.streetAddress2,
-          city: checkout.city,
-          state: checkout.state,
-          zip: checkout.zip,
-          country: checkout.zip,
+        source: {
+          type: 'token',
+          token: checkout.checkoutTokenId,
+          billing_address: {
+            address_line1: checkout.streetAddress,
+            address_line2: checkout.streetAddress2,
+            city: checkout.city,
+            state: checkout.state,
+            zip: checkout.zip,
+            country: checkout.zip,
+          },
         },
         currency: checkout.chargeAmountMoney.getCurrency(),
         amount: checkout.chargeAmountMoney.getAmount(),
         payment_type: 'Regular',
         reference: `ORDER ${checkout.id}`,
         description: `Purchase for ${checkout.amount} USDC`,
+        processing_channel_id: process.env.CHECKOUT_PROCESSING_CHANNEL_ID,
         customer: {
           email: checkout.email,
           name: checkout.fullName,
