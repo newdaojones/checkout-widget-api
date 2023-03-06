@@ -6,5 +6,7 @@ export const Config = {
   primeTrustAccountId: process.env.PRIME_TRUST_CUSTODY_ACCOUNT_ID,
   primeTrustContactId: process.env.PRIME_TRUST_CUSTODY_CONTACT_ID,
   primeTrustUsdcAssetId: process.env.PRIME_TRUST_USDC_ASSET_ID,
-  primeTrustFundsTransferMethodId: process.env.PRIME_TRUST_FUNDS_TRANSFER_METHOD_ID
+  primeTrustFundsTransferMethodId: process.env.PRIME_TRUST_FUNDS_TRANSFER_METHOD_ID,
+  primeTrustApiUri: process.env.PRIME_TRUST_API_URI,
+  isProduction: process.env.NODE_ENV === 'production'
 }

@@ -4,7 +4,7 @@ import { Checkout } from '../models/Checkout';
 
 const cko = new CheckoutSdk(Config.checkoutSecureKey, {
   pk: Config.checkoutPublicKey,
-  environment: process.env.NODE_ENV === 'production' ? "production" : "sandbox"
+  environment: Config.isProduction ? "production" : "sandbox"
 });
 
 export class CheckoutService {
@@ -44,7 +44,6 @@ export class CheckoutService {
       console.log(res)
 
     } catch (err) {
-      console.log('error=========')
       console.log(err)
     }
     
