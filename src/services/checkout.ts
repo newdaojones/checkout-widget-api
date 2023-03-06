@@ -1,9 +1,9 @@
 import { Checkout as CheckoutSdk } from 'checkout-sdk-node';
+import { Config } from '../config';
 import { Checkout } from '../models/Checkout';
 
-console.log(process.env.CHECKOUT_SECURE_KEY)
-const cko = new CheckoutSdk(process.env.CHECKOUT_SECURE_KEY, {
-  pk: process.env.CHECKOUT_PUBLIC_KEY,
+const cko = new CheckoutSdk(Config.checkoutSecureKey, {
+  pk: Config.checkoutPublicKey,
   environment: process.env.NODE_ENV === 'production' ? "production" : "sandbox"
 });
 
@@ -32,7 +32,7 @@ export class CheckoutService {
         payment_type: 'Regular',
         reference: `ORDER ${checkout.id}`,
         description: `Purchase for ${checkout.amount} USDC`,
-        processing_channel_id: process.env.CHECKOUT_PROCESSING_CHANNEL_ID,
+        processing_channel_id: Config.checkoutProcessingChannelId,
         customer: {
           email: checkout.email,
           name: checkout.fullName,
