@@ -2,10 +2,19 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('checkouts', {
       id: {
-        type: Sequelize.INTEGER(11).UNSIGNED,
+        type: Sequelize.UUID,
         primaryKey: true,
         allowNull: false,
-        autoIncrement: true,
+        defaultValue: Sequelize.UUIDV4,
+      },
+      walletAddress: {
+        allowNull: false,
+        type: Sequelize.STRING(255),
+      },
+      assetTransferId: {
+        allowNull: true,
+        type: Sequelize.STRING(255),
+        defaultValue: null,
       },
       firstName: {
         allowNull: false,
@@ -74,44 +83,10 @@ module.exports = {
         defaultValue: null,
         type: Sequelize.STRING(255),
       },
-      checkoutTokenId: {
+      status: {
         allowNull: false,
-        type: Sequelize.STRING(255)
-      },
-      checkoutChargeId: {
-        allowNull: true,
-        defaultValue: null,
-        type: Sequelize.STRING(255)
-      },
-      checkoutStatus: {
-        allowNull: false,
-        defaultValue: 'processing',
-        type: Sequelize.ENUM('processing', 'paid', 'postponed', 'error')
-      },
-      checkoutPaidAt: {
-        allowNull: true,
-        defaultValue: null,
-        type: Sequelize.DATE
-      },
-      primeTrustId: {
-        allowNull: true,
-        defaultValue: null,
-        type: Sequelize.STRING(255)
-      },
-      primeTrustStatus: {
-        allowNull: false,
-        defaultValue: 'postponed',
-        type: Sequelize.ENUM('processing', 'paid', 'postponed', 'error')
-      },
-      primeTrustPaidAt: {
-        allowNull: true,
-        defaultValue: null,
-        type: Sequelize.DATE
-      },
-      logs: {
-        allowNull: true,
-        defaultValue: null,
-        type: Sequelize.JSON
+        defaultValue: 'pending',
+        type: Sequelize.ENUM('pending', 'processing', 'paid', 'postponed', 'error')
       },
       createdAt: {
         type: Sequelize.DATE,

@@ -6,10 +6,19 @@ import { newDinero } from '../utils/dinero';
 @Table
 export class Checkout extends Model<Checkout> {
   @PrimaryKey
-  @AutoIncrement
   @AllowNull(false)
-  @Column(DataType.INTEGER.UNSIGNED)
-  id!: number;
+  @Default(DataType.UUIDV4)
+  @Column(DataType.UUID)
+  id!: string;
+
+  @AllowNull(false)
+  @Column(DataType.STRING(255))
+  walletAddress!: string;
+
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.STRING(255))
+  assetTransferId!: string;
 
   @AllowNull(false)
   @Column(DataType.STRING(100))
@@ -88,34 +97,9 @@ export class Checkout extends Model<Checkout> {
   checkoutChargeId!: string;
 
   @AllowNull(false)
-  @Default('processing')
-  @Column(DataType.ENUM('processing', 'paid', 'postponed', 'error'))
-  checkoutStatus!: PaidStatus;
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.DATE)
-  checkoutPaidAt!: Date;
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.STRING(255))
-  primeTrustId!: string;
-
-  @AllowNull(false)
-  @Default('postponed')
-  @Column(DataType.ENUM('processing', 'paid', 'postponed', 'error'))
-  primeTrustStatus!: PaidStatus;
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.DATE)
-  primeTrustPaidAt!: Date;
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.JSON)
-  logs!: any;
+  @Default('pending')
+  @Column(DataType.ENUM('pending', 'processing', 'paid', 'postponed', 'error'))
+  status!: PaidStatus;
 
   @Column(DataType.DATE)
   createdAt!: Date;
