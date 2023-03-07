@@ -6,6 +6,9 @@ export class CheckoutType {
   id: number;
 
   @Field()
+  walletAddress: string;
+
+  @Field()
   firstName: string;
 
   @Field()
@@ -49,24 +52,6 @@ export class CheckoutType {
 
   @Field({ nullable: true })
   country: string;
-
-  @Field({ nullable: true })
-  checkoutChargeId: string;
-
-  @Field({ nullable: true })
-  checkoutStatus: string;
-
-  @Field({ nullable: true })
-  checkoutPaidAt: Date;
-
-  @Field({ nullable: true })
-  primeTrustId: string;
-
-  @Field({ nullable: true })
-  primeTrustStatus: string;
-
-  @Field({ nullable: true })
-  primeTrustPaidAt: Date;
 
   @Field({ nullable: true })
   createdAt: Date;
