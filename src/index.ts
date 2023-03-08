@@ -1,12 +1,15 @@
 import "reflect-metadata";
-import express from "express";
 require('dotenv').config();
+
+import express from "express";
+import * as bodyParser from 'body-parser';
 import { ApolloServer } from "apollo-server-express";
 import { buildSchemaSync } from "type-graphql";
 import { CheckoutResolver } from "./resolvers/checkout.resolver";
 import models from './models';
 import { checkForMigrations } from "./sequelize/helpers/migrations";
 import { log } from "./utils";
+import { initRoutes } from "./routes";
 const { sequelize } = models;
 
 
@@ -44,6 +47,10 @@ async function bootstrap() {
   await server.start();
 
   const app = express();
+  app.use(bodyParser.json());
+  // routes
+  initRoutes(app);
+
   server.applyMiddleware({ app });
 
   const port = process.env.PORT;

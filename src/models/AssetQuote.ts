@@ -46,38 +46,38 @@ export class AssetQuote extends Model<AssetQuote> {
   unitCount!: number;
 
   @AllowNull(false)
-  @Column(DataType.BOOLEAN)
   @Default(false)
+  @Column(DataType.BOOLEAN)
   hot!: boolean;
 
   @AllowNull(false)
-  @Column(DataType.BOOLEAN)
   @Default(false)
+  @Column(DataType.BOOLEAN)
   delayedSettlement!: boolean;
 
   @AllowNull(false)
-  @Column(DataType.BOOLEAN)
   @Default(false)
+  @Column(DataType.BOOLEAN)
   integratorSettled!: boolean;
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   executedAt!: Date;
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   expiresAt!: Date;
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   rejectedAt!: Date;
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   settledAt!: Date;
 
   @Column(DataType.DATE)

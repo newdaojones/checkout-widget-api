@@ -49,13 +49,18 @@ module.exports = {
       },
       tipType: {
         allowNull: false,
-        defaultValue: 'cash',
+        defaultValue: 'percent',
         type: Sequelize.ENUM('cash', 'percent')
       },
       fee: {
         type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0,
+      },
+      tipType: {
+        allowNull: false,
+        defaultValue: 'percent',
+        type: Sequelize.ENUM('cash', 'percent')
       },
       streetAddress: {
         allowNull: false,

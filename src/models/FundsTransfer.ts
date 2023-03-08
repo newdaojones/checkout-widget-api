@@ -8,10 +8,6 @@ export class FundsTransfer extends Model<FundsTransfer> {
   @Column(DataType.UUID)
   id!: string;
 
-  @AllowNull(false)
-  @Column(DataType.UUID)
-  contingentHoldId!: string;
-
   @ForeignKey(() => Checkout)
   @AllowNull(false)
   @Column(DataType.UUID)
@@ -34,73 +30,73 @@ export class FundsTransfer extends Model<FundsTransfer> {
   currencyType!: string
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   cancelledAt!: Date
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
   @Default(null)
+  @Column(DataType.TEXT)
   cancellationDetails!: string
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   clearsOn!: Date
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   contingenciesClearedAt!: Date
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   contingenciesClearedOn!: Date
 
   @AllowNull(true)
-  @Column(DataType.STRING(255))
   @Default(null)
+  @Column(DataType.STRING(255))
   equalityHash!: string
 
   @AllowNull(true)
-  @Column(DataType.STRING(255))
   @Default(null)
+  @Column(DataType.STRING(255))
   fundsSourceName!: string
 
   @AllowNull(true)
-  @Column(DataType.STRING(255))
   @Default(null)
+  @Column(DataType.STRING(255))
   fundsTransferType!: string
 
   @AllowNull(true)
-  @Column(DataType.STRING(255))
   @Default(null)
+  @Column(DataType.STRING(255))
   nachaIndividualId!: string
 
   @AllowNull(true)
-  @Column(DataType.STRING(255))
   @Default(null)
+  @Column(DataType.STRING(255))
   privateMemo!: string
 
   @AllowNull(true)
-  @Column(DataType.STRING(255))
   @Default(null)
+  @Column(DataType.STRING(255))
   receivedChargeBack!: string
 
   @AllowNull(true)
-  @Column(DataType.STRING(255))
   @Default(null)
+  @Column(DataType.STRING(255))
   receiverName!: string
 
   @AllowNull(true)
-  @Column(DataType.STRING(255))
   @Default(null)
+  @Column(DataType.STRING(255))
   reference!: string
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
   @Default(null)
+  @Column(DataType.TEXT)
   reviewReasons!: string
 
   @AllowNull(false)
@@ -109,58 +105,53 @@ export class FundsTransfer extends Model<FundsTransfer> {
   reversedAmount!: number;
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
   @Default(null)
-  reversedReasons!: string
-
-  @AllowNull(true)
   @Column(DataType.TEXT)
-  @Default(null)
   reversalDetails!: string
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   reversedAt!: Date
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   settledAt!: Date
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
   @Default(null)
+  @Column(DataType.TEXT)
   settlementDetails!: string
 
   @AllowNull(true)
-  @Column(DataType.STRING(255))
   @Default(null)
+  @Column(DataType.STRING(255))
   signetDepositAddress!: string
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
   @Default(null)
+  @Column(DataType.TEXT)
   specialInstructions!: string
 
   @AllowNull(true)
-  @Column(DataType.STRING(255))
   @Default(null)
+  @Column(DataType.STRING(255))
   specialType!: string
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
   @Default(null)
+  @Column(DataType.TEXT)
   wireInstructions!: string
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
   @Default(null)
+  @Column(DataType.TEXT)
   wireInstructionsIntl!: string
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
   @Default(null)
+  @Column(DataType.TEXT)
   altCurrencyWireInstructions!: string
 
   @Column(DataType.DATE)

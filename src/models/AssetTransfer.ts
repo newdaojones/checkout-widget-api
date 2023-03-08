@@ -30,43 +30,43 @@ export class AssetTransfer extends Model<AssetTransfer> {
   unitCountExpected!: number;
 
   @AllowNull(true)
-  @Column(DataType.STRING(255))
   @Default(null)
+  @Column(DataType.STRING(255))
   transactionHash!: string
 
   @AllowNull(true)
-  @Column(DataType.TEXT)
   @Default(null)
+  @Column(DataType.TEXT)
   settlementDetails!: string
 
   @AllowNull(false)
-  @Column(DataType.BOOLEAN)
   @Default(false)
+  @Column(DataType.BOOLEAN)
   hotTransfer!: boolean;
 
   @AllowNull(true)
-  @Column(DataType.STRING(255))
   @Default(null)
+  @Column(DataType.STRING(255))
   chargeAccountId!: string
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   cancelledAt!: Date
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   contingenciesClearedAt!: Date
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   contingenciesClearedOn!: Date
 
   @AllowNull(true)
-  @Column(DataType.DATE)
   @Default(null)
+  @Column(DataType.DATE)
   reconciledAt!: Date
 
   @Column(DataType.DATE)

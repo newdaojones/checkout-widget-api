@@ -4,7 +4,7 @@ import { TipType } from '../types/tip.type';
 import { newDinero } from '../utils/dinero';
 
 @Table
-export class Checkout extends Model<Checkout> {
+export class Checkout extends Model<Checkout> { 
   @PrimaryKey
   @AllowNull(false)
   @Default(DataType.UUIDV4)
@@ -60,6 +60,11 @@ export class Checkout extends Model<Checkout> {
   @Default(0)
   @Column(DataType.DECIMAL(10, 2))
   fee!: number
+
+  @AllowNull(false)
+  @Default('cash')
+  @Column(DataType.ENUM('cash', 'percent'))
+  feeType!: TipType
 
   @AllowNull(false)
   @Column(DataType.STRING(255))
@@ -131,7 +136,23 @@ export class Checkout extends Model<Checkout> {
     return this.amountMoney.multiply(this.tip / 100)
   }
 
-  get chargeAmountMoney() {
-    return this.amountMoney.add(this.tipAmountMoney)
+  get feeAmountMoney() {
+    if (!this.fee) {
+      return this.zeroMoney;
+    }
+
+    if (this.tipType === TipType.Cash) {
+      return newDinero(this.fee * 100, this.currency)
+    }
+
+    return this.amountMoney.multiply(this.fee / 100)
+  }
+
+  get totalChargeAmountMoney() {
+    return this.amountMoney.add(this.tipAmountMoney).add(this.feeAmountMoney)
+  }
+
+  get fundsAmountMoney() {
+    return this.amountMoney.add(this.feeAmountMoney)
   }
 }

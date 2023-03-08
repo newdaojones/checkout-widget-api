@@ -3,9 +3,6 @@ import { Checkout } from '../models/Checkout';
 import { CheckoutInputType } from '../types/checkout-input.type';
 import { CheckoutType } from '../types/checkout.type';
 import { log } from '../utils';
-import {CheckoutService} from '../services/checkout'
-
-const checkoutService = CheckoutService.getInstance()
 
 @Resolver()
 export class CheckoutResolver {
@@ -29,7 +26,7 @@ export class CheckoutResolver {
     })
 
     const checkout = await Checkout.create(data);
-    await checkoutService.charge(checkout)
+
     return checkout
   }
 }

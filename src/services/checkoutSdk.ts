@@ -1,0 +1,64 @@
+import { Checkout as CheckoutSdk } from 'checkout-sdk-node';
+import { Config } from '../config';
+import { Charge } from '../models/Charge';
+import { Checkout } from '../models/Checkout';
+import { FundsTransfer } from '../models/FundsTransfer';
+import { PaidStatus } from '../types/paidStatus.type';
+import { log } from '../utils';
+import { convertToCharge, convertToFundsTransfer } from '../utils/convert';
+import { PrimeTrustService } from './primeTrust';
+
+const cko = new CheckoutSdk(Config.checkoutSecureKey, {
+  pk: Config.checkoutPublicKey,
+  environment: Config.isProduction ? "production" : "sandbox"
+});
+
+const primeTrustService = PrimeTrustService.getInstance();
+
+export class CheckoutSdkService {
+  static getInstance() {
+    return new CheckoutSdkService()
+  }
+
+  async charge(checkout: Checkout) {
+    try {
+      const res = await cko.payments.request({
+        source: {
+          type: 'token',
+          token: checkout.checkoutTokenId,
+          billing_address: {
+            address_line1: checkout.streetAddress,
+            address_line2: checkout.streetAddress2,
+            city: checkout.city,
+            state: checkout.state,
+            zip: checkout.zip,
+            country: checkout.zip,
+          },
+        },
+        currency: checkout.totalChargeAmountMoney.getCurrency(),
+        amount: checkout.totalChargeAmountMoney.getAmount(),
+        payment_type: 'Regular',
+        reference: `ORDER ${checkout.id}`,
+        description: `Purchase USDC for $${checkout.amount}`,
+        processing_channel_id: Config.checkoutProcessingChannelId,
+        customer: {
+          email: checkout.email,
+          name: checkout.fullName,
+        },
+        metadata: {
+          value: `Purchase USDC for $${checkout.amount}`,
+          checkoutId: checkout.id
+        },
+      })
+      
+      return res as any
+    } catch (err) {
+      log.warn({
+        func: 'CheckoutService.charge',
+        checkoutId: checkout.id,
+        err
+      }, 'Failed charge from checkout.com')
+      throw err
+    }
+  }
+}

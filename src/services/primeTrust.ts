@@ -3,6 +3,7 @@ import { Config } from "../config";
 import { PrimeTrustAccount } from "../models/PrimeTrustAccount";
 import * as moment from 'moment-timezone'
 import { log } from "../utils";
+import { Dinero } from "dinero.js";
 
 export class PrimeTrustService {
   account: PrimeTrustAccount;
@@ -17,6 +18,8 @@ export class PrimeTrustService {
     const instance = new PrimeTrustService(axios)
 
     instance.setAccount(Config.primeTrustAccountEmail)
+
+    return instance
   }
 
   async setAccount(email: string) {
@@ -27,7 +30,7 @@ export class PrimeTrustService {
     })
 
     if (!account) {
-      throw new Error(`Can not find prime trust account for ${email}`)
+      // throw new Error(`Can not find prime trust account for ${email}`)
     }
 
     this.account = account;
@@ -91,7 +94,12 @@ export class PrimeTrustService {
         await this.getToken()
       }
 
-      const res = await this.axiosInstance.request<T>(config);
+      const res = await this.axiosInstance.request<T>({
+        ...config,
+        headers: {
+          Authorization: `Bearer ${this.account.token}`
+        }
+      });
 
       return res
     } catch (err) {
@@ -104,7 +112,12 @@ export class PrimeTrustService {
       if (err.status === 401) {
         await this.getToken()
 
-        return this.axiosInstance.request<T>(config)
+        return this.axiosInstance.request<T>({
+          ...config,
+          headers: {
+            Authorization: `Bearer ${this.account.token}`
+          }
+        });
       }
 
       throw err;
@@ -112,7 +125,7 @@ export class PrimeTrustService {
   }
 
   async createAssetTransferMethod(userWalletAddress: string) {
-    const res = await this.request({
+    const res = await this.request<any>({
       method: 'POST',
       url: '/v2/asset-transfer-methods',
       data: {
@@ -135,7 +148,7 @@ export class PrimeTrustService {
   }
 
   async createAssetDisbursements(assetTransferMethodId: string, amount: number) {
-    const res = await this.request({
+    const res = await this.request<any>({
       method: 'POST',
       url: '/v2/asset-disbursements?include=asset-transfer,disbursement-authorization',
       data: {
@@ -157,8 +170,37 @@ export class PrimeTrustService {
     return res.data;
   }
 
-  async addFundsToAccount(amount: number) {
-    const res = await this.request({
+  async sandboxDisbursementAuthorizations(disbursementAuthorizationId: string) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: `/v2/disbursement-authorizations/${disbursementAuthorizationId}/sandbox/verify-owner`,
+    })
+
+    return res.data;
+  }
+
+  async sandboxSettleAssetTransfer(assetTransferId) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: `/v2/asset-transfers/${assetTransferId}/sandbox/settle`,
+      data: {
+        data: {
+          type: "asset-transfers",
+          attributes: {
+            "settlement-details": "Transfer confirmed in transaction with hash cafe0c950a24ddb06517a73b592d8682e86c9d79a2bbc7b3afc1073610ebfc0c.",
+            "transaction-hash": "cafe0c950a24ddb06517a73b592d8682e86c9d79a2bbc7b3afc1073610ebfc0c",
+            "comments-1": "comments: Asset received via sandbox/settle. max length 60",
+            "comments-2": "comments2: This is space for additional comments."
+          }
+        }
+      }
+    })
+
+    return res.data;
+  }
+
+  async addFundsToAccount(amount: Dinero.Dinero) {
+    const res = await this.request<any>({
       method: 'POST',
       url: '/v2/contributions?include=funds-transfer',
       data: {
@@ -168,12 +210,78 @@ export class PrimeTrustService {
             "account-id": Config.primeTrustAccountId,
             "contact-id": Config.primeTrustContactId,
             "funds-transfer-method-id": Config.primeTrustFundsTransferMethodId,
-            amount: amount.toFixed(2)
+            amount: amount.toUnit()
           }
         }
       }
     })
 
     return res.data;
+  }
+
+  async getFundsTransfer(fundsTransferId: string) {
+    const res = await this.request<any>({
+      method: 'GET',
+      url: `v2/funds-transfers?filter[id eq]=${fundsTransferId}&include=contingent-holds`
+    })
+
+    return res.data
+  }
+
+  async sandboxSettleFundsTransfer(fundsTransferId: string) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: `/v2/funds-transfers/${fundsTransferId}/sandbox/settle`,
+    })
+
+    return res.data;
+  }
+
+  async sandboxClearFundsTransfer(contingentHoldId: string) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: `/v2/contingent-holds/${contingentHoldId}/sandbox/clear`,
+    })
+
+    return res.data;
+  }
+
+  async createQuote(amount: Dinero.Dinero) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: `/v2/quotes`,
+      data: {
+        data: {
+          type: "quotes",
+          attributes: {
+            "account-id": Config.primeTrustAccountId,
+            "asset-id": Config.primeTrustUsdcAssetId,
+            "transaction-type": "buy",
+            amount: amount.toUnit(),
+            hot: false
+          }
+        }
+      }
+    })
+
+    return res.data;
+  }
+
+  async executeQuote(quoteId: string) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: `/v2/quotes/${quoteId}/execute`,
+    })
+
+    return res.data;
+  }
+
+  async getQuote(quoteId: string) {
+    const res = await this.request<any>({
+      method: 'GET',
+      url: `/v2/quotes/${quoteId}`
+    })
+
+    return res.data
   }
 }

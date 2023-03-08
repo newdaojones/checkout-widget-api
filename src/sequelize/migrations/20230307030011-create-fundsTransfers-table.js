@@ -7,10 +7,6 @@ module.exports = {
         allowNull: false,
         defaultValue: Sequelize.UUIDV4,
       },
-      contingentHoldId: {
-        type: Sequelize.UUID,
-        allowNull: false
-      },
       checkoutId: {
         type: Sequelize.UUID,
         allowNull: false,
