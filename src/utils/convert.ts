@@ -63,6 +63,7 @@ export const convertToQuote = (data: any) => {
     totalAmount: data.attributes['total-amount'],
     pricePerUnit: data.attributes['price-per-unit'],
     unitCount: data.attributes['unit-count'],
+    transactionType: data.attributes['transaction-type'],
     hot: data.attributes.hot,
     delayedSettlement: data.attributes['delayed-settlement'],
     integratorSettled: data.attributes['integrator-settled'],

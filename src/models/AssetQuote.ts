@@ -38,11 +38,11 @@ export class AssetQuote extends Model<AssetQuote> {
   totalAmount!: number;
 
   @AllowNull(false)
-  @Column(DataType.DECIMAL(10, 10))
+  @Column(DataType.DECIMAL(10, 5))
   pricePerUnit!: number;
 
   @AllowNull(false)
-  @Column(DataType.DECIMAL(10, 10))
+  @Column(DataType.DECIMAL(10, 5))
   unitCount!: number;
 
   @AllowNull(false)

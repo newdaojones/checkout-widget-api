@@ -36,11 +36,11 @@ module.exports = {
         allowNull: false
       },
       pricePerUnit: {
-        type: Sequelize.DECIMAL(10, 10),
+        type: Sequelize.DECIMAL(10, 5),
         allowNull: false
       },
       unitCount: {
-        type: Sequelize.DECIMAL(10, 10),
+        type: Sequelize.DECIMAL(10, 5),
         allowNull: false
       },
       hot: {

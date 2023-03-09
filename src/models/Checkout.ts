@@ -96,11 +96,6 @@ export class Checkout extends Model<Checkout> {
   @Column(DataType.STRING(255))
   checkoutTokenId!: string;
 
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.STRING(255))
-  checkoutChargeId!: string;
-
   @AllowNull(false)
   @Default('pending')
   @Column(DataType.ENUM('pending', 'processing', 'paid', 'postponed', 'error'))

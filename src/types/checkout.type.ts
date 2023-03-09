@@ -30,10 +30,13 @@ export class CheckoutType {
   fee: number;
 
   @Field()
+  feeType: string;
+
+  @Field()
   tip: number;
 
   @Field()
-  tipType: number;
+  tipType: string;
 
   @Field()
   streetAddress: string;

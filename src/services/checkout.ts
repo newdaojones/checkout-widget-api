@@ -40,7 +40,7 @@ export class CheckoutService {
     }
   }
 
-  private async processAssetTransfer(checkout: Checkout) {
+  private async processAssetTransfer(checkout: Checkout, quote: AssetQuote) {
     try {
       const assetTransferMethodRes = await this.primeTrust.createAssetTransferMethod(checkout.walletAddress);
       const assetTransferMethodId = assetTransferMethodRes.data.id
@@ -49,7 +49,7 @@ export class CheckoutService {
         assetTransferMethodId
       })
   
-      const res = await this.primeTrust.createAssetDisbursements(assetTransferMethodId, checkout.amountMoney);
+      const res = await this.primeTrust.createAssetDisbursements(assetTransferMethodId, quote.unitCount);
       const assetTransferData = res.included.find((item) => item.type === 'asset-transfers')
   
       if (!assetTransferData) {
@@ -110,9 +110,8 @@ export class CheckoutService {
   private async processQuote(checkout: Checkout) {
     try {
       const quotesRes = await this.primeTrust.createQuote(checkout.amountMoney)
-      
       const assetQuote = await AssetQuote.create({
-        ...convertToQuote(quotesRes),
+        ...convertToQuote(quotesRes.data),
         checkoutId: checkout.id
       })
 
@@ -234,7 +233,7 @@ export class CheckoutService {
         return
       }
 
-      await this.processAssetTransfer(checkout)
+      await this.processAssetTransfer(checkout, quote)
     } catch (err) {
       log.warn({
         func: 'quotesUpdateHandler',
@@ -305,9 +304,9 @@ export class CheckoutService {
       return
     }
 
-    if (data.action !== 'update') {
-      return
-    }
+    // if (data.action !== 'update' && data.action !== 'settled') {
+    //   return
+    // }
 
     try {
       switch(data['resource-type']) {

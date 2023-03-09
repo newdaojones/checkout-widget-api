@@ -22,11 +22,11 @@ export class AssetTransfer extends Model<AssetTransfer> {
   status!: string;
 
   @AllowNull(false)
-  @Column(DataType.DECIMAL(10, 10))
+  @Column(DataType.DECIMAL(10, 5))
   unitCount!: number;
 
   @AllowNull(false)
-  @Column(DataType.DECIMAL(10, 10))
+  @Column(DataType.DECIMAL(10, 5))
   unitCountExpected!: number;
 
   @AllowNull(true)

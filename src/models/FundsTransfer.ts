@@ -99,7 +99,7 @@ export class FundsTransfer extends Model<FundsTransfer> {
   @Column(DataType.TEXT)
   reviewReasons!: string
 
-  @AllowNull(false)
+  @AllowNull(true)
   @Default(0)
   @Column(DataType.DECIMAL(10, 2))
   reversedAmount!: number;

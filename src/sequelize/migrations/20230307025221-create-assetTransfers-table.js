@@ -21,11 +21,11 @@ module.exports = {
         allowNull: false
       },
       unitCount: {
-        type: Sequelize.DECIMAL(10, 10),
+        type: Sequelize.DECIMAL(10, 5),
         allowNull: false
       },
       unitCountExpected: {
-        type: Sequelize.DECIMAL(10, 10),
+        type: Sequelize.DECIMAL(10, 5),
         allowNull: false
       },
       transactionHash: {

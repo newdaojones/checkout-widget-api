@@ -30,7 +30,7 @@ export class PrimeTrustService {
     })
 
     if (!account) {
-      // throw new Error(`Can not find prime trust account for ${email}`)
+      throw new Error(`Can not find prime trust account for ${email}`)
     }
 
     this.account = account;
@@ -39,7 +39,10 @@ export class PrimeTrustService {
   private async getServerIp() {
     const res = await Axios.request({
       url: 'https://ifconfig.co',
-      method: 'GET'
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
     })
 
     return res.data.ip
@@ -53,12 +56,17 @@ export class PrimeTrustService {
 
       const expiresAt = moment.utc().add(1, 'month')
       const ipAddress = await this.getServerIp();
+
       const res = await this.axiosInstance.request({
         method: 'POST',
         url: '/auth/jwts',
         data: {
           expires_at: expiresAt.toISOString(),
           cidr: [`${ipAddress}/32`]
+        },
+        auth: {
+          username: this.account.email,
+          password: this.account.password
         }
       })
 
@@ -147,7 +155,7 @@ export class PrimeTrustService {
     return res.data
   }
 
-  async createAssetDisbursements(assetTransferMethodId: string, amount: Dinero.Dinero) {
+  async createAssetDisbursements(assetTransferMethodId: string, amount: number) {
     const res = await this.request<any>({
       method: 'POST',
       url: '/v2/asset-disbursements?include=asset-transfer,disbursement-authorization',
@@ -156,7 +164,7 @@ export class PrimeTrustService {
           type: "asset-disbursements",
           attributes: {
             "account-id": Config.primeTrustAccountId,
-            "unit-count": amount.toUnit(),
+            "unit-count": amount,
             "asset-transfer": {
               "asset-transfer-method-id": assetTransferMethodId
             },

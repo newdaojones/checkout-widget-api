@@ -1,19 +1,12 @@
 import { Checkout as CheckoutSdk } from 'checkout-sdk-node';
 import { Config } from '../config';
-import { Charge } from '../models/Charge';
 import { Checkout } from '../models/Checkout';
-import { FundsTransfer } from '../models/FundsTransfer';
-import { PaidStatus } from '../types/paidStatus.type';
 import { log } from '../utils';
-import { convertToCharge, convertToFundsTransfer } from '../utils/convert';
-import { PrimeTrustService } from './primeTrust';
 
 const cko = new CheckoutSdk(Config.checkoutSecureKey, {
   pk: Config.checkoutPublicKey,
   environment: Config.isProduction ? "production" : "sandbox"
 });
-
-const primeTrustService = PrimeTrustService.getInstance();
 
 export class CheckoutSdkService {
   static getInstance() {
@@ -32,7 +25,7 @@ export class CheckoutSdkService {
             city: checkout.city,
             state: checkout.state,
             zip: checkout.zip,
-            country: checkout.zip,
+            country: checkout.country,
           },
         },
         currency: checkout.totalChargeAmountMoney.getCurrency(),

@@ -7,6 +7,10 @@ module.exports = {
         allowNull: false,
         defaultValue: Sequelize.UUIDV4,
       },
+      checkoutTokenId: {
+        allowNull: false,
+        type: Sequelize.STRING(255),
+      },
       walletAddress: {
         allowNull: false,
         type: Sequelize.STRING(255),
@@ -57,7 +61,7 @@ module.exports = {
         allowNull: false,
         defaultValue: 0,
       },
-      tipType: {
+      feeType: {
         allowNull: false,
         defaultValue: 'percent',
         type: Sequelize.ENUM('cash', 'percent')
