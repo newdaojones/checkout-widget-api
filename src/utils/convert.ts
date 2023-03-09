@@ -72,3 +72,20 @@ export const convertToQuote = (data: any) => {
     settledAt: data.attributes['settled-at'],
   }
 }
+
+export const convertToAssetTransfer = (data) => {
+  return {
+    id: data.id,
+    status: data.attributes.status,
+    unitCount: data.attributes['unit-count'],
+    unitCountExpected: data.attributes['unit-count-expected'],
+    transactionHash: data.attributes['transaction-hash'],
+    settlementDetails: data.attributes['settlement-details'],
+    hotTransfer: data.attributes['hot-transfer'],
+    chargeAccountId: data.attributes['charge-account-id'],
+    cancelledAt: data.attributes['cancelled-at'],
+    contingenciesClearedAt: data.attributes['contingencies-cleared-at'],
+    contingenciesClearedOn: data.attributes['contingencies-cleared-on'],
+    reconciledAt: data.attributes['reconciled-at'],
+  }
+}

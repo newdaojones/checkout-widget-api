@@ -10,6 +10,10 @@ export class CheckoutInputType {
 
   @IsString()
   @Field()
+  walletAddress: string;
+
+  @IsString()
+  @Field()
   firstName: string;
 
   @IsString()
@@ -35,6 +39,14 @@ export class CheckoutInputType {
   @IsString()
   @Field()
   tipType: TipType;
+
+  @IsNumber()
+  @Field()
+  fee: number;
+
+  @IsString()
+  @Field()
+  feeType: TipType;
 
   @IsString()
   @Field()

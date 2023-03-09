@@ -1,9 +1,13 @@
+import { Config } from '../config';
 import { Resolver, Query, Arg, Mutation } from 'type-graphql';
 import { Checkout } from '../models/Checkout';
+import { CheckoutService } from '../services/checkout';
 import { CheckoutInputType } from '../types/checkout-input.type';
 import { CheckoutType } from '../types/checkout.type';
+import { TipType } from '../types/tip.type';
 import { log } from '../utils';
 
+const checkoutService = CheckoutService.getInstance()
 @Resolver()
 export class CheckoutResolver {
   @Query(() => [CheckoutType])
@@ -26,6 +30,8 @@ export class CheckoutResolver {
     })
 
     const checkout = await Checkout.create(data);
+
+    checkoutService.processCheckout(checkout)
 
     return checkout
   }

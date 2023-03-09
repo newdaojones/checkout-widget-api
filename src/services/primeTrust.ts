@@ -3,7 +3,7 @@ import { Config } from "../config";
 import { PrimeTrustAccount } from "../models/PrimeTrustAccount";
 import * as moment from 'moment-timezone'
 import { log } from "../utils";
-import { Dinero } from "dinero.js";
+import { Dinero, DineroObject } from "dinero.js";
 
 export class PrimeTrustService {
   account: PrimeTrustAccount;
@@ -147,7 +147,7 @@ export class PrimeTrustService {
     return res.data
   }
 
-  async createAssetDisbursements(assetTransferMethodId: string, amount: number) {
+  async createAssetDisbursements(assetTransferMethodId: string, amount: Dinero.Dinero) {
     const res = await this.request<any>({
       method: 'POST',
       url: '/v2/asset-disbursements?include=asset-transfer,disbursement-authorization',
@@ -156,7 +156,7 @@ export class PrimeTrustService {
           type: "asset-disbursements",
           attributes: {
             "account-id": Config.primeTrustAccountId,
-            "unit-count": amount.toFixed(2),
+            "unit-count": amount.toUnit(),
             "asset-transfer": {
               "asset-transfer-method-id": assetTransferMethodId
             },
@@ -280,6 +280,15 @@ export class PrimeTrustService {
     const res = await this.request<any>({
       method: 'GET',
       url: `/v2/quotes/${quoteId}`
+    })
+
+    return res.data
+  }
+
+  async getAssetTransfer(id: string) {
+    const res = await this.request<any>({
+      method: 'GET',
+      url: `/v2/asset-transfers/${id}`
     })
 
     return res.data

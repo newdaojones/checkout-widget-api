@@ -1,11 +1,12 @@
 import { Config } from "../config";
 import { AssetQuote } from "../models/AssetQuote";
+import { AssetTransfer } from "../models/AssetTransfer";
 import { Charge } from "../models/Charge";
 import { Checkout } from "../models/Checkout";
 import { FundsTransfer } from "../models/FundsTransfer";
 import { PaidStatus } from "../types/paidStatus.type";
 import { log } from "../utils";
-import { convertToCharge, convertToFundsTransfer, convertToQuote } from "../utils/convert";
+import { convertToAssetTransfer, convertToCharge, convertToFundsTransfer, convertToQuote } from "../utils/convert";
 import { CheckoutSdkService } from "./checkoutSdk";
 import { PrimeTrustService } from "./primeTrust";
 
@@ -20,19 +21,63 @@ export class CheckoutService {
 
   constructor (private checkoutSdk: CheckoutSdkService, private primeTrust: PrimeTrustService) {}
 
-  async processCheckout(checkout: Checkout) {
+  private async processCharge(checkout: Checkout) {
     try {
-      await checkout.update({
-        status: PaidStatus.Processing
-      })
-
       const charge = await this.checkoutSdk.charge(checkout);
       const chargeData = convertToCharge(charge);
       await Charge.create({
         checkoutId: checkout.id,
         ...chargeData
       })
+    } catch (err) {
+      log.warn({
+        func: 'processCharge',
+        checkoutId: checkout.id,
+        err,
+      }, 'Failed processCharge')
+      
+      throw err
+    }
+  }
 
+  private async processAssetTransfer(checkout: Checkout) {
+    try {
+      const assetTransferMethodRes = await this.primeTrust.createAssetTransferMethod(checkout.walletAddress);
+      const assetTransferMethodId = assetTransferMethodRes.data.id
+  
+      await checkout.update({
+        assetTransferMethodId
+      })
+  
+      const res = await this.primeTrust.createAssetDisbursements(assetTransferMethodId, checkout.amountMoney);
+      const assetTransferData = res.included.find((item) => item.type === 'asset-transfers')
+  
+      if (!assetTransferData) {
+        throw new Error('Can not find asset transfer data')
+      }
+  
+      const assetTransfer = await AssetTransfer.create({
+        ...convertToAssetTransfer(assetTransferData),
+        checkoutId: checkout.id,
+        disbursementAuthorizationId: res.data.id
+      })
+  
+      if (!Config.isProduction) {
+        await this.primeTrust.sandboxSettleAssetTransfer(assetTransfer.id)
+      }
+    } catch (err) {
+      log.warn({
+        func: 'processAssetTransfer',
+        checkoutId: checkout.id,
+        err,
+      }, 'Failed processAssetTransfer')
+      
+      throw err
+    }
+  }
+
+  private async processFundsTransfer(checkout: Checkout)  {
+    try {
       const res = await this.primeTrust.addFundsToAccount(checkout.fundsAmountMoney)
 
       const fundsTransfer = res.included?.find((item) => item.type === 'funds-transfers')
@@ -52,6 +97,50 @@ export class CheckoutService {
         await this.primeTrust.sandboxSettleFundsTransfer(fundsTransferRecord.id)
       }
     } catch (err) {
+      log.warn({
+        func: 'processFundsTransfer',
+        checkoutId: checkout.id,
+        err,
+      }, 'Failed processFundsTransfer')
+      
+      throw err
+    }
+  }
+
+  private async processQuote(checkout: Checkout) {
+    try {
+      const quotesRes = await this.primeTrust.createQuote(checkout.amountMoney)
+      
+      const assetQuote = await AssetQuote.create({
+        ...convertToQuote(quotesRes),
+        checkoutId: checkout.id
+      })
+
+      await this.primeTrust.executeQuote(assetQuote.id)
+    } catch (err) {
+      log.warn({
+        func: 'processQuote',
+        checkoutId: checkout.id,
+        err,
+      }, 'Failed processQuote')
+
+      throw err
+    }
+  }
+
+  async processCheckout(checkout: Checkout) {
+    try {
+      await checkout.update({
+        status: PaidStatus.Processing
+      })
+
+      await this.processCharge(checkout);
+      await this.processFundsTransfer(checkout);
+    } catch (err) {
+      await checkout.update({
+        status: PaidStatus.Error
+      })
+
       await checkout.update({
         status: PaidStatus.Error
       })
@@ -64,44 +153,20 @@ export class CheckoutService {
     }
   }
 
-  async webhookHandler(data: any) {
-    log.info({
-      func: 'webhookHandler',
-      data
-    })
 
-    if (data['account-id'] !== Config.primeTrustAccountId) {
-      return
-    }
+  private async fundsTransferUpdateHandler(fundsTransferId: string) {
+    let checkout: Checkout;
 
     try {
-      switch(data['resource-type']) {
-        case 'funds_transfers':
-          await this.fundsTransferUpdateHandler(data['resource_id'])
-        case 'facilitated_trades':
-          await this.quotesUpdateHandler(data['resource_id'])
-        default:
-          return
-      }
-    } catch (err) {
-      log.warn({
-        func: 'webhookHandler',
-        data,
-      }, 'Failed webhook handler')
-    }
-  }
+      const fundsTransfer = await FundsTransfer.findByPk(fundsTransferId);
 
-  async quotesUpdateHandler(assetQuoteId: string) {
-    try {
-      const quote = await AssetQuote.findByPk(assetQuoteId);
-
-      if (!quote) {
+      if (!fundsTransfer) {
         return
       }
 
-      const checkout = await quote.getCheckout()
+      checkout = await fundsTransfer.getCheckout()
 
-      const res = await this.primeTrust.getQuote(assetQuoteId);
+      const res = await this.primeTrust.getFundsTransfer(fundsTransferId);
       const fundsTransferRes = res.data.find((item) => item.id === fundsTransferId);
       const contingentHoldIds = fundsTransferRes.relationships['contingent-holds']?.data?.map((item) => item.id) || []
 
@@ -125,23 +190,141 @@ export class CheckoutService {
         for (const contingentHold of contingentHolds) {
           await this.primeTrust.sandboxClearFundsTransfer(contingentHold.id)
         }
+
+        return
       }
 
-      const quotesRes = await this.primeTrust.createQuote(checkout.amountMoney)
-      
-      const assetQuote = await AssetQuote.create({
-        ...convertToQuote(quotesRes),
-        checkoutId: checkout.id
-      })
-
-      await this.primeTrust.executeQuote(assetQuote.id)
+      await this.processQuote(checkout)
     } catch (err) {
       log.warn({
         func: 'fundsTransferUpdateHandler',
         fundsTransferId,
+        checkoutId: checkout?.id,
+        err
       }, 'Failed fundsTransferUpdateHandler')
+
+      await checkout.update({
+        status: PaidStatus.Error
+      })
       
       throw err
+    }
+  }
+
+  private async quotesUpdateHandler(assetQuoteId: string) {
+    let checkout: Checkout;
+
+    try {
+      const quote = await AssetQuote.findByPk(assetQuoteId);
+
+      if (!quote) {
+        return
+      }
+
+      checkout = await quote.getCheckout()
+      const res = await this.primeTrust.getQuote(assetQuoteId);
+
+      await quote.update(convertToQuote(res.data));
+
+      if (quote.status !== 'pending' && quote.status !== 'settled') {
+        throw new Error('Unknown status for funds transfer')
+      }
+
+      if (quote.status !== 'settled') {
+        return
+      }
+
+      await this.processAssetTransfer(checkout)
+    } catch (err) {
+      log.warn({
+        func: 'quotesUpdateHandler',
+        assetQuoteId,
+        checkoutId: checkout?.id,
+        err
+      }, 'Failed quotesUpdateHandler')
+
+      await checkout.update({
+        status: PaidStatus.Error
+      })
+      
+      throw err
+    }
+  }
+
+  private async assetTransferUpdateHandler(assetTransferId: string) {
+    let checkout: Checkout;
+
+    try {
+      const assetTransfer = await AssetTransfer.findByPk(assetTransferId);
+
+      if (!assetTransfer) {
+        return
+      }
+
+      const checkout = await assetTransfer.getCheckout()
+      const res = await this.primeTrust.getAssetTransfer(assetTransferId);
+
+      await assetTransfer.update(convertToQuote(res.data));
+
+      if (assetTransfer.status !== 'pending' && assetTransfer.status !== 'settled') {
+        throw new Error('Unknown status for funds transfer')
+      }
+
+      if (assetTransfer.status !== 'settled') {
+        return
+      }
+
+      await checkout.update({
+        status: PaidStatus.Paid
+      })
+    } catch (err) {
+      log.warn({
+        func: 'assetTransferUpdateHandler',
+        assetTransferId,
+        checkoutId: checkout?.id,
+        err
+      }, 'Failed assetTransferUpdateHandler')
+
+      if (checkout) {
+        await checkout.update({
+          status: PaidStatus.Error
+        })
+      }
+      
+      throw err
+    }
+  }
+
+  async webhookHandler(data: any) {
+    log.info({
+      func: 'webhookHandler',
+      data
+    })
+
+    if (data['account-id'] !== Config.primeTrustAccountId) {
+      return
+    }
+
+    if (data.action !== 'update') {
+      return
+    }
+
+    try {
+      switch(data['resource-type']) {
+        case 'funds_transfers':
+          await this.fundsTransferUpdateHandler(data['resource_id'])
+        case 'facilitated_trades':
+          await this.quotesUpdateHandler(data['resource_id'])
+        case 'asset_transfers':
+            await this.assetTransferUpdateHandler(data['resource_id'])
+        default:
+          return
+      }
+    } catch (err) {
+      log.warn({
+        func: 'webhookHandler',
+        data,
+      }, 'Failed webhook handler')
     }
   }
 }

@@ -11,7 +11,7 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING(255),
       },
-      assetTransferId: {
+      assetTransferMethodId: {
         allowNull: true,
         type: Sequelize.STRING(255),
         defaultValue: null,

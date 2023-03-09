@@ -18,7 +18,7 @@ export class Checkout extends Model<Checkout> {
   @AllowNull(true)
   @Default(null)
   @Column(DataType.STRING(255))
-  assetTransferId!: string;
+  assetTransferMethodId!: string;
 
   @AllowNull(false)
   @Column(DataType.STRING(100))

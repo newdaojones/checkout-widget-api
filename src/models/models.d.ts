@@ -5,8 +5,8 @@ import { AssetTransfer } from './AssetTransfer';
 import { FundsTransfer } from './FundsTransfer';
 import { Charge } from './Charge';
 export interface IDbModels {
-  Checkout: typeof Checkout;
   PrimeTrustAccount: typeof PrimeTrustAccount;
+  Checkout: typeof Checkout;
   AssetQuote: typeof AssetQuote;
   AssetTransfer: typeof AssetTransfer;
   FundsTransfer: typeof FundsTransfer;

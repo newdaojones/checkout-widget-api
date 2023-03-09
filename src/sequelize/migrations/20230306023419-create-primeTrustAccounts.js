@@ -16,7 +16,8 @@ module.exports = {
         type: Sequelize.STRING(100),
       },
       token: {
-        allowNull: false,
+        allowNull: null,
+        defaultValue: null,
         type: Sequelize.TEXT,
       },
       expiresAt: {
