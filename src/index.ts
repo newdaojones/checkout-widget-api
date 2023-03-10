@@ -4,15 +4,13 @@ require('dotenv').config();
 
 import express from "express";
 import * as bodyParser from 'body-parser';
-import { ApolloServer } from "apollo-server-express";
-import { buildSchemaSync } from "type-graphql";
-import { CheckoutResolver } from "./resolvers/checkout.resolver";
 import models from './models';
 import { checkForMigrations } from "./sequelize/helpers/migrations";
 import { log } from "./utils";
 import { initRoutes } from "./routes";
+import { initGraphql } from "./graphql";
+import { createServer } from "http";
 const { sequelize } = models;
-
 
 async function bootstrap() {
   try {
@@ -37,27 +35,18 @@ async function bootstrap() {
   }
   log.info('Sequelize Database Connected');
 
-  const schema = buildSchemaSync({
-    resolvers: [CheckoutResolver],
-  });
-
-  const server = new ApolloServer({
-    schema,
-  });
-
-  await server.start();
-
   const app = express();
-  app.use(bodyParser.json());
-  // routes
-  initRoutes(app);
+  const httpServer = createServer(app);
 
-  server.applyMiddleware({ app });
+  app.use(bodyParser.json());
+
+  initRoutes(app);
+  await initGraphql(app, httpServer)
 
   const port = process.env.PORT;
 
-  app.listen(port, () => {
-    log.info(`Server running at http://localhost:${port}${server.graphqlPath}`);
+  httpServer.listen(port, () => {
+    log.info(`Server running at http://localhost:${port}`);
   });
 }
 

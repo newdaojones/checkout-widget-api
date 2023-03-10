@@ -1,25 +1,52 @@
 import { Config } from "../config";
+
+import Container from "typedi";
+import { PubSubEngine } from 'graphql-subscriptions';
+
 import { AssetQuote } from "../models/AssetQuote";
 import { AssetTransfer } from "../models/AssetTransfer";
 import { Charge } from "../models/Charge";
 import { Checkout } from "../models/Checkout";
 import { FundsTransfer } from "../models/FundsTransfer";
-import { PaidStatus } from "../types/paidStatus.type";
-import { log } from "../utils";
-import { convertToAssetTransfer, convertToCharge, convertToFundsTransfer, convertToQuote } from "../utils/convert";
+
 import { CheckoutSdkService } from "./checkoutSdk";
 import { PrimeTrustService } from "./primeTrust";
 
+import { log } from "../utils";
+import { convertToAssetTransfer, convertToCharge, convertToFundsTransfer, convertToQuote } from "../utils/convert";
+
+import { PaidStatus } from "../types/paidStatus.type";
+import { CheckoutStep } from "../types/checkoutStep.type";
+import { TransactionType } from "../types/transaction.type";
+
 const checkoutSdkService = CheckoutSdkService.getInstance();
 const primeTrustService = PrimeTrustService.getInstance();
+const pubsubEngine = Container.get<PubSubEngine>('pubsub');
 
 export class CheckoutService {
   static getInstance() {
 
-    return new CheckoutService(checkoutSdkService, primeTrustService)
+    return new CheckoutService(checkoutSdkService, primeTrustService, pubsubEngine)
   }
 
-  constructor (private checkoutSdk: CheckoutSdkService, private primeTrust: PrimeTrustService) {}
+  constructor(private checkoutSdk: CheckoutSdkService, private primeTrust: PrimeTrustService, private pubSub: PubSubEngine) { }
+
+  private async publishNotification(payload: TransactionType) {
+    try {
+      if (!this.pubSub) {
+        throw new Error('Subscription is not initialized')
+      }
+
+      this.pubSub.publish('TRANSACTION_STATUS', payload)
+    } catch (err) {
+      log.warn({
+        func: 'publishNotification',
+        checkoutId: payload.checkoutId,
+        payload,
+        err
+      })
+    }
+  }
 
   private async processCharge(checkout: Checkout) {
     try {
@@ -29,13 +56,33 @@ export class CheckoutService {
         checkoutId: checkout.id,
         ...chargeData
       })
+
+      this.publishNotification({
+        checkoutId: checkout.id,
+        status: checkout.status,
+        step: CheckoutStep.Charge,
+        message: `Charged $${checkout.totalChargeAmountMoney.toUnit()}`,
+        transactionId: null
+      })
     } catch (err) {
       log.warn({
         func: 'processCharge',
         checkoutId: checkout.id,
         err,
       }, 'Failed processCharge')
-      
+
+      await checkout.update({
+        status: PaidStatus.Error
+      })
+
+      this.publishNotification({
+        checkoutId: checkout.id,
+        status: checkout.status,
+        step: CheckoutStep.Charge,
+        message: `Failed Charge $${checkout.totalChargeAmountMoney.toUnit()}`,
+        transactionId: null
+      })
+
       throw err
     }
   }
@@ -44,39 +91,57 @@ export class CheckoutService {
     try {
       const assetTransferMethodRes = await this.primeTrust.createAssetTransferMethod(checkout.walletAddress);
       const assetTransferMethodId = assetTransferMethodRes.data.id
-  
+
       await checkout.update({
         assetTransferMethodId
       })
-  
+
       const res = await this.primeTrust.createAssetDisbursements(assetTransferMethodId, quote.unitCount);
       const assetTransferData = res.included.find((item) => item.type === 'asset-transfers')
-  
+
       if (!assetTransferData) {
         throw new Error('Can not find asset transfer data')
       }
-  
+
       const assetTransfer = await AssetTransfer.create({
         ...convertToAssetTransfer(assetTransferData),
         checkoutId: checkout.id,
         disbursementAuthorizationId: res.data.id
       })
-  
+
       if (!Config.isProduction) {
         await this.primeTrust.sandboxSettleAssetTransfer(assetTransfer.id)
       }
+
+      this.publishNotification({
+        checkoutId: checkout.id,
+        status: checkout.status,
+        step: CheckoutStep.Asset,
+        message: `Processing transfer assets for ${quote.unitCount} USDC`,
+        transactionId: null
+      })
     } catch (err) {
       log.warn({
         func: 'processAssetTransfer',
         checkoutId: checkout.id,
         err,
       }, 'Failed processAssetTransfer')
-      
-      throw err
+
+      await checkout.update({
+        status: PaidStatus.Error
+      })
+
+      this.publishNotification({
+        checkoutId: checkout.id,
+        status: checkout.status,
+        step: CheckoutStep.Asset,
+        message: `Failed transfer assets for ${quote.unitCount} USDC}`,
+        transactionId: null
+      })
     }
   }
 
-  private async processFundsTransfer(checkout: Checkout)  {
+  private async processFundsTransfer(checkout: Checkout) {
     try {
       const res = await this.primeTrust.addFundsToAccount(checkout.fundsAmountMoney)
 
@@ -96,13 +161,33 @@ export class CheckoutService {
       if (!Config.isProduction) {
         await this.primeTrust.sandboxSettleFundsTransfer(fundsTransferRecord.id)
       }
+
+      this.publishNotification({
+        checkoutId: checkout.id,
+        status: checkout.status,
+        step: CheckoutStep.Funds,
+        message: `Processing funds for $${checkout.fundsAmountMoney.toUnit()}`,
+        transactionId: null
+      })
     } catch (err) {
       log.warn({
         func: 'processFundsTransfer',
         checkoutId: checkout.id,
         err,
       }, 'Failed processFundsTransfer')
-      
+
+      await checkout.update({
+        status: PaidStatus.Error
+      })
+
+      this.publishNotification({
+        checkoutId: checkout.id,
+        status: checkout.status,
+        step: CheckoutStep.Funds,
+        message: `Failed Processing funds for $${checkout.fundsAmountMoney.toUnit()}`,
+        transactionId: null
+      })
+
       throw err
     }
   }
@@ -116,6 +201,14 @@ export class CheckoutService {
       })
 
       await this.primeTrust.executeQuote(assetQuote.id)
+
+      this.publishNotification({
+        checkoutId: checkout.id,
+        status: checkout.status,
+        step: CheckoutStep.Quote,
+        message: `Processing quote asset for $${checkout.amountMoney.toUnit()}`,
+        transactionId: null
+      })
     } catch (err) {
       log.warn({
         func: 'processQuote',
@@ -123,7 +216,17 @@ export class CheckoutService {
         err,
       }, 'Failed processQuote')
 
-      throw err
+      await checkout.update({
+        status: PaidStatus.Error
+      })
+
+      this.publishNotification({
+        checkoutId: checkout.id,
+        status: checkout.status,
+        step: CheckoutStep.Quote,
+        message: `Failed quote assets $${checkout.fundsAmountMoney.toUnit()}`,
+        transactionId: null
+      })
     }
   }
 
@@ -136,15 +239,7 @@ export class CheckoutService {
       await this.processCharge(checkout);
       await this.processFundsTransfer(checkout);
     } catch (err) {
-      await checkout.update({
-        status: PaidStatus.Error
-      })
-
-      await checkout.update({
-        status: PaidStatus.Error
-      })
-
-      log.info({
+      log.warn({
         func: 'processCheckout',
         checkoutId: checkout.id,
         err
@@ -185,13 +280,21 @@ export class CheckoutService {
 
       if (!fundsTransfer.contingenciesClearedAt && !Config.isProduction) { // sandbox only for clear holds
         const contingentHolds = res.included?.filter((item) => item.type === 'contingent-holds' && item.attributes.status === 'pending' && contingentHoldIds.includes(item.id)) || []
-  
+
         for (const contingentHold of contingentHolds) {
           await this.primeTrust.sandboxClearFundsTransfer(contingentHold.id)
         }
 
         return
       }
+
+      this.publishNotification({
+        checkoutId: checkout.id,
+        status: checkout.status,
+        step: CheckoutStep.Funds,
+        message: `Settled funds $${checkout.fundsAmountMoney.toUnit()}`,
+        transactionId: null
+      })
 
       await this.processQuote(checkout)
     } catch (err) {
@@ -202,10 +305,20 @@ export class CheckoutService {
         err
       }, 'Failed fundsTransferUpdateHandler')
 
-      await checkout.update({
-        status: PaidStatus.Error
-      })
-      
+      if (checkout) {
+        await checkout.update({
+          status: PaidStatus.Error
+        })
+  
+        this.publishNotification({
+          checkoutId: checkout.id,
+          status: checkout.status,
+          step: CheckoutStep.Funds,
+          message: `Failed funds $${checkout.fundsAmountMoney.toUnit()}`,
+          transactionId: null
+        })
+      }
+
       throw err
     }
   }
@@ -242,19 +355,29 @@ export class CheckoutService {
         err
       }, 'Failed quotesUpdateHandler')
 
-      await checkout.update({
-        status: PaidStatus.Error
-      })
-      
+      if (checkout) {
+        await checkout.update({
+          status: PaidStatus.Error
+        })
+  
+        this.publishNotification({
+          checkoutId: checkout.id,
+          status: checkout.status,
+          step: CheckoutStep.Quote,
+          message: `Failed quote assets $${checkout.fundsAmountMoney.toUnit()}`,
+          transactionId: null
+        })
+      }
+
       throw err
     }
   }
 
   private async assetTransferUpdateHandler(assetTransferId: string) {
     let checkout: Checkout;
-
+    let assetTransfer: AssetTransfer;
     try {
-      const assetTransfer = await AssetTransfer.findByPk(assetTransferId);
+      assetTransfer = await AssetTransfer.findByPk(assetTransferId);
 
       if (!assetTransfer) {
         return
@@ -276,6 +399,14 @@ export class CheckoutService {
       await checkout.update({
         status: PaidStatus.Paid
       })
+
+      this.pubSub.publish('TRANSACTION_STATUS', {
+        checkoutId: checkout.id,
+        step: CheckoutStep.Asset,
+        status: checkout.status,
+        transactionId: assetTransfer.transactionHash,
+        message: `Settled transfer assets for ${Math.abs(assetTransfer.unitCount)} USDC`
+      })
     } catch (err) {
       log.warn({
         func: 'assetTransferUpdateHandler',
@@ -288,8 +419,16 @@ export class CheckoutService {
         await checkout.update({
           status: PaidStatus.Error
         })
+
+        this.pubSub.publish('TRANSACTION_STATUS', {
+          checkoutId: checkout.id,
+          step: CheckoutStep.Asset,
+          status: checkout.status,
+          transactionId: null,
+          message: `Failed transfer assets for ${Math.abs(assetTransfer.unitCount)} USDC`
+        })
       }
-      
+
       throw err
     }
   }
@@ -309,13 +448,13 @@ export class CheckoutService {
     // }
 
     try {
-      switch(data['resource-type']) {
+      switch (data['resource-type']) {
         case 'funds_transfers':
           await this.fundsTransferUpdateHandler(data['resource_id'])
         case 'facilitated_trades':
           await this.quotesUpdateHandler(data['resource_id'])
         case 'asset_transfers':
-            await this.assetTransferUpdateHandler(data['resource_id'])
+          await this.assetTransferUpdateHandler(data['resource_id'])
         default:
           return
       }

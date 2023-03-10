@@ -1,11 +1,12 @@
 import { Config } from '../config';
-import { Resolver, Query, Arg, Mutation } from 'type-graphql';
+import { Resolver, Query, Arg, Mutation, Subscription, Root } from 'type-graphql';
 import { Checkout } from '../models/Checkout';
 import { CheckoutService } from '../services/checkout';
 import { CheckoutInputType } from '../types/checkout-input.type';
 import { CheckoutType } from '../types/checkout.type';
 import { TipType } from '../types/tip.type';
 import { log } from '../utils';
+import { TransactionType } from '../types/transaction.type';
 
 const checkoutService = CheckoutService.getInstance()
 @Resolver()
@@ -34,5 +35,23 @@ export class CheckoutResolver {
     checkoutService.processCheckout(checkout)
 
     return checkout
+  }
+
+  @Subscription({
+    topics: 'TRANSACTION_STATUS',
+    filter: ({ payload, args }) => {
+      console.log('received transaction============')
+      console.log(payload, args)
+      return !!payload && payload.checkoutId === args.checkoutId;
+    }
+  })
+
+  transaction(
+    @Root() messagePayload: TransactionType,
+    @Arg('checkoutId') checkoutId: string,
+  ): TransactionType {
+    console.log('messagePayload============')
+    console.log(messagePayload)
+    return messagePayload;
   }
 }
