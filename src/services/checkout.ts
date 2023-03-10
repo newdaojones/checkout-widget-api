@@ -62,7 +62,8 @@ export class CheckoutService {
         status: checkout.status,
         step: CheckoutStep.Charge,
         message: `Charged $${checkout.totalChargeAmountMoney.toUnit()}`,
-        transactionId: null
+        transactionId: null,
+        date: new Date()
       })
     } catch (err) {
       log.warn({
@@ -80,7 +81,8 @@ export class CheckoutService {
         status: checkout.status,
         step: CheckoutStep.Charge,
         message: `Failed Charge $${checkout.totalChargeAmountMoney.toUnit()}`,
-        transactionId: null
+        transactionId: null,
+        date: new Date()
       })
 
       throw err
@@ -118,7 +120,8 @@ export class CheckoutService {
         status: checkout.status,
         step: CheckoutStep.Asset,
         message: `Processing transfer assets for ${quote.unitCount} USDC`,
-        transactionId: null
+        transactionId: null,
+        date: new Date()
       })
     } catch (err) {
       log.warn({
@@ -136,7 +139,8 @@ export class CheckoutService {
         status: checkout.status,
         step: CheckoutStep.Asset,
         message: `Failed transfer assets for ${quote.unitCount} USDC}`,
-        transactionId: null
+        transactionId: null,
+        date: new Date()
       })
     }
   }
@@ -167,7 +171,8 @@ export class CheckoutService {
         status: checkout.status,
         step: CheckoutStep.Funds,
         message: `Processing funds for $${checkout.fundsAmountMoney.toUnit()}`,
-        transactionId: null
+        transactionId: null,
+        date: new Date()
       })
     } catch (err) {
       log.warn({
@@ -185,7 +190,8 @@ export class CheckoutService {
         status: checkout.status,
         step: CheckoutStep.Funds,
         message: `Failed Processing funds for $${checkout.fundsAmountMoney.toUnit()}`,
-        transactionId: null
+        transactionId: null,
+        date: new Date()
       })
 
       throw err
@@ -207,7 +213,8 @@ export class CheckoutService {
         status: checkout.status,
         step: CheckoutStep.Quote,
         message: `Processing quote asset for $${checkout.amountMoney.toUnit()}`,
-        transactionId: null
+        transactionId: null,
+        date: new Date()
       })
     } catch (err) {
       log.warn({
@@ -225,7 +232,8 @@ export class CheckoutService {
         status: checkout.status,
         step: CheckoutStep.Quote,
         message: `Failed quote assets $${checkout.fundsAmountMoney.toUnit()}`,
-        transactionId: null
+        transactionId: null,
+        date: new Date()
       })
     }
   }
@@ -293,7 +301,8 @@ export class CheckoutService {
         status: checkout.status,
         step: CheckoutStep.Funds,
         message: `Settled funds $${checkout.fundsAmountMoney.toUnit()}`,
-        transactionId: null
+        transactionId: null,
+        date: new Date()
       })
 
       await this.processQuote(checkout)
@@ -315,7 +324,8 @@ export class CheckoutService {
           status: checkout.status,
           step: CheckoutStep.Funds,
           message: `Failed funds $${checkout.fundsAmountMoney.toUnit()}`,
-          transactionId: null
+          transactionId: null,
+          date: new Date()
         })
       }
 
@@ -365,7 +375,8 @@ export class CheckoutService {
           status: checkout.status,
           step: CheckoutStep.Quote,
           message: `Failed quote assets $${checkout.fundsAmountMoney.toUnit()}`,
-          transactionId: null
+          transactionId: null,
+          date: new Date()
         })
       }
 
@@ -386,13 +397,13 @@ export class CheckoutService {
       const checkout = await assetTransfer.getCheckout()
       const res = await this.primeTrust.getAssetTransfer(assetTransferId);
 
-      await assetTransfer.update(convertToQuote(res.data));
+      await assetTransfer.update(convertToAssetTransfer(res.data));
 
       if (assetTransfer.status !== 'pending' && assetTransfer.status !== 'settled') {
         throw new Error('Unknown status for funds transfer')
       }
 
-      if (assetTransfer.status !== 'settled') {
+      if (assetTransfer.status !== 'settled' || checkout.state === PaidStatus.Paid) {
         return
       }
 
@@ -400,12 +411,13 @@ export class CheckoutService {
         status: PaidStatus.Paid
       })
 
-      this.pubSub.publish('TRANSACTION_STATUS', {
+      this.publishNotification({
         checkoutId: checkout.id,
         step: CheckoutStep.Asset,
         status: checkout.status,
         transactionId: assetTransfer.transactionHash,
-        message: `Settled transfer assets for ${Math.abs(assetTransfer.unitCount)} USDC`
+        message: `Settled transfer assets for ${Math.abs(assetTransfer.unitCount)} USDC`,
+        date: new Date()
       })
     } catch (err) {
       log.warn({
@@ -420,12 +432,13 @@ export class CheckoutService {
           status: PaidStatus.Error
         })
 
-        this.pubSub.publish('TRANSACTION_STATUS', {
+        this.publishNotification({
           checkoutId: checkout.id,
           step: CheckoutStep.Asset,
           status: checkout.status,
           transactionId: null,
-          message: `Failed transfer assets for ${Math.abs(assetTransfer.unitCount)} USDC`
+          message: `Failed transfer assets for ${Math.abs(assetTransfer.unitCount)} USDC`,
+          date: new Date()
         })
       }
 

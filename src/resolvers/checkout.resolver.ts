@@ -40,8 +40,6 @@ export class CheckoutResolver {
   @Subscription({
     topics: 'TRANSACTION_STATUS',
     filter: ({ payload, args }) => {
-      console.log('received transaction============')
-      console.log(payload, args)
       return !!payload && payload.checkoutId === args.checkoutId;
     }
   })
@@ -50,8 +48,6 @@ export class CheckoutResolver {
     @Root() messagePayload: TransactionType,
     @Arg('checkoutId') checkoutId: string,
   ): TransactionType {
-    console.log('messagePayload============')
-    console.log(messagePayload)
     return messagePayload;
   }
 }

@@ -18,4 +18,7 @@ export class TransactionType {
 
   @Field({ nullable: null })
   transactionId!: string;
+
+  @Field()
+  date: Date;
 }
