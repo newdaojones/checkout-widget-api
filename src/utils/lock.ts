@@ -1,10 +1,10 @@
-import * as AsyncLock from 'async-lock';
+import AsyncLock from 'async-lock';
 
 let lock: AsyncLock;
 
-export const asyncLock = <T>(resource: string | string[], funcPromise: () => Promise<T>): Promise<T> => {
+export const asyncLock = (resource: string | string[], funcPromise: () => Promise<any>) => {
   if (!lock) {
-    lock = new AsyncLock({ maxPending: 1000 });
+    lock = new AsyncLock();
   }
 
   return lock.acquire(resource, funcPromise);

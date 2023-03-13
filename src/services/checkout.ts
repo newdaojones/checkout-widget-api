@@ -259,56 +259,56 @@ export class CheckoutService {
 
   private async fundsTransferUpdateHandler(fundsTransferId: string) {
     let checkout: Checkout;
-
     try {
-      const fundsTransfer = await FundsTransfer.findByPk(fundsTransferId);
-
-      if (!fundsTransfer) {
-        return
-      }
-
-      checkout = await fundsTransfer.getCheckout()
-
-      const res = await this.primeTrust.getFundsTransfer(fundsTransferId);
-      const fundsTransferRes = res.data.find((item) => item.id === fundsTransferId);
-      const contingentHoldIds = fundsTransferRes.relationships['contingent-holds']?.data?.map((item) => item.id) || []
-
-      if (!fundsTransferRes) {
-        throw new Error(`Cant get funds transfer from prime trust for ${fundsTransferId}`)
-      }
-
-      await fundsTransfer.update(convertToFundsTransfer(fundsTransferRes));
-
-      if (fundsTransfer.status !== 'pending' && fundsTransfer.status !== 'settled') {
-        throw new Error('Unknown status for funds transfer')
-      }
-
-      if (fundsTransfer.status !== 'settled') {
-        return
-      }
-      
-      if (!fundsTransfer.contingenciesClearedAt) { // sandbox only for clear holds
-        if (!Config.isProduction) {
-          const contingentHolds = res.included?.filter((item) => item.type === 'contingent-holds' && item.attributes.status === 'pending' && contingentHoldIds.includes(item.id)) || []
-  
-          for (const contingentHold of contingentHolds) {
-            await this.primeTrust.sandboxClearFundsTransfer(contingentHold.id)
-          }
+      await asyncLock(`funds-transfer-update/${fundsTransferId}`, async () => {
+        const fundsTransfer = await FundsTransfer.findByPk(fundsTransferId);
+        if (!fundsTransfer) {
+          return
         }
 
-        return
-      }
+        checkout = await fundsTransfer.getCheckout()
 
-      this.publishNotification({
-        checkoutId: checkout.id,
-        status: checkout.status,
-        step: CheckoutStep.Funds,
-        message: `Settled funds $${checkout.fundsAmountMoney.toUnit()}`,
-        transactionId: null,
-        date: new Date()
+        const res = await this.primeTrust.getFundsTransfer(fundsTransferId);
+        const fundsTransferRes = res.data.find((item) => item.id === fundsTransferId);
+        const contingentHoldIds = fundsTransferRes.relationships['contingent-holds']?.data?.map((item) => item.id) || []
+
+        if (!fundsTransferRes) {
+          throw new Error(`Cant get funds transfer from prime trust for ${fundsTransferId}`)
+        }
+
+        await fundsTransfer.update(convertToFundsTransfer(fundsTransferRes));
+
+        if (fundsTransfer.status !== 'pending' && fundsTransfer.status !== 'settled') {
+          throw new Error('Unknown status for funds transfer')
+        }
+
+        if (fundsTransfer.status !== 'settled') {
+          return
+        }
+
+        if (!fundsTransfer.contingenciesClearedAt && !Config.isProduction) { // sandbox only for clear holds
+          if (!Config.isProduction) {
+            const contingentHolds = res.included?.filter((item) => item.type === 'contingent-holds' && item.attributes.status === 'pending' && contingentHoldIds.includes(item.id)) || []
+
+            for (const contingentHold of contingentHolds) {
+              await this.primeTrust.sandboxClearFundsTransfer(contingentHold.id)
+            }
+          }
+
+          return
+        }
+
+        this.publishNotification({
+          checkoutId: checkout.id,
+          status: checkout.status,
+          step: CheckoutStep.Funds,
+          message: `Settled funds $${checkout.fundsAmountMoney.toUnit()}`,
+          transactionId: null,
+          date: new Date()
+        })
+
+        await this.processQuote(checkout)
       })
-
-      await this.processQuote(checkout)
     } catch (err) {
       log.warn({
         func: 'fundsTransferUpdateHandler',
@@ -321,7 +321,7 @@ export class CheckoutService {
         await checkout.update({
           status: PaidStatus.Error
         })
-  
+
         this.publishNotification({
           checkoutId: checkout.id,
           status: checkout.status,
@@ -334,32 +334,35 @@ export class CheckoutService {
 
       throw err
     }
+
   }
 
   private async quotesUpdateHandler(assetQuoteId: string) {
     let checkout: Checkout;
 
     try {
-      const quote = await AssetQuote.findByPk(assetQuoteId);
+      await asyncLock(`quotes-update/${assetQuoteId}`, async () => {
+        const quote = await AssetQuote.findByPk(assetQuoteId);
 
-      if (!quote) {
-        return
-      }
+        if (!quote) {
+          return
+        }
 
-      checkout = await quote.getCheckout()
-      const res = await this.primeTrust.getQuote(assetQuoteId);
+        checkout = await quote.getCheckout()
+        const res = await this.primeTrust.getQuote(assetQuoteId);
 
-      await quote.update(convertToQuote(res.data));
+        await quote.update(convertToQuote(res.data));
 
-      if (quote.status !== 'pending' && quote.status !== 'settled') {
-        throw new Error('Unknown status for funds transfer')
-      }
+        if (quote.status !== 'pending' && quote.status !== 'settled') {
+          throw new Error('Unknown status for funds transfer')
+        }
 
-      if (quote.status !== 'settled') {
-        return
-      }
+        if (quote.status !== 'settled') {
+          return
+        }
 
-      await this.processAssetTransfer(checkout, quote)
+        await this.processAssetTransfer(checkout, quote)
+      })
     } catch (err) {
       log.warn({
         func: 'quotesUpdateHandler',
@@ -372,7 +375,7 @@ export class CheckoutService {
         await checkout.update({
           status: PaidStatus.Error
         })
-  
+
         this.publishNotification({
           checkoutId: checkout.id,
           status: checkout.status,
@@ -392,36 +395,38 @@ export class CheckoutService {
     let assetTransfer: AssetTransfer;
 
     try {
-      assetTransfer = await AssetTransfer.findByPk(assetTransferId);
+      await asyncLock(`asset-transfer-update/${assetTransferId}`, async () => {
+        assetTransfer = await AssetTransfer.findByPk(assetTransferId);
 
-      if (!assetTransfer) {
-        return
-      }
+        if (!assetTransfer) {
+          return
+        }
 
-      const checkout = await assetTransfer.getCheckout()
-      const res = await this.primeTrust.getAssetTransfer(assetTransferId);
+        const checkout = await assetTransfer.getCheckout()
+        const res = await this.primeTrust.getAssetTransfer(assetTransferId);
 
-      await assetTransfer.update(convertToAssetTransfer(res.data));
+        await assetTransfer.update(convertToAssetTransfer(res.data));
 
-      if (assetTransfer.status !== 'pending' && assetTransfer.status !== 'settled') {
-        throw new Error('Unknown status for funds transfer')
-      }
+        if (assetTransfer.status !== 'pending' && assetTransfer.status !== 'settled') {
+          throw new Error('Unknown status for funds transfer')
+        }
 
-      if (assetTransfer.status !== 'settled' || checkout.state === PaidStatus.Paid) {
-        return
-      }
+        if (assetTransfer.status !== 'settled' || checkout.status === PaidStatus.Paid) {
+          return
+        }
 
-      await checkout.update({
-        status: PaidStatus.Paid
-      })
+        await checkout.update({
+          status: PaidStatus.Paid
+        })
 
-      this.publishNotification({
-        checkoutId: checkout.id,
-        step: CheckoutStep.Asset,
-        status: checkout.status,
-        transactionId: assetTransfer.transactionHash,
-        message: `Settled transfer assets for ${Math.abs(assetTransfer.unitCount)} USDC`,
-        date: new Date()
+        this.publishNotification({
+          checkoutId: checkout.id,
+          step: CheckoutStep.Asset,
+          status: checkout.status,
+          transactionId: assetTransfer.transactionHash,
+          message: `Settled transfer assets for ${Math.abs(assetTransfer.unitCount)} USDC`,
+          date: new Date()
+        })
       })
     } catch (err) {
       log.warn({
@@ -479,6 +484,7 @@ export class CheckoutService {
       log.warn({
         func: 'webhookHandler',
         data,
+        err,
       }, 'Failed webhook handler')
     }
   }
