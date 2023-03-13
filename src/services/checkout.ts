@@ -18,6 +18,7 @@ import { convertToAssetTransfer, convertToCharge, convertToFundsTransfer, conver
 import { PaidStatus } from "../types/paidStatus.type";
 import { CheckoutStep } from "../types/checkoutStep.type";
 import { TransactionType } from "../types/transaction.type";
+import { asyncLock } from "../utils/lock";
 
 const checkoutSdkService = CheckoutSdkService.getInstance();
 const primeTrustService = PrimeTrustService.getInstance();
@@ -285,12 +286,14 @@ export class CheckoutService {
       if (fundsTransfer.status !== 'settled') {
         return
       }
-
-      if (!fundsTransfer.contingenciesClearedAt && !Config.isProduction) { // sandbox only for clear holds
-        const contingentHolds = res.included?.filter((item) => item.type === 'contingent-holds' && item.attributes.status === 'pending' && contingentHoldIds.includes(item.id)) || []
-
-        for (const contingentHold of contingentHolds) {
-          await this.primeTrust.sandboxClearFundsTransfer(contingentHold.id)
+      
+      if (!fundsTransfer.contingenciesClearedAt) { // sandbox only for clear holds
+        if (!Config.isProduction) {
+          const contingentHolds = res.included?.filter((item) => item.type === 'contingent-holds' && item.attributes.status === 'pending' && contingentHoldIds.includes(item.id)) || []
+  
+          for (const contingentHold of contingentHolds) {
+            await this.primeTrust.sandboxClearFundsTransfer(contingentHold.id)
+          }
         }
 
         return
@@ -387,6 +390,7 @@ export class CheckoutService {
   private async assetTransferUpdateHandler(assetTransferId: string) {
     let checkout: Checkout;
     let assetTransfer: AssetTransfer;
+
     try {
       assetTransfer = await AssetTransfer.findByPk(assetTransferId);
 

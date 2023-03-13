@@ -15,6 +15,21 @@ export class PrimeTrustService {
       baseURL: `${Config.primeTrustApiUri}`
     })
 
+    axios.interceptors.response.use(
+      response => response,
+      error => {
+        const errorData = error.response?.data?.errors && error.response?.data?.errors[0]
+        if (errorData?.status) {
+          throw {
+            status: errorData.status,
+            message: errorData.title || errorData.detail
+          }
+        }
+
+        throw error.response || error
+      }
+    )
+
     const instance = new PrimeTrustService(axios)
 
     instance.setAccount(Config.primeTrustAccountEmail)

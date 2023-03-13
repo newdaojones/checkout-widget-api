@@ -13,7 +13,6 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import type http from 'http';
 
 export const initGraphql = async (app: Express, httpServer: http.Server) => {
-
   let resolversPattern: NonEmptyArray<string> = [
     `${__dirname}/resolvers/*.resolver.js`,
   ];
