@@ -162,7 +162,7 @@ export class CheckoutService {
 
   private async processFundsTransfer(checkout: Checkout) {
     try {
-      const res = await this.primeTrust.addFundsToAccount(checkout.fundsAmountMoney)
+      const res = await this.primeTrust.addFundsToAccount(checkout.totalChargeAmountMoney)
 
       const fundsTransfer = res.included?.find((item) => item.type === 'funds-transfers')
 
@@ -186,7 +186,7 @@ export class CheckoutService {
         status: 'processing',
         paidStatus: checkout.status,
         step: CheckoutStep.Funds,
-        message: `Processing funds for $${checkout.fundsAmountMoney.toUnit()}`,
+        message: `Processing funds for $${checkout.totalChargeAmountMoney.toUnit()}`,
         transactionId: null,
         date: new Date()
       })
@@ -206,7 +206,7 @@ export class CheckoutService {
         status: 'failed',
         paidStatus: checkout.status,
         step: CheckoutStep.Funds,
-        message: `Failed Processing funds for $${checkout.fundsAmountMoney.toUnit()}`,
+        message: `Failed Processing funds for $${checkout.totalChargeAmountMoney.toUnit()}`,
         transactionId: null,
         date: new Date()
       })
@@ -250,7 +250,7 @@ export class CheckoutService {
         status: 'failed',
         paidStatus: checkout.status,
         step: CheckoutStep.Quote,
-        message: `Failed quote assets $${checkout.fundsAmountMoney.toUnit()}`,
+        message: `Failed quote assets for $${checkout.amountMoney.toUnit()}`,
         transactionId: null,
         date: new Date()
       })
@@ -325,7 +325,7 @@ export class CheckoutService {
           status: 'settled',
           paidStatus: checkout.status,
           step: CheckoutStep.Funds,
-          message: `Settled funds $${checkout.fundsAmountMoney.toUnit()}`,
+          message: `Settled funds for $${checkout.totalChargeAmountMoney.toUnit()}`,
           transactionId: null,
           date: new Date()
         })
@@ -350,7 +350,7 @@ export class CheckoutService {
           status: 'failed',
           paidStatus: checkout.status,
           step: CheckoutStep.Funds,
-          message: `Failed funds $${checkout.fundsAmountMoney.toUnit()}`,
+          message: `Failed funds for $${checkout.totalChargeAmountMoney.toUnit()}`,
           transactionId: null,
           date: new Date()
         })
@@ -409,7 +409,7 @@ export class CheckoutService {
           status: 'failed',
           paidStatus: checkout.status,
           step: CheckoutStep.Quote,
-          message: `Failed quote assets $${checkout.fundsAmountMoney.toUnit()}`,
+          message: `Failed quote assets $${checkout.amountMoney.toUnit()}`,
           transactionId: null,
           date: new Date()
         })
