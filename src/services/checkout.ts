@@ -278,8 +278,12 @@ export class CheckoutService {
 
         await fundsTransfer.update(convertToFundsTransfer(fundsTransferRes));
 
-        if (fundsTransfer.status !== 'pending' && fundsTransfer.status !== 'settled') {
-          throw new Error('Unknown status for funds transfer')
+        if (fundsTransfer.status === 'cancelled') {
+          throw new Error('The funds transfer cancelled')
+        }
+
+        if (fundsTransfer.status === 'reversed') {
+          throw new Error('The funds transfer reversed')
         }
 
         if (fundsTransfer.status !== 'settled') {
@@ -353,8 +357,12 @@ export class CheckoutService {
 
         await quote.update(convertToQuote(res.data));
 
-        if (quote.status !== 'pending' && quote.status !== 'settled') {
-          throw new Error('Unknown status for funds transfer')
+        if (quote.status === 'cancelled') {
+          throw new Error('The asset quote cancelled')
+        }
+
+        if (quote.status === 'expired') {
+          throw new Error('The asset quote expired')
         }
 
         if (quote.status !== 'settled') {
@@ -407,8 +415,12 @@ export class CheckoutService {
 
         await assetTransfer.update(convertToAssetTransfer(res.data));
 
-        if (assetTransfer.status !== 'pending' && assetTransfer.status !== 'settled') {
-          throw new Error('Unknown status for funds transfer')
+        if (assetTransfer.status === 'cancelled') {
+          throw new Error('The asset transfer cancelled')
+        }
+
+        if (assetTransfer.status === 'reversed') {
+          throw new Error('The asset transfer reversed')
         }
 
         if (assetTransfer.status !== 'settled' || checkout.status === PaidStatus.Paid) {
