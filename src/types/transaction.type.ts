@@ -11,7 +11,10 @@ export class TransactionType {
   step: CheckoutStep;
 
   @Field()
-  status: PaidStatus;
+  status: string;
+
+  @Field()
+  paidStatus: PaidStatus;
 
   @Field()
   message: string;

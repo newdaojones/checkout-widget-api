@@ -51,6 +51,16 @@ export class CheckoutService {
 
   private async processCharge(checkout: Checkout) {
     try {
+      this.publishNotification({
+        checkoutId: checkout.id,
+        step: CheckoutStep.Charge,
+        status: 'processing',
+        paidStatus: checkout.status,
+        message: `Processing charge $${checkout.totalChargeAmountMoney.toUnit()}`,
+        transactionId: null,
+        date: new Date()
+      })
+
       const charge = await this.checkoutSdk.charge(checkout);
       const chargeData = convertToCharge(charge);
       await Charge.create({
@@ -60,8 +70,9 @@ export class CheckoutService {
 
       this.publishNotification({
         checkoutId: checkout.id,
-        status: checkout.status,
         step: CheckoutStep.Charge,
+        status: 'settled',
+        paidStatus: checkout.status,
         message: `Charged $${checkout.totalChargeAmountMoney.toUnit()}`,
         transactionId: null,
         date: new Date()
@@ -79,7 +90,8 @@ export class CheckoutService {
 
       this.publishNotification({
         checkoutId: checkout.id,
-        status: checkout.status,
+        status: 'failed',
+        paidStatus: checkout.status,
         step: CheckoutStep.Charge,
         message: `Failed Charge $${checkout.totalChargeAmountMoney.toUnit()}`,
         transactionId: null,
@@ -118,7 +130,8 @@ export class CheckoutService {
 
       this.publishNotification({
         checkoutId: checkout.id,
-        status: checkout.status,
+        status: 'processing',
+        paidStatus: checkout.status,
         step: CheckoutStep.Asset,
         message: `Processing transfer assets for ${quote.unitCount} USDC`,
         transactionId: null,
@@ -137,7 +150,8 @@ export class CheckoutService {
 
       this.publishNotification({
         checkoutId: checkout.id,
-        status: checkout.status,
+        status: 'failed',
+        paidStatus: checkout.status,
         step: CheckoutStep.Asset,
         message: `Failed transfer assets for ${quote.unitCount} USDC}`,
         transactionId: null,
@@ -169,7 +183,8 @@ export class CheckoutService {
 
       this.publishNotification({
         checkoutId: checkout.id,
-        status: checkout.status,
+        status: 'processing',
+        paidStatus: checkout.status,
         step: CheckoutStep.Funds,
         message: `Processing funds for $${checkout.fundsAmountMoney.toUnit()}`,
         transactionId: null,
@@ -188,7 +203,8 @@ export class CheckoutService {
 
       this.publishNotification({
         checkoutId: checkout.id,
-        status: checkout.status,
+        status: 'failed',
+        paidStatus: checkout.status,
         step: CheckoutStep.Funds,
         message: `Failed Processing funds for $${checkout.fundsAmountMoney.toUnit()}`,
         transactionId: null,
@@ -211,7 +227,8 @@ export class CheckoutService {
 
       this.publishNotification({
         checkoutId: checkout.id,
-        status: checkout.status,
+        status: 'processing',
+        paidStatus: checkout.status,
         step: CheckoutStep.Quote,
         message: `Processing quote asset for $${checkout.amountMoney.toUnit()}`,
         transactionId: null,
@@ -230,7 +247,8 @@ export class CheckoutService {
 
       this.publishNotification({
         checkoutId: checkout.id,
-        status: checkout.status,
+        status: 'failed',
+        paidStatus: checkout.status,
         step: CheckoutStep.Quote,
         message: `Failed quote assets $${checkout.fundsAmountMoney.toUnit()}`,
         transactionId: null,
@@ -304,7 +322,8 @@ export class CheckoutService {
 
         this.publishNotification({
           checkoutId: checkout.id,
-          status: checkout.status,
+          status: 'settled',
+          paidStatus: checkout.status,
           step: CheckoutStep.Funds,
           message: `Settled funds $${checkout.fundsAmountMoney.toUnit()}`,
           transactionId: null,
@@ -328,7 +347,8 @@ export class CheckoutService {
 
         this.publishNotification({
           checkoutId: checkout.id,
-          status: checkout.status,
+          status: 'failed',
+          paidStatus: checkout.status,
           step: CheckoutStep.Funds,
           message: `Failed funds $${checkout.fundsAmountMoney.toUnit()}`,
           transactionId: null,
@@ -386,7 +406,8 @@ export class CheckoutService {
 
         this.publishNotification({
           checkoutId: checkout.id,
-          status: checkout.status,
+          status: 'failed',
+          paidStatus: checkout.status,
           step: CheckoutStep.Quote,
           message: `Failed quote assets $${checkout.fundsAmountMoney.toUnit()}`,
           transactionId: null,
@@ -434,7 +455,8 @@ export class CheckoutService {
         this.publishNotification({
           checkoutId: checkout.id,
           step: CheckoutStep.Asset,
-          status: checkout.status,
+          status: 'settled',
+          paidStatus: checkout.status,
           transactionId: assetTransfer.transactionHash,
           message: `Settled transfer assets for ${Math.abs(assetTransfer.unitCount)} USDC`,
           date: new Date()
@@ -456,7 +478,8 @@ export class CheckoutService {
         this.publishNotification({
           checkoutId: checkout.id,
           step: CheckoutStep.Asset,
-          status: checkout.status,
+          status: 'failed',
+          paidStatus: checkout.status,
           transactionId: null,
           message: `Failed transfer assets for ${Math.abs(assetTransfer.unitCount)} USDC`,
           date: new Date()
