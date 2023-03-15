@@ -80,8 +80,8 @@ export class PrimeTrustService {
           cidr: [`${ipAddress}/32`]
         },
         auth: {
-          username: this.account.email,
-          password: this.account.password
+          username: Config.primeTrustAccountEmail,
+          password: Config.primeTrustAccountPassword
         }
       })
 

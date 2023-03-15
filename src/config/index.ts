@@ -3,6 +3,7 @@ export const Config = {
   checkoutSecureKey: process.env.CHECKOUT_SECURE_KEY,
   checkoutProcessingChannelId: process.env.CHECKOUT_PROCESSING_CHANNEL_ID,
   primeTrustAccountEmail: process.env.PRIME_TRUST_ACCOUNT_EMAIL,
+  primeTrustAccountPassword: process.env.PRIME_TRUST_ACCOUNT_PASSWORD,
   primeTrustAccountId: process.env.PRIME_TRUST_CUSTODY_ACCOUNT_ID,
   primeTrustContactId: process.env.PRIME_TRUST_CUSTODY_CONTACT_ID,
   primeTrustUsdcAssetId: process.env.PRIME_TRUST_USDC_ASSET_ID,

@@ -13,10 +13,6 @@ export class PrimeTrustAccount extends Model<PrimeTrustAccount> {
   @Column(DataType.STRING(100))
   email!: string;
 
-  @AllowNull(false)
-  @Column(DataType.STRING(100))
-  password!: string;
-
   @AllowNull(true)
   @Default(null)
   @Column(DataType.TEXT)
