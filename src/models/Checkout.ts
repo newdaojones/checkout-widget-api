@@ -3,7 +3,13 @@ import { PaidStatus } from '../types/paidStatus.type';
 import { TipType } from '../types/tip.type';
 import { newDinero } from '../utils/dinero';
 
-@Table
+@Table({
+  tableName: 'checkouts',
+  name: {
+    singular: 'checkout',
+    plural: 'checkouts'
+  }
+})
 export class Checkout extends Model<Checkout> { 
   @PrimaryKey
   @AllowNull(false)

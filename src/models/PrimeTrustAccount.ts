@@ -1,6 +1,12 @@
 import { Model, Table, Column, PrimaryKey, AutoIncrement, AllowNull, DataType, Default, IsEmail } from 'sequelize-typescript';
 
-@Table
+@Table({
+  tableName: 'primeTrustAccounts',
+  name: {
+    singular: 'primeTrustAccount',
+    plural: 'primeTrustAccounts'
+  }
+})
 export class PrimeTrustAccount extends Model<PrimeTrustAccount> {
   @PrimaryKey
   @AutoIncrement

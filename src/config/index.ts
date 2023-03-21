@@ -10,6 +10,7 @@ export const Config = {
   primeTrustFundsTransferMethodId: process.env.PRIME_TRUST_FUNDS_TRANSFER_METHOD_ID,
   primeTrustApiUri: process.env.PRIME_TRUST_API_URI,
   isProduction: process.env.NODE_ENV === 'production',
+  isStaging: process.env.NODE_ENV === 'staging',
   defaultFee: {
     fee: 2,
     feeType: 'percent'

@@ -17,7 +17,7 @@ export const initGraphql = async (app: Express, httpServer: http.Server) => {
     `${__dirname}/resolvers/*.resolver.js`,
   ];
 
-  if (!Config.isProduction) {
+  if (!Config.isProduction && !Config.isStaging) {
     resolversPattern = [
       `${__dirname}/resolvers/*.resolver.ts`,
     ];

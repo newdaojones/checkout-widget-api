@@ -1,6 +1,5 @@
 const account = {
   email: process.env.PRIME_TRUST_ACCOUNT_EMAIL,
-  password: process.env.PRIME_TRUST_ACCOUNT_PASSWORD,
 }
 
 module.exports = {

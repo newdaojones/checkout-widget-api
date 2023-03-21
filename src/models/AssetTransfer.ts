@@ -1,7 +1,13 @@
 import { Model, Table, Column, PrimaryKey, AllowNull, DataType, Default, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { Checkout } from './Checkout';
 
-@Table
+@Table({
+  tableName: 'assetTransfers',
+  name: {
+    singular: 'assetTransfer',
+    plural: 'assetTransfers'
+  }
+})
 export class AssetTransfer extends Model<AssetTransfer> {
   @PrimaryKey
   @AllowNull(false)

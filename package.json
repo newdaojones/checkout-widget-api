@@ -6,6 +6,7 @@
   "scripts": {
     "start-local": "TS_NODE_FILES=true ts-node-dev ./src/index.ts",
     "start": "NODE_ENV=production node dist/index.js",
+    "staging": "NODE_ENV=staging pm2 start dist/index.js",
     "production": "NODE_ENV=production pm2 start dist/index.js",
     "build": "tsc --extendedDiagnostics",
     "build:schema": "gql-gen",
