@@ -153,7 +153,7 @@ export class CheckoutService {
         status: 'failed',
         paidStatus: checkout.status,
         step: CheckoutStep.Asset,
-        message: `Failed transfer assets for ${quote.unitCount} USDC}`,
+        message: `Failed transfer assets for ${quote.unitCount} USDC`,
         transactionId: null,
         date: new Date()
       })
