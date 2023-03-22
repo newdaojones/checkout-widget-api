@@ -22,7 +22,7 @@ export class PrimeTrustService {
         if (errorData?.status) {
           throw {
             status: errorData.status,
-            message: errorData.title || errorData.detail,
+            message: errorData.detail || errorData.title,
             response: error.response?.data
           }
         }
