@@ -124,10 +124,6 @@ export class CheckoutService {
         disbursementAuthorizationId: res.data.id
       })
 
-      if (!Config.isProduction) {
-        await this.primeTrust.sandboxSettleAssetTransfer(assetTransfer.id)
-      }
-
       this.publishNotification({
         checkoutId: checkout.id,
         status: 'processing',
@@ -442,6 +438,10 @@ export class CheckoutService {
 
         if (assetTransfer.status === 'reversed') {
           throw new Error('The asset transfer reversed')
+        }
+
+        if (!Config.isProduction && assetTransfer.contingenciesClearedAt && assetTransfer.status === 'pending') {
+          await this.primeTrust.sandboxSettleAssetTransfer(assetTransfer.id)
         }
 
         if (assetTransfer.status !== 'settled' || checkout.status === PaidStatus.Paid) {
