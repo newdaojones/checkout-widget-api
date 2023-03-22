@@ -71,14 +71,14 @@ export class PrimeTrustService {
       }
 
       const expiresAt = moment.utc().add(1, 'month')
-      const ipAddress = await this.getServerIp();
+      // const ipAddress = await this.getServerIp();
 
       const res = await this.axiosInstance.request({
         method: 'POST',
         url: '/auth/jwts',
         data: {
           expires_at: expiresAt.toISOString(),
-          cidr: [`${ipAddress}/32`]
+          // cidr: [`${ipAddress}/32`]
         },
         auth: {
           username: Config.primeTrustAccountEmail,
