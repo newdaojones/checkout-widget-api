@@ -5,6 +5,9 @@ export class CheckoutType {
   @Field(() => ID)
   id: number;
 
+  @Field({ nullable: true })
+  checkoutRequestId!: string;
+
   @Field()
   walletAddress: string;
 

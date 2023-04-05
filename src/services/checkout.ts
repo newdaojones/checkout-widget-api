@@ -88,6 +88,13 @@ export class CheckoutService {
         status: PaidStatus.Error
       })
 
+      const checkoutRequest = await checkout?.getCheckoutRequest()
+        await checkoutRequest?.update({
+          status: PaidStatus.Error
+        })
+  
+        await checkoutRequest?.sendWebhook()
+
       this.publishNotification({
         checkoutId: checkout.id,
         status: 'failed',
@@ -144,6 +151,13 @@ export class CheckoutService {
         status: PaidStatus.Error
       })
 
+      const checkoutRequest = await checkout?.getCheckoutRequest()
+        await checkoutRequest?.update({
+          status: PaidStatus.Error
+        })
+  
+        await checkoutRequest?.sendWebhook()
+
       this.publishNotification({
         checkoutId: checkout.id,
         status: 'failed',
@@ -197,6 +211,13 @@ export class CheckoutService {
         status: PaidStatus.Error
       })
 
+      const checkoutRequest = await checkout?.getCheckoutRequest()
+        await checkoutRequest?.update({
+          status: PaidStatus.Error
+        })
+  
+        await checkoutRequest?.sendWebhook()
+
       this.publishNotification({
         checkoutId: checkout.id,
         status: 'failed',
@@ -241,6 +262,13 @@ export class CheckoutService {
         status: PaidStatus.Error
       })
 
+      const checkoutRequest = await checkout?.getCheckoutRequest()
+        await checkoutRequest?.update({
+          status: PaidStatus.Error
+        })
+  
+        await checkoutRequest?.sendWebhook()
+
       this.publishNotification({
         checkoutId: checkout.id,
         status: 'failed',
@@ -254,10 +282,19 @@ export class CheckoutService {
   }
 
   async processCheckout(checkout: Checkout) {
+    const checkoutRequest = await checkout.getCheckoutRequest()
+
     try {
       await checkout.update({
         status: PaidStatus.Processing
       })
+
+
+      await checkoutRequest?.update({
+        status: PaidStatus.Processing
+      })
+
+      await checkoutRequest?.sendWebhook()
 
       await this.processCharge(checkout);
       await this.processFundsTransfer(checkout);
@@ -341,6 +378,13 @@ export class CheckoutService {
           status: PaidStatus.Error
         })
 
+        const checkoutRequest = await checkout?.getCheckoutRequest()
+        await checkoutRequest?.update({
+          status: PaidStatus.Error
+        })
+  
+        await checkoutRequest?.sendWebhook()
+
         this.publishNotification({
           checkoutId: checkout.id,
           status: 'failed',
@@ -400,6 +444,13 @@ export class CheckoutService {
           status: PaidStatus.Error
         })
 
+        const checkoutRequest = await checkout?.getCheckoutRequest()
+        await checkoutRequest?.update({
+          status: PaidStatus.Error
+        })
+  
+        await checkoutRequest?.sendWebhook()
+
         this.publishNotification({
           checkoutId: checkout.id,
           status: 'failed',
@@ -452,6 +503,13 @@ export class CheckoutService {
           status: PaidStatus.Paid
         })
 
+        const checkoutRequest = await checkout?.getCheckoutRequest()
+        await checkoutRequest?.update({
+          status: PaidStatus.Paid
+        })
+  
+        await checkoutRequest?.sendWebhook(assetTransfer.transactionHash)
+
         this.publishNotification({
           checkoutId: checkout.id,
           step: CheckoutStep.Asset,
@@ -474,6 +532,13 @@ export class CheckoutService {
         await checkout.update({
           status: PaidStatus.Error
         })
+
+        const checkoutRequest = await checkout?.getCheckoutRequest()
+        await checkoutRequest?.update({
+          status: PaidStatus.Error
+        })
+  
+        await checkoutRequest?.sendWebhook()
 
         this.publishNotification({
           checkoutId: checkout.id,

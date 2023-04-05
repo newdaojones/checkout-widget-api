@@ -1,7 +1,8 @@
-import { Model, Table, Column, PrimaryKey, AutoIncrement, AllowNull, DataType, Default, IsEmail } from 'sequelize-typescript';
+import { Model, Table, Column, PrimaryKey, AutoIncrement, AllowNull, DataType, Default, IsEmail, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { PaidStatus } from '../types/paidStatus.type';
 import { TipType } from '../types/tip.type';
 import { newDinero } from '../utils/dinero';
+import { CheckoutRequest } from './CheckoutRequest';
 
 @Table({
   tableName: 'checkouts',
@@ -16,6 +17,12 @@ export class Checkout extends Model<Checkout> {
   @Default(DataType.UUIDV4)
   @Column(DataType.UUID)
   id!: string;
+
+  @ForeignKey(() => CheckoutRequest)
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.UUID)
+  checkoutRequestId!: string;
 
   @AllowNull(false)
   @Column(DataType.STRING(255))
@@ -112,6 +119,15 @@ export class Checkout extends Model<Checkout> {
 
   @Column(DataType.DATE)
   updatedAt!: Date;
+
+   //#region Associations
+
+   @BelongsTo(() => CheckoutRequest)
+   checkoutRequest!: CheckoutRequest;
+   getCheckoutRequest!: () => Promise<CheckoutRequest>;
+   setCheckoutRequest!: (checkoutRequest: CheckoutRequest) => void;
+   
+   //#endregion
 
   get fullName() {
     return `${this.firstName} ${this.lastName}`

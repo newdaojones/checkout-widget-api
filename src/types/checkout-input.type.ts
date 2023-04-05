@@ -5,6 +5,11 @@ import { TipType } from "./tip.type";
 @InputType()
 export class CheckoutInputType {
   @IsString()
+  @IsOptional()
+  @Field({ nullable: true })
+  checkoutRequestId!: string;
+
+  @IsString()
   @Field()
   checkoutTokenId: string;
 

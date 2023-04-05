@@ -7,8 +7,10 @@ import { CheckoutType } from '../types/checkout.type';
 import { TipType } from '../types/tip.type';
 import { log } from '../utils';
 import { TransactionType } from '../types/transaction.type';
+import { CheckoutRequest } from '../models/CheckoutRequest';
 
 const checkoutService = CheckoutService.getInstance()
+
 @Resolver()
 export class CheckoutResolver {
   @Query(() => [CheckoutType])
@@ -29,6 +31,30 @@ export class CheckoutResolver {
       func: 'createCheckout',
       data
     })
+
+    if (data.checkoutRequestId) {
+      const checkoutRequest = await CheckoutRequest.findByPk(data.checkoutRequestId);
+
+      if (!checkoutRequest) {
+        throw new Error('Can\'t find checkout request');
+      }
+
+      if (checkoutRequest.walletAddress !== data.walletAddress) {
+        throw new Error('Mismatch wallet address')
+      }
+
+      if (checkoutRequest.phoneNumber !== data.phoneNumber) {
+        throw new Error('Mismatch phone number')
+      }
+
+      if (checkoutRequest.email !== data.email) {
+        throw new Error('Mismatch email address')
+      }
+
+      if (checkoutRequest.amount !== data.amount) {
+        throw new Error('Mismatch amount')
+      }
+    }
 
     const checkout = await Checkout.create(data);
 
