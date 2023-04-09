@@ -47,7 +47,7 @@ export class CheckoutResolver {
         throw new Error('Mismatch phone number')
       }
 
-      if (checkoutRequest.email !== data.email) {
+      if (checkoutRequest.phoneNumber && checkoutRequest.email !== data.email) {
         throw new Error('Mismatch email address')
       }
 

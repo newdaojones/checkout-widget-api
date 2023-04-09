@@ -8,8 +8,8 @@ export class CheckoutRequestInputType {
   walletAddress: string;
 
   @IsString()
-  @Field()
-  email: string;
+  @Field({ nullable: true })
+  email!: string;
 
   @IsString()
   @Field()
@@ -19,8 +19,11 @@ export class CheckoutRequestInputType {
   @Field()
   amount: number;
 
+  @Field({ nullable: true })
+  partnerOrderId!: string;
+
   @IsString()
   @IsOptional()
   @Field({ nullable: true })
-  webhook: string;
+  webhook!: string;
 }

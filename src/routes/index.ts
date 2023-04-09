@@ -37,6 +37,6 @@ export const initRoutes = async (app: express.Application) => {
       route = route.router;
     }
 
-    app.use('/api/', route);
+    app.use('/', route);
   });
 };

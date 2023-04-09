@@ -17,12 +17,18 @@ export class CheckoutRequest extends Model<CheckoutRequest> {
   @Column(DataType.UUID)
   id!: string;
 
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.STRING(255))
+  partnerOrderId!: string;
+
   @AllowNull(false)
   @Column(DataType.STRING(255))
   walletAddress!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
   @IsEmail
+  @Default(null)
   @Column(DataType.STRING(100))
   email!: string;
 
@@ -55,7 +61,7 @@ export class CheckoutRequest extends Model<CheckoutRequest> {
   @Column(DataType.DATE)
   updatedAt!: Date;
 
-  async sendWebhook(transactionHash?: string) {
+  async sendWebhook(amount?: number, transactionHash?: string) {
     if (!this.webhook) {
       return
     }
@@ -67,6 +73,8 @@ export class CheckoutRequest extends Model<CheckoutRequest> {
         email: this.email,
         phoneNumber: this.phoneNumber,
         status: this.status,
+        partnerOrderId: this.partnerOrderId,
+        amount,
         transactionHash,
       })
     } catch (err) {

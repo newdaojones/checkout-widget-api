@@ -11,6 +11,7 @@ export const Config = {
   primeTrustApiUri: process.env.PRIME_TRUST_API_URI,
   isProduction: process.env.NODE_ENV === 'production',
   isStaging: process.env.NODE_ENV === 'staging',
+  frontendUri: process.env.FRONT_END_URI || 'https://test.checkout.mybackpack.app/',
   defaultFee: {
     fee: 2,
     feeType: 'percent'

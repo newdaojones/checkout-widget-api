@@ -5,11 +5,14 @@ export class CheckoutRequestType {
   @Field(() => ID)
   id: number;
 
+  @Field({ nullable: true })
+  partnerOrderId!: string;
+
   @Field()
   walletAddress: string;
 
-  @Field()
-  email: string;
+  @Field({ nullable: true })
+  email!: string;
 
   @Field()
   phoneNumber: string;

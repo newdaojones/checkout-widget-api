@@ -508,7 +508,7 @@ export class CheckoutService {
           status: PaidStatus.Paid
         })
   
-        await checkoutRequest?.sendWebhook(assetTransfer.transactionHash)
+        await checkoutRequest?.sendWebhook(Math.abs(assetTransfer.unitCount), assetTransfer.transactionHash)
 
         this.publishNotification({
           checkoutId: checkout.id,

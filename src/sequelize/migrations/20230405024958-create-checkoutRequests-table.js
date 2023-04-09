@@ -7,12 +7,18 @@ module.exports = {
         allowNull: false,
         defaultValue: Sequelize.UUIDV4,
       },
+      partnerOrderId: {
+        allowNull: true,
+        defaultValue: null,
+        type: Sequelize.STRING(255),
+      },
       walletAddress: {
         allowNull: false,
         type: Sequelize.STRING(255),
       },
       email: {
-        allowNull: false,
+        allowNull: true,
+        defaultValue: null,
         type: Sequelize.STRING(100),
       },
       phoneNumber: {

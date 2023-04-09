@@ -211,8 +211,8 @@ export class PrimeTrustService {
         data: {
           type: "asset-transfers",
           attributes: {
-            "settlement-details": "Transfer confirmed in transaction with hash cafe0c950a24ddb06517a73b592d8682e86c9d79a2bbc7b3afc1073610ebfc0c.",
-            "transaction-hash": "cafe0c950a24ddb06517a73b592d8682e86c9d79a2bbc7b3afc1073610ebfc0c",
+            "settlement-details": "Transfer confirmed in transaction with hash 0x1f265eff3ab28ada13b53f0f663164221379d0a244cd8239d999ee1cbedc83cc.",
+            "transaction-hash": "0x1f265eff3ab28ada13b53f0f663164221379d0a244cd8239d999ee1cbedc83cc",
             "comments-1": "comments: Asset received via sandbox/settle. max length 60",
             "comments-2": "comments2: This is space for additional comments."
           }
