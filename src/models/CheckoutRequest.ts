@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Model, Table, Column, PrimaryKey, AllowNull, DataType, Default, IsEmail } from 'sequelize-typescript';
 import { PaidStatus } from '../types/paidStatus.type';
 import { log } from '../utils';
-
+import shortUUID from 'short-uuid';
 @Table({
   tableName: 'checkoutRequests',
   name: {
@@ -83,5 +83,12 @@ export class CheckoutRequest extends Model<CheckoutRequest> {
         err
       }, 'Failed send request')
     }
+  }
+
+  static async generateCheckoutRequest(data: Partial<CheckoutRequest>) {
+    return CheckoutRequest.create({
+      ...data,
+      id: shortUUID.generate()
+    })
   }
 }

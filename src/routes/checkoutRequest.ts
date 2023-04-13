@@ -19,7 +19,7 @@ router.post('/checkoutRequest', async (req, res) => {
       throw new Error('Required wallet address')
     }
 
-    const checkoutRequest = await CheckoutRequest.create(data)
+    const checkoutRequest = await CheckoutRequest.generateCheckoutRequest(data)
     res.status(200).json({
       id: checkoutRequest.id,
       uri: `${Config.frontendUri}/${checkoutRequest.id}`
