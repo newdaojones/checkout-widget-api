@@ -1,4 +1,4 @@
-import { Model, Table, Column, PrimaryKey, AutoIncrement, AllowNull, DataType, Default, IsEmail, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import { Model, Table, Column, PrimaryKey, AllowNull, DataType, Default, IsEmail, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { PaidStatus } from '../types/paidStatus.type';
 import { TipType } from '../types/tip.type';
 import { newDinero } from '../utils/dinero';
@@ -49,6 +49,16 @@ export class Checkout extends Model<Checkout> {
   @AllowNull(false)
   @Column(DataType.STRING(100))
   phoneNumber!: string;
+
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.STRING(20))
+  sex!: string;
+
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.STRING(20))
+  dob!: string;
 
   @AllowNull(false)
   @Default('USD')
@@ -113,6 +123,41 @@ export class Checkout extends Model<Checkout> {
   @Default('pending')
   @Column(DataType.ENUM('pending', 'processing', 'paid', 'postponed', 'error'))
   status!: PaidStatus;
+
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.STRING(255))
+  contactId!: string;
+
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.STRING(100))
+  taxId!: string;
+
+  @AllowNull(false)
+  @Default(false)
+  @Column(DataType.STRING(100))
+  identityConfirmed!: boolean;
+
+  @AllowNull(false)
+  @Default(false)
+  @Column(DataType.STRING(100))
+  identityDocumentsVerified!: boolean;
+
+  @AllowNull(false)
+  @Default(false)
+  @Column(DataType.STRING(100))
+  proofOfAddressDocumentsVerified!: boolean;
+
+  @AllowNull(false)
+  @Default(false)
+  @Column(DataType.STRING(100))
+  amlCleared!: boolean;
+
+  @AllowNull(false)
+  @Default(false)
+  @Column(DataType.STRING(100))
+  cipCleared!: boolean;
 
   @Column(DataType.DATE)
   createdAt!: Date;

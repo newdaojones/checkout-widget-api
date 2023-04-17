@@ -12,6 +12,7 @@ export const Config = {
   isProduction: process.env.NODE_ENV === 'production',
   isStaging: process.env.NODE_ENV === 'staging',
   frontendUri: process.env.FRONT_END_URI || 'https://test.checkout.mybackpack.app/',
+  uri: process.env.URI || 'https://test.checkout.mybackpack.app/api',
   defaultFee: {
     fee: 2,
     feeType: 'percent'

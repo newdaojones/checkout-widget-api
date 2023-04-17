@@ -6,6 +6,9 @@ export class CheckoutType {
   id: number;
 
   @Field({ nullable: true })
+  contactId!: string;
+
+  @Field({ nullable: true })
   checkoutRequestId!: string;
 
   @Field()
@@ -22,6 +25,15 @@ export class CheckoutType {
 
   @Field()
   phoneNumber: string;
+
+  @Field({ nullable: true })
+  gender!: string;
+
+  @Field({ nullable: true })
+  dob!: string;
+
+  @Field({ nullable: true })
+  taxId!: string;
 
   @Field()
   currency: string;
@@ -58,6 +70,21 @@ export class CheckoutType {
 
   @Field({ nullable: true })
   country: string;
+
+  @Field()
+  identityConfirmed: boolean;
+
+  @Field()
+  identityDocumentsVerified: boolean;
+
+  @Field()
+  proofOfAddressDocumentsVerified: boolean;
+
+  @Field()
+  amlCleared: boolean;
+
+  @Field()
+  cipCleared: boolean;
 
   @Field({ nullable: true })
   createdAt: Date;

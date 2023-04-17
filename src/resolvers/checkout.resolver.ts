@@ -1,15 +1,17 @@
-import { Config } from '../config';
+import * as moment from 'moment-timezone'
 import { Resolver, Query, Arg, Mutation, Subscription, Root } from 'type-graphql';
 import { Checkout } from '../models/Checkout';
 import { CheckoutService } from '../services/checkout';
 import { CheckoutInputType } from '../types/checkout-input.type';
 import { CheckoutType } from '../types/checkout.type';
-import { TipType } from '../types/tip.type';
 import { log } from '../utils';
 import { TransactionType } from '../types/transaction.type';
 import { CheckoutRequest } from '../models/CheckoutRequest';
+import { PrimeTrustService } from '../services/primeTrust';
+import { CustodialAccount } from '../models/CustodialAccount';
 
 const checkoutService = CheckoutService.getInstance()
+const primeTrustService = PrimeTrustService.getInstance();
 
 @Resolver()
 export class CheckoutResolver {
@@ -56,11 +58,41 @@ export class CheckoutResolver {
       }
     }
 
-    const checkout = await Checkout.create(data);
+    if (data.amount >= 500) {
+      if (!data.taxId) {
+        throw new Error('Required tax ID')
+      }
 
-    checkoutService.processCheckout(checkout)
+      if (!data.dob) {
+        throw new Error('Required date of birth')
+      }
 
-    return checkout
+      if (!moment.utc(data.dob).isValid()) {
+        throw new Error('Invalid date of birth')
+      }
+
+      if (!data.gender) {
+        throw new Error('Required gender')
+      }
+    }
+
+    if (data.amount >= 500) {
+     
+    }
+
+    // const checkout = await Checkout.create(data);
+
+    // if (checkout.amount > 500) {
+    //   const contact = await primeTrustService.createContact(checkout);
+
+    //   await checkout.update({
+    //     contactId: contact.data.id
+    //   })
+    // } else {
+    //   checkoutService.processCheckout(checkout)
+    // }
+
+    // return checkout
   }
 
   @Subscription({

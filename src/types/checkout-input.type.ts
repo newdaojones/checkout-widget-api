@@ -33,6 +33,18 @@ export class CheckoutInputType {
   @Field()
   phoneNumber: string;
 
+  @IsString()
+  @Field({ nullable: true })
+  gender!: string;
+
+  @IsString()
+  @Field({ nullable: true })
+  dob!: string;
+
+  @IsString()
+  @Field({ nullable: true })
+  taxId!: string;
+
   @IsNumber()
   @Field()
   amount: number;

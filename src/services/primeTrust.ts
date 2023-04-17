@@ -4,6 +4,9 @@ import { PrimeTrustAccount } from "../models/PrimeTrustAccount";
 import * as moment from 'moment-timezone'
 import { log } from "../utils";
 import { Dinero, DineroObject } from "dinero.js";
+import { Checkout } from "../models/Checkout";
+import { CheckoutInputType } from "../types/checkout-input.type";
+import { CustodialAccount } from "../models/CustodialAccount";
 
 export class PrimeTrustService {
   account: PrimeTrustAccount;
@@ -313,6 +316,156 @@ export class PrimeTrustService {
     const res = await this.request<any>({
       method: 'GET',
       url: `/v2/asset-transfers/${id}`
+    })
+
+    return res.data
+  }
+
+  async setupCustodialAccount(data: CheckoutInputType) {
+    const res = await this.createCustodialAccount(data);
+    const contact = await res.included?.find((entity) => entity.type === 'contacts');
+
+    if (!contact) {
+      throw new Error(`Can\'t find a contact for account ${res.data.id}`)
+    }
+
+    const custodialAccount = await CustodialAccount.create({
+      id: res.data.id,
+      contactId: contact.id,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phoneNumber: data.phoneNumber,
+      gender: data.gender,
+      dob: data.dob,
+      taxId: data.taxId,
+      streetAddress: data.streetAddress,
+      streetAddress2: data.streetAddress2,
+      city: data.city,
+      state: data.state,
+      zip: data.zip,
+      country: data.country
+    })
+  }
+
+  async createCustodialAccount(data: CheckoutInputType) {
+    const name = `${data.firstName} ${data.lastName}`
+    const res = await this.request<any>({
+      method: 'POST',
+      url: '/v2/accounts?include=owners,contacts,webhook-config',
+      data: {
+        data: {
+          type: "account",
+          attributes: {
+            "account-type": "custodial",
+            name: `Account ${name}`,
+            "authorized-signature": name,
+            owner: {
+              "contact-type": "natural_person",
+              name: name,
+              email: data.email,
+              "date-of-birth": data.dob,
+              "tax-id-number": data.taxId,
+              "tax-country": data.country,
+              "primary-phone-number": {
+                country: "US",
+                number: data.phoneNumber,
+                sms: true
+              },
+              "primary-address": {
+                "street-1": data.streetAddress,
+                "street-2": data.streetAddress2,
+                "postal-code": data.zip,
+                city: data.city,
+                region: data.state,
+                country: data.country
+              }
+            },
+            "webhook-config": {
+              "contact-email": Config.primeTrustAccountEmail,
+              "url": `${Config.uri}/primeTrustWebhook`,
+              "enabled": true,
+              "shared-secret": "shared-webhook-secret"
+            }
+          }
+        }
+      }
+    })
+
+    return res.data
+  }
+
+  async getCipChecks(contactId: string) {
+    const res = await this.request<any>({
+      method: 'GET',
+      url: `/v2/cip-checks?filter[status]=pending&sort=-created-at&contact.id=${contactId}`
+    })
+
+    return res.data
+  }
+
+  async getCipCheck(cipCheckId: string) {
+    const res = await this.request<any>({
+      method: 'GET',
+      url: `/v2/cip-check/${cipCheckId}`
+    })
+
+    return res.data
+  }
+
+  async sandboxVerifyCipCheck(cipCheckId: string) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: `/v2/cip-checks/${cipCheckId}/sandbox/approve`
+    })
+
+    return res.data
+  }
+
+  async uploadDocument(contactId: string, type: string, documentType: string, file: any) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: '/v2/uploaded-documents',
+      data: {
+        'contact-id': contactId,
+        description: `${type} of Driver\'s License`,
+        label: `${type} Driver's License`,
+        file,
+        public: true
+      }
+    })
+
+    return res.data
+  }
+
+  async submitDocumentCheck(contractId, frontId: string, backId: string, type: string) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: '',
+      data: {
+        data: {
+          type: "kyc-document-checks",
+          attributes: {
+            "contact-id": contractId,
+            "uploaded-document-id": frontId,
+            "backside-document-id": backId,
+            "kyc-document-type": type,
+            "identity": true,
+            "identity-photo": true,
+            "proof-of-address": true,
+            "kyc-document-country": "US"
+          }
+        }
+      }
+    })
+
+    return res.data
+  }
+
+  async sandboxVerifyDocumentCheck(documentCheckId: string) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: `/v2/kyc-document-checks/${documentCheckId}/sandbox/verify`
     })
 
     return res.data
