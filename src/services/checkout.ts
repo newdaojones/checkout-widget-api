@@ -13,12 +13,14 @@ import { CheckoutSdkService } from "./checkoutSdk";
 import { PrimeTrustService } from "./primeTrust";
 
 import { log } from "../utils";
-import { convertToAssetTransfer, convertToCharge, convertToFundsTransfer, convertToQuote } from "../utils/convert";
+import { convertToAssetTransfer, convertToCharge, convertToContact, convertToFundsTransfer, convertToQuote } from "../utils/convert";
 
 import { PaidStatus } from "../types/paidStatus.type";
 import { CheckoutStep } from "../types/checkoutStep.type";
 import { TransactionType } from "../types/transaction.type";
 import { asyncLock } from "../utils/lock";
+import { CheckoutInputType } from "../types/checkout-input.type";
+import { CustodialAccount } from "../models/CustodialAccount";
 
 const checkoutSdkService = CheckoutSdkService.getInstance();
 const primeTrustService = PrimeTrustService.getInstance();
@@ -47,6 +49,69 @@ export class CheckoutService {
         err
       })
     }
+  }
+
+  async processWithCustodial(data: CheckoutInputType) {
+    const res = await this.primeTrust.createCustodialAccount(data)
+
+    const contact = await res.included?.find((entity) => entity.type === 'contacts');
+
+    if (!contact) {
+      throw new Error(`Can\'t find a contact for account ${res.data.id}`)
+    }
+
+    const custodialAccount = await CustodialAccount.create({
+      id: res.data.id,
+      contactId: contact.id,
+      status: res.data.attributes.status,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phoneNumber: data.phoneNumber,
+      gender: data.gender,
+      dob: data.dob,
+      taxId: data.taxId,
+      streetAddress: data.streetAddress,
+      streetAddress2: data.streetAddress2,
+      city: data.city,
+      state: data.state,
+      zip: data.zip,
+      country: data.country,
+      deviceId: data.deviceId,
+      documentId: data.documentId
+    })
+
+    if (!Config.isProduction) {
+      this.primeTrust.sandboxOpenAccount(res.data.id)
+    }
+
+    const checkout = await Checkout.create({
+      ...data,
+      custodialAccountId: custodialAccount.id,
+    });
+
+    this.publishNotification({
+      checkoutId: checkout.id,
+      step: CheckoutStep.KYC,
+      status: 'processing',
+      paidStatus: checkout.status,
+      message: `Processing KYC`,
+      transactionId: null,
+      date: new Date()
+    })
+
+    return checkout
+  }
+
+  async processAlone(data: CheckoutInputType) {
+    const checkout = await Checkout.create({
+      ...data,
+      custodialAccountId: Config.primeTrustAccountId,
+    });
+
+    this.processCheckout(checkout)
+
+    return checkout
   }
 
   private async processCharge(checkout: Checkout) {
@@ -111,21 +176,22 @@ export class CheckoutService {
 
   private async processAssetTransfer(checkout: Checkout, quote: AssetQuote) {
     try {
-      const assetTransferMethodRes = await this.primeTrust.createAssetTransferMethod(checkout.walletAddress);
+      const custodialAccount = await checkout.getCustodialAccount()
+      const assetTransferMethodRes = await this.primeTrust.createAssetTransferMethod(custodialAccount.id, custodialAccount.contactId, checkout.walletAddress);
       const assetTransferMethodId = assetTransferMethodRes.data.id
 
       await checkout.update({
         assetTransferMethodId
       })
 
-      const res = await this.primeTrust.createAssetDisbursements(assetTransferMethodId, quote.unitCount);
+      const res = await this.primeTrust.createAssetDisbursements(custodialAccount.id, assetTransferMethodId, quote.unitCount);
       const assetTransferData = res.included.find((item) => item.type === 'asset-transfers')
 
       if (!assetTransferData) {
         throw new Error('Can not find asset transfer data')
       }
 
-      const assetTransfer = await AssetTransfer.create({
+      await AssetTransfer.create({
         ...convertToAssetTransfer(assetTransferData),
         checkoutId: checkout.id,
         disbursementAuthorizationId: res.data.id
@@ -232,9 +298,59 @@ export class CheckoutService {
     }
   }
 
+  private async transferFunds(checkout: Checkout) {
+    try {
+      const res = await this.primeTrust.transferFunds(checkout.custodialAccountId, checkout.fundsAmountMoney)
+
+      if (res.data.attributes.status === 'settled') {
+        this.publishNotification({
+          checkoutId: checkout.id,
+          status: 'settled',
+          paidStatus: checkout.status,
+          step: CheckoutStep.Funds,
+          message: `Settled funds for $${checkout.totalChargeAmountMoney.toUnit()}`,
+          transactionId: null,
+          date: new Date()
+        })
+
+        await this.processQuote(checkout)
+      } else {
+        throw new Error(`Failed transfer funds: res.data.attributes.status`)
+      }
+
+    } catch (err) {
+      log.warn({
+        func: 'transferFunds',
+        checkoutId: checkout.id,
+        err,
+      }, 'Failed transferFunds')
+
+      await checkout.update({
+        status: PaidStatus.Error
+      })
+
+      const checkoutRequest = await checkout?.getCheckoutRequest()
+        await checkoutRequest?.update({
+          status: PaidStatus.Error
+        })
+  
+        await checkoutRequest?.sendWebhook()
+
+      this.publishNotification({
+        checkoutId: checkout.id,
+        status: 'failed',
+        paidStatus: checkout.status,
+        step: CheckoutStep.Funds,
+        message: `Failed transfer funds for $${checkout.fundsAmountMoney.toUnit()}`,
+        transactionId: null,
+        date: new Date()
+      })
+    }
+  }
+
   private async processQuote(checkout: Checkout) {
     try {
-      const quotesRes = await this.primeTrust.createQuote(checkout.amountMoney)
+      const quotesRes = await this.primeTrust.createQuote(checkout.custodialAccountId, checkout.fundsAmountMoney)
       const assetQuote = await AssetQuote.create({
         ...convertToQuote(quotesRes.data),
         checkoutId: checkout.id
@@ -247,7 +363,7 @@ export class CheckoutService {
         status: 'processing',
         paidStatus: checkout.status,
         step: CheckoutStep.Quote,
-        message: `Processing quote asset for $${checkout.amountMoney.toUnit()}`,
+        message: `Processing quote asset for $${checkout.fundsAmountMoney.toUnit()}`,
         transactionId: null,
         date: new Date()
       })
@@ -274,7 +390,7 @@ export class CheckoutService {
         status: 'failed',
         paidStatus: checkout.status,
         step: CheckoutStep.Quote,
-        message: `Failed quote assets for $${checkout.amountMoney.toUnit()}`,
+        message: `Failed quote assets for $${checkout.fundsAmountMoney.toUnit()}`,
         transactionId: null,
         date: new Date()
       })
@@ -353,17 +469,21 @@ export class CheckoutService {
           return
         }
 
-        this.publishNotification({
-          checkoutId: checkout.id,
-          status: 'settled',
-          paidStatus: checkout.status,
-          step: CheckoutStep.Funds,
-          message: `Settled funds for $${checkout.totalChargeAmountMoney.toUnit()}`,
-          transactionId: null,
-          date: new Date()
-        })
+        if (checkout.custodialAccountId === Config.primeTrustAccountId) {
+          this.publishNotification({
+            checkoutId: checkout.id,
+            status: 'settled',
+            paidStatus: checkout.status,
+            step: CheckoutStep.Funds,
+            message: `Settled funds for $${checkout.totalChargeAmountMoney.toUnit()}`,
+            transactionId: null,
+            date: new Date()
+          })
 
-        await this.processQuote(checkout)
+          await this.processQuote(checkout)
+        } else {
+          await this.transferFunds(checkout)
+        }
       })
     } catch (err) {
       log.warn({
@@ -555,6 +675,95 @@ export class CheckoutService {
     }
   }
 
+  async contactUpdateHandler(data: any) {
+    const contactId = data['resource-id']
+    let checkout: Checkout;
+    let custodialAccount: CustodialAccount;
+
+    try {
+      await asyncLock(`contact-update/${contactId}`, async () => {
+        custodialAccount = await CustodialAccount.findOne({
+          where: {
+            contactId
+          }
+        })
+
+        if (!custodialAccount) {
+          return
+        }
+
+        checkout = await Checkout.findOne({
+          where: {
+            custodialAccountId: custodialAccount.id
+          }
+        })
+
+        if (!checkout) {
+          return
+        }
+
+        if (data['kyc-required-actions'].length > 0) {
+          throw new Error('Failed KYC verification')
+        }
+
+        const contactResponse = await this.primeTrust.getContact(contactId);
+        const accountResponse = await this.primeTrust.getAccount(custodialAccount.id)
+
+        await custodialAccount.update({
+          ...convertToContact(contactResponse.data),
+          status: accountResponse.data.attributes.status
+        })
+
+        if (!custodialAccount.isVerified) {
+          return
+        }
+        
+        this.processCheckout(checkout)
+        this.publishNotification({
+          checkoutId: checkout.id,
+          step: CheckoutStep.KYC,
+          status: 'verified',
+          paidStatus: checkout.status,
+          transactionId: '',
+          message: `Verified KYC`,
+          date: new Date()
+        })
+      })
+    } catch (err) {
+      log.warn({
+        func: 'contactUpdateHandler',
+        contactId,
+        checkoutId: checkout?.id,
+        err
+      }, 'Failed contactUpdateHandler')
+
+      if (checkout) {
+        await checkout.update({
+          status: PaidStatus.Error
+        })
+
+        const checkoutRequest = await checkout?.getCheckoutRequest()
+        await checkoutRequest?.update({
+          status: PaidStatus.Error
+        })
+  
+        await checkoutRequest?.sendWebhook()
+
+        this.publishNotification({
+          checkoutId: checkout.id,
+          step: CheckoutStep.Asset,
+          status: 'failed',
+          paidStatus: checkout.status,
+          transactionId: null,
+          message: `Failed KYC verification`,
+          date: new Date()
+        })
+      }
+
+      throw err
+    }
+  }
+
   async webhookHandler(data: any) {
     log.info({
       func: 'webhookHandler',
@@ -565,10 +774,6 @@ export class CheckoutService {
       return
     }
 
-    // if (data.action !== 'update' && data.action !== 'settled') {
-    //   return
-    // }
-
     try {
       switch (data['resource-type']) {
         case 'funds_transfers':
@@ -577,6 +782,10 @@ export class CheckoutService {
           await this.quotesUpdateHandler(data['resource_id'])
         case 'asset_transfers':
           await this.assetTransferUpdateHandler(data['resource_id'])
+        case 'contact':
+          await this.contactUpdateHandler(data)
+        case 'contacts':
+          await this.contactUpdateHandler(data)
         default:
           return
       }

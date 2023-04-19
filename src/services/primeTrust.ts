@@ -111,7 +111,7 @@ export class PrimeTrustService {
   async request<T>(config: AxiosRequestConfig<any>) {
     try {
       if (!this.account) {
-        throw new Error('Account is not initialized')
+        await this.setAccount(Config.primeTrustAccountEmail)
       }
 
       const fiveMinAfter = moment.utc().add(5, 'minutes')
@@ -151,7 +151,7 @@ export class PrimeTrustService {
     }
   }
 
-  async createAssetTransferMethod(userWalletAddress: string) {
+  async createAssetTransferMethod(userWalletAddress: string, accountId: string, contactId: string) {
     const res = await this.request<any>({
       method: 'POST',
       url: '/v2/asset-transfer-methods',
@@ -160,8 +160,8 @@ export class PrimeTrustService {
           type: "asset-transfer-methods",
           attributes: {
             "asset-id": Config.primeTrustUsdcAssetId,
-            "contact-id": Config.primeTrustContactId,
-            "account-id": Config.primeTrustAccountId,
+            "contact-id": contactId,
+            "account-id": accountId,
             "asset-transfer-type": "ethereum",
             "transfer-direction": "outgoing",
             "label": "User purchase for USDC",
@@ -174,7 +174,7 @@ export class PrimeTrustService {
     return res.data
   }
 
-  async createAssetDisbursements(assetTransferMethodId: string, amount: number) {
+  async createAssetDisbursements(accountId: string, assetTransferMethodId: string, amount: number) {
     const res = await this.request<any>({
       method: 'POST',
       url: '/v2/asset-disbursements?include=asset-transfer,disbursement-authorization',
@@ -182,7 +182,7 @@ export class PrimeTrustService {
         data: {
           type: "asset-disbursements",
           attributes: {
-            "account-id": Config.primeTrustAccountId,
+            "account-id": accountId,
             "unit-count": amount,
             "asset-transfer": {
               "asset-transfer-method-id": assetTransferMethodId
@@ -273,7 +273,7 @@ export class PrimeTrustService {
     return res.data;
   }
 
-  async createQuote(amount: Dinero.Dinero) {
+  async createQuote(accountId: string, amount: Dinero.Dinero) {
     const res = await this.request<any>({
       method: 'POST',
       url: `/v2/quotes`,
@@ -281,7 +281,7 @@ export class PrimeTrustService {
         data: {
           type: "quotes",
           attributes: {
-            "account-id": Config.primeTrustAccountId,
+            "account-id": accountId,
             "asset-id": Config.primeTrustUsdcAssetId,
             "transaction-type": "buy",
             amount: amount.toUnit(),
@@ -292,6 +292,25 @@ export class PrimeTrustService {
     })
 
     return res.data;
+  }
+
+  async transferFunds(contactId, amount: Dinero.Dinero) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: 'v2/account-cash-transfers',
+      data: {
+        data : {
+            type : "account-cash-transfers",
+            attributes : {
+                amount : amount.toUnit(),
+                "from-account-id" : Config.primeTrustAccountId,
+                "to-account-id" : contactId
+            }
+        }
+      }
+    })
+
+    return res.data
   }
 
   async executeQuote(quoteId: string) {
@@ -319,33 +338,6 @@ export class PrimeTrustService {
     })
 
     return res.data
-  }
-
-  async setupCustodialAccount(data: CheckoutInputType) {
-    const res = await this.createCustodialAccount(data);
-    const contact = await res.included?.find((entity) => entity.type === 'contacts');
-
-    if (!contact) {
-      throw new Error(`Can\'t find a contact for account ${res.data.id}`)
-    }
-
-    const custodialAccount = await CustodialAccount.create({
-      id: res.data.id,
-      contactId: contact.id,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      phoneNumber: data.phoneNumber,
-      gender: data.gender,
-      dob: data.dob,
-      taxId: data.taxId,
-      streetAddress: data.streetAddress,
-      streetAddress2: data.streetAddress2,
-      city: data.city,
-      state: data.state,
-      zip: data.zip,
-      country: data.country
-    })
   }
 
   async createCustodialAccount(data: CheckoutInputType) {
@@ -422,52 +414,31 @@ export class PrimeTrustService {
     return res.data
   }
 
-  async uploadDocument(contactId: string, type: string, documentType: string, file: any) {
+  async getAccount(accountId: string) {
     const res = await this.request<any>({
-      method: 'POST',
-      url: '/v2/uploaded-documents',
-      data: {
-        'contact-id': contactId,
-        description: `${type} of Driver\'s License`,
-        label: `${type} Driver's License`,
-        file,
-        public: true
-      }
+      method: 'GET',
+      url: `/v2/accounts/${accountId}`
     })
 
     return res.data
   }
 
-  async submitDocumentCheck(contractId, frontId: string, backId: string, type: string) {
+  async getContact(contactId: string) {
     const res = await this.request<any>({
-      method: 'POST',
-      url: '',
-      data: {
-        data: {
-          type: "kyc-document-checks",
-          attributes: {
-            "contact-id": contractId,
-            "uploaded-document-id": frontId,
-            "backside-document-id": backId,
-            "kyc-document-type": type,
-            "identity": true,
-            "identity-photo": true,
-            "proof-of-address": true,
-            "kyc-document-country": "US"
-          }
-        }
-      }
+      method: 'GET',
+      url: `/v2/contacts/${contactId}?include=primary-address,primary-phone-number`
     })
 
     return res.data
   }
 
-  async sandboxVerifyDocumentCheck(documentCheckId: string) {
+  async sandboxOpenAccount(accountId: string) {
     const res = await this.request<any>({
       method: 'POST',
-      url: `/v2/kyc-document-checks/${documentCheckId}/sandbox/verify`
+      url: `/v2/accounts/${accountId}/sandbox/open`,
     })
 
-    return res.data
+    return res.data;
+
   }
 }

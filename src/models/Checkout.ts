@@ -3,6 +3,7 @@ import { PaidStatus } from '../types/paidStatus.type';
 import { TipType } from '../types/tip.type';
 import { newDinero } from '../utils/dinero';
 import { CheckoutRequest } from './CheckoutRequest';
+import { CustodialAccount } from './CustodialAccount';
 
 @Table({
   tableName: 'checkouts',
@@ -23,6 +24,12 @@ export class Checkout extends Model<Checkout> {
   @Default(null)
   @Column(DataType.UUID)
   checkoutRequestId!: string;
+
+  @ForeignKey(() => CustodialAccount)
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.UUID)
+  custodialAccountId!: string;
 
   @AllowNull(false)
   @Column(DataType.STRING(255))
@@ -126,11 +133,6 @@ export class Checkout extends Model<Checkout> {
 
   @AllowNull(true)
   @Default(null)
-  @Column(DataType.STRING(255))
-  contactId!: string;
-
-  @AllowNull(true)
-  @Default(null)
   @Column(DataType.STRING(100))
   taxId!: string;
 
@@ -171,6 +173,10 @@ export class Checkout extends Model<Checkout> {
    checkoutRequest!: CheckoutRequest;
    getCheckoutRequest!: () => Promise<CheckoutRequest>;
    setCheckoutRequest!: (checkoutRequest: CheckoutRequest) => void;
+
+   @BelongsTo(() => CustodialAccount)
+   custodialAccount!: CustodialAccount;
+   getCustodialAccount!: () => Promise<CustodialAccount>;
    
    //#endregion
 
@@ -215,6 +221,6 @@ export class Checkout extends Model<Checkout> {
   }
 
   get fundsAmountMoney() {
-    return this.amountMoney.add(this.feeAmountMoney)
+    return this.amountMoney.add(this.tipAmountMoney)
   }
 }

@@ -5,6 +5,8 @@ import { AssetQuote } from './AssetQuote';
 import { AssetTransfer } from './AssetTransfer';
 import { FundsTransfer } from './FundsTransfer';
 import { Charge } from './Charge';
+import { CustodialAccount } from './CustodialAccount';
+import { CipCheck } from './CipCheck';
 export interface IDbModels {
   PrimeTrustAccount: typeof PrimeTrustAccount;
   Checkout: typeof Checkout;
@@ -13,4 +15,6 @@ export interface IDbModels {
   AssetTransfer: typeof AssetTransfer;
   FundsTransfer: typeof FundsTransfer;
   Charge: typeof Charge;
+  CustodialAccount: typeof CustodialAccount;
+  CipCheck: typeof CipCheck;
 }

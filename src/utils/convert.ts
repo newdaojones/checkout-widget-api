@@ -90,3 +90,13 @@ export const convertToAssetTransfer = (data) => {
     reconciledAt: data.attributes['reconciled-at'],
   }
 }
+
+export const convertToContact = (data) => {
+  return {
+    identityConfirmed: data.attributes['identity-confirmed'],
+    identityDocumentsVerified: data.attributes['identity-documents-verified'],
+    proofOfAddressDocumentsVerified: data.attributes['proof-of-address-documents-verified'],
+    amlCleared: data.attributes['aml-cleared'],
+    cipCleared: data.attributes['cip-cleared'],
+  }
+}

@@ -96,6 +96,16 @@ module.exports = {
         allowNull: false,
         defaultValue: false
       },
+      documentId: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+        defaultValue: null
+      },
+      deviceId: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+        defaultValue: null
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),

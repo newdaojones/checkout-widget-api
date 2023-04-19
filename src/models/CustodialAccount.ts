@@ -114,6 +114,16 @@ export class CustodialAccount extends Model<CustodialAccount> {
   @Column(DataType.BOOLEAN)
   cipCleared!: boolean;
 
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.TEXT)
+  documentId!: string;
+
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.TEXT)
+  deviceId!: string;
+
   @Column(DataType.DATE)
   createdAt!: Date;
 
@@ -132,6 +142,7 @@ export class CustodialAccount extends Model<CustodialAccount> {
       this.identityDocumentsVerified &&
       this.proofOfAddressDocumentsVerified &&
       this.amlCleared &&
-      this.cipCleared
+      this.cipCleared &&
+      this.status === 'opened'
   }
 }

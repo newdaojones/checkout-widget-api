@@ -7,11 +7,8 @@ import { CheckoutType } from '../types/checkout.type';
 import { log } from '../utils';
 import { TransactionType } from '../types/transaction.type';
 import { CheckoutRequest } from '../models/CheckoutRequest';
-import { PrimeTrustService } from '../services/primeTrust';
-import { CustodialAccount } from '../models/CustodialAccount';
 
 const checkoutService = CheckoutService.getInstance()
-const primeTrustService = PrimeTrustService.getInstance();
 
 @Resolver()
 export class CheckoutResolver {
@@ -58,6 +55,8 @@ export class CheckoutResolver {
       }
     }
 
+    const totalAmount = data.amount + data.amount * (data.tip || 0) / 100
+
     if (data.amount >= 500) {
       if (!data.taxId) {
         throw new Error('Required tax ID')
@@ -74,25 +73,17 @@ export class CheckoutResolver {
       if (!data.gender) {
         throw new Error('Required gender')
       }
+
+      if (!data.documentId) {
+        throw new Error('Required KYC document')
+      }
     }
 
-    if (data.amount >= 500) {
-     
+    if (totalAmount >= 500) {
+     return checkoutService.processWithCustodial(data)
+    } else {
+      return checkoutService.processAlone(data);
     }
-
-    // const checkout = await Checkout.create(data);
-
-    // if (checkout.amount > 500) {
-    //   const contact = await primeTrustService.createContact(checkout);
-
-    //   await checkout.update({
-    //     contactId: contact.data.id
-    //   })
-    // } else {
-    //   checkoutService.processCheckout(checkout)
-    // }
-
-    // return checkout
   }
 
   @Subscription({
