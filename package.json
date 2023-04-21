@@ -28,7 +28,7 @@
     "express-graphql": "^0.12.0",
     "graphql": "15.3.0",
     "graphql-ws": "^5.12.0",
-    "libphonenumber-js": "^1.10.21",
+    "libphonenumber-js": "^1.10.28",
     "moment-timezone": "^0.5.41",
     "mysql2": "^3.1.2",
     "reflect-metadata": "^0.1.13",

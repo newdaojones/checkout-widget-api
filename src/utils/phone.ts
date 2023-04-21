@@ -40,5 +40,9 @@ export const normalizePhoneNumber = (phoneNumber: string) => {
 };
 
 export const isPhoneNumber = (n: any) => {
+  if (!n) {
+    return false;
+  }
+
   return isValidPhoneNumber(n);
 };

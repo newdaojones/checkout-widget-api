@@ -3,10 +3,8 @@ import { Config } from "../config";
 import { PrimeTrustAccount } from "../models/PrimeTrustAccount";
 import * as moment from 'moment-timezone'
 import { log } from "../utils";
-import { Dinero, DineroObject } from "dinero.js";
-import { Checkout } from "../models/Checkout";
 import { CheckoutInputType } from "../types/checkout-input.type";
-import { CustodialAccount } from "../models/CustodialAccount";
+import { parsePhoneNumber } from "libphonenumber-js";
 
 export class PrimeTrustService {
   account: PrimeTrustAccount;
@@ -341,6 +339,12 @@ export class PrimeTrustService {
   }
 
   async createCustodialAccount(data: CheckoutInputType) {
+    const phoneNumberObject = parsePhoneNumber(data.phoneNumber);
+
+    if (!phoneNumberObject.isValid()) {
+      throw new Error('Invalid phone number')
+    }
+
     const name = `${data.firstName} ${data.lastName}`
     const primaryAddress = Config.isProduction ? {
       "street-1": data.streetAddress,
@@ -375,8 +379,8 @@ export class PrimeTrustService {
             "socure-document-id": data.documentId,
             "socure-device-id": data.deviceId,
             "primary-phone-number": {
-              country: "US",
-              number: '3223233234',
+              country: phoneNumberObject.country,
+              number: phoneNumberObject.formatNational().replace(/[()+\- ]/g, ''),
               sms: true
             },
             "primary-address": primaryAddress
