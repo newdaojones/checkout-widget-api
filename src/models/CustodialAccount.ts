@@ -139,8 +139,6 @@ export class CustodialAccount extends Model<CustodialAccount> {
 
   get isVerified() {
     return this.identityConfirmed &&
-      this.identityDocumentsVerified &&
-      this.proofOfAddressDocumentsVerified &&
       this.amlCleared &&
       this.cipCleared &&
       this.status === 'opened'

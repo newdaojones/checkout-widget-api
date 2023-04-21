@@ -53,6 +53,11 @@ export class CheckoutService {
 
   async processWithCustodial(data: CheckoutInputType) {
     const res = await this.primeTrust.createCustodialAccount(data)
+    const accountId = res.data.id;
+
+    if (!Config.isProduction) {
+      await this.primeTrust.createAccountPolicySandbox(accountId)
+    }
 
     const contact = await res.included?.find((entity) => entity.type === 'contacts');
 
@@ -177,7 +182,7 @@ export class CheckoutService {
   private async processAssetTransfer(checkout: Checkout, quote: AssetQuote) {
     try {
       const custodialAccount = await checkout.getCustodialAccount()
-      const assetTransferMethodRes = await this.primeTrust.createAssetTransferMethod(custodialAccount.id, custodialAccount.contactId, checkout.walletAddress);
+      const assetTransferMethodRes = await this.primeTrust.createAssetTransferMethod(checkout.walletAddress, custodialAccount.id, custodialAccount.contactId);
       const assetTransferMethodId = assetTransferMethodRes.data.id
 
       await checkout.update({
@@ -679,7 +684,6 @@ export class CheckoutService {
     const contactId = data['resource-id']
     let checkout: Checkout;
     let custodialAccount: CustodialAccount;
-
     try {
       await asyncLock(`contact-update/${contactId}`, async () => {
         custodialAccount = await CustodialAccount.findOne({
@@ -694,7 +698,8 @@ export class CheckoutService {
 
         checkout = await Checkout.findOne({
           where: {
-            custodialAccountId: custodialAccount.id
+            custodialAccountId: custodialAccount.id,
+            status: PaidStatus.Pending
           }
         })
 
@@ -702,7 +707,7 @@ export class CheckoutService {
           return
         }
 
-        if (data['kyc-required-actions'].length > 0) {
+        if (data.data && data.data['kyc-required-actions']?.length > 0) {
           throw new Error('Failed KYC verification')
         }
 
@@ -770,10 +775,6 @@ export class CheckoutService {
       data
     })
 
-    if (data['account-id'] !== Config.primeTrustAccountId) {
-      return
-    }
-
     try {
       switch (data['resource-type']) {
         case 'funds_transfers':
@@ -782,7 +783,7 @@ export class CheckoutService {
           await this.quotesUpdateHandler(data['resource_id'])
         case 'asset_transfers':
           await this.assetTransferUpdateHandler(data['resource_id'])
-        case 'contact':
+        case 'contacts':
           await this.contactUpdateHandler(data)
         case 'contacts':
           await this.contactUpdateHandler(data)

@@ -342,46 +342,59 @@ export class PrimeTrustService {
 
   async createCustodialAccount(data: CheckoutInputType) {
     const name = `${data.firstName} ${data.lastName}`
-    const res = await this.request<any>({
-      method: 'POST',
-      url: '/v2/accounts?include=owners,contacts,webhook-config',
+    const primaryAddress = Config.isProduction ? {
+      "street-1": data.streetAddress,
+      "street-2": data.streetAddress2,
+      "postal-code": data.zip,
+      "city": data.city,
+      "region": data.state,
+      "country": data.country
+    } : {
+      "street-1": data.streetAddress,
+      "street-2": "happy",
+      "postal-code": "89145",
+      "city": "Las Vegas",
+      "region": "NV",
+      "country": "US"
+    }
+
+    const requestBody = {
       data: {
-        data: {
-          type: "account",
-          attributes: {
-            "account-type": "custodial",
-            name: `Account ${name}`,
-            "authorized-signature": name,
-            owner: {
-              "contact-type": "natural_person",
-              name: name,
-              email: data.email,
-              "date-of-birth": data.dob,
-              "tax-id-number": data.taxId,
-              "tax-country": data.country,
-              "primary-phone-number": {
-                country: "US",
-                number: data.phoneNumber,
-                sms: true
-              },
-              "primary-address": {
-                "street-1": data.streetAddress,
-                "street-2": data.streetAddress2,
-                "postal-code": data.zip,
-                city: data.city,
-                region: data.state,
-                country: data.country
-              }
+        type: "account",
+        attributes: {
+          "account-type": "custodial",
+          name: `Account ${name}`,
+          "authorized-signature": name,
+          owner: {
+            "contact-type": "natural_person",
+            name: name,
+            email: data.email,
+            "date-of-birth": data.dob,
+            "tax-id-number": data.taxId,
+            "tax-country": data.country,
+            "socure-document-id": data.documentId,
+            "socure-device-id": data.deviceId,
+            "primary-phone-number": {
+              country: "US",
+              number: '3223233234',
+              sms: true
             },
-            "webhook-config": {
-              "contact-email": Config.primeTrustAccountEmail,
-              "url": `${Config.uri}/primeTrustWebhook`,
-              "enabled": true,
-              "shared-secret": "shared-webhook-secret"
-            }
+            "primary-address": primaryAddress
+          },
+          "webhook-config": {
+            "contact-email": Config.primeTrustAccountEmail,
+            "url": `${Config.uri}/primeTrustWebhook`,
+            "enabled": true,
+            "shared-secret": "shared-webhook-secret"
           }
         }
       }
+    }
+
+    const res = await this.request<any>({
+      method: 'POST',
+      url: '/v2/accounts?include=owners,contacts,webhook-config',
+      data: requestBody
     })
 
     return res.data
@@ -439,6 +452,54 @@ export class PrimeTrustService {
     })
 
     return res.data;
+  }
 
+  async getWebhookConfigs() {
+    const res = await this.request<any>({
+      method: 'GET',
+      url: `/v2/webhook-configs`,
+    })
+
+    return res.data
+  }
+
+  async enableWebHookConfig(webhookConfigId: string) {
+    const res = await this.request<any>({
+      method: 'PATCH',
+      url: `/v2/webhook-configs/${webhookConfigId}`,
+      data: {
+        "data": {
+          "type": "webhook-configs",
+          "attributes": {
+            "url": `${Config.uri}/primeTrustWebhook`,
+            "enabled": true
+          }
+        }
+      }
+    })
+
+    return res.data
+  }
+
+  async createAccountPolicySandbox(accountId: string) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: `/v2/account-policies/sandbox`,
+      data: {
+        "data": {
+          "type": "account-policies",
+          "attributes": {
+              "account-id": accountId,
+              "manual-authorization-on-asset-disbursements": false,
+              "owner-verification-on-asset-disbursements": false,
+              "require-contact-on-outgoing-asset-transfers": false,
+              "review-asset-transfers": false,
+              "allow-organizational-contacts": true
+          }
+        }
+      }
+    })
+
+    return res.data
   }
 }

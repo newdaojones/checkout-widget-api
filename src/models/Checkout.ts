@@ -57,16 +57,6 @@ export class Checkout extends Model<Checkout> {
   @Column(DataType.STRING(100))
   phoneNumber!: string;
 
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.STRING(20))
-  sex!: string;
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.STRING(20))
-  dob!: string;
-
   @AllowNull(false)
   @Default('USD')
   @Column(DataType.STRING(3))
@@ -130,36 +120,6 @@ export class Checkout extends Model<Checkout> {
   @Default('pending')
   @Column(DataType.ENUM('pending', 'processing', 'paid', 'postponed', 'error'))
   status!: PaidStatus;
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.STRING(100))
-  taxId!: string;
-
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.STRING(100))
-  identityConfirmed!: boolean;
-
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.STRING(100))
-  identityDocumentsVerified!: boolean;
-
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.STRING(100))
-  proofOfAddressDocumentsVerified!: boolean;
-
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.STRING(100))
-  amlCleared!: boolean;
-
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.STRING(100))
-  cipCleared!: boolean;
 
   @Column(DataType.DATE)
   createdAt!: Date;

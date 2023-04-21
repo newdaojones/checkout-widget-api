@@ -8,6 +8,7 @@ export const Config = {
   primeTrustContactId: process.env.PRIME_TRUST_CUSTODY_CONTACT_ID,
   primeTrustUsdcAssetId: process.env.PRIME_TRUST_USDC_ASSET_ID,
   primeTrustFundsTransferMethodId: process.env.PRIME_TRUST_FUNDS_TRANSFER_METHOD_ID,
+  primeTrustWebhookConfigId: process.env.PRIME_TRUST_WEBHOOK_CONFIG_ID,
   primeTrustApiUri: process.env.PRIME_TRUST_API_URI,
   isProduction: process.env.NODE_ENV === 'production',
   isStaging: process.env.NODE_ENV === 'staging',
