@@ -10,6 +10,7 @@ import { log } from "./utils";
 import { initRoutes } from "./routes";
 import { initGraphql } from "./graphql";
 import { createServer } from "http";
+import { initAuth } from "./auth";
 const { sequelize } = models;
 
 async function bootstrap() {
@@ -39,7 +40,7 @@ async function bootstrap() {
   const httpServer = createServer(app);
 
   app.use(bodyParser.json());
-
+  initAuth(app)
   initRoutes(app);
   await initGraphql(app, httpServer)
 

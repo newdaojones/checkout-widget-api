@@ -8,6 +8,7 @@ import {
   Default,
   IsEmail
 } from 'sequelize-typescript';
+import * as bcrypt from 'bcrypt';
 
 @Table({
   tableName: 'custodialAccounts',
@@ -43,6 +44,10 @@ export class CustodialAccount extends Model<CustodialAccount> {
   @IsEmail
   @Column(DataType.STRING(100))
   email!: string;
+
+  @AllowNull(true)
+  @Column(DataType.TEXT)
+  password: string;
 
   @AllowNull(false)
   @Column(DataType.STRING(100))
@@ -124,6 +129,10 @@ export class CustodialAccount extends Model<CustodialAccount> {
   @Column(DataType.TEXT)
   deviceId!: string;
 
+  @AllowNull(true)
+  @Column(DataType.TEXT)
+  token: string;
+
   @Column(DataType.DATE)
   createdAt!: Date;
 
@@ -143,4 +152,28 @@ export class CustodialAccount extends Model<CustodialAccount> {
       this.cipCleared &&
       this.status === 'opened'
   }
+
+  static async findUser(email: string, password: string, cb: Function) {
+    try {
+      const user = await this.findOne({
+        where: { email },
+      });
+
+      if (user == null || user.password == null || user.password.length === 0) {
+        cb(new Error('Invalid email or password'), null);
+        return;
+      }
+
+      const isPasswordMatch = await bcrypt.compare(password, user.password);
+      if (isPasswordMatch) {
+        return cb(null, user);
+      }
+
+      cb(new Error('Invalid email or password'), null);
+
+    } catch (err: any) {
+      cb(err, null);
+    }
+  }
+
 }

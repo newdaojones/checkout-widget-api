@@ -11,6 +11,7 @@ import { Express } from 'express'
 import { useServer } from 'graphql-ws/lib/use/ws';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import type http from 'http';
+import { authMiddlewareForGraphql } from "./middleware/auth";
 
 export const initGraphql = async (app: Express, httpServer: http.Server) => {
   let resolversPattern: NonEmptyArray<string> = [
@@ -59,6 +60,8 @@ export const initGraphql = async (app: Express, httpServer: http.Server) => {
   });  
   
   await server.start();
-  
+
+  app.use('/graphql', authMiddlewareForGraphql);
+
   server.applyMiddleware({ app });
 }

@@ -1,4 +1,5 @@
 export const Config = {
+  jwtSecret: process.env.JWT_SECRET,
   checkoutPublicKey: process.env.CHECKOUT_PUBLIC_KEY,
   checkoutSecureKey: process.env.CHECKOUT_SECURE_KEY,
   checkoutProcessingChannelId: process.env.CHECKOUT_PROCESSING_CHANNEL_ID,
