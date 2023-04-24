@@ -37,6 +37,11 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING(100),
       },
+      password: {
+        allowNull: true,
+        defaultValue: null,
+        type: Sequelize.TEXT
+      },
       phoneNumber: {
         allowNull: false,
         type: Sequelize.STRING(100),

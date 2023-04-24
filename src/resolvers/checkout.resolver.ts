@@ -1,5 +1,5 @@
 import * as moment from 'moment-timezone'
-import { Resolver, Query, Arg, Mutation, Subscription, Root, Authorized } from 'type-graphql';
+import { Resolver, Query, Arg, Mutation, Subscription, Root } from 'type-graphql';
 import { Checkout } from '../models/Checkout';
 import { CheckoutService } from '../services/checkout';
 import { CheckoutInputType } from '../types/checkout-input.type';

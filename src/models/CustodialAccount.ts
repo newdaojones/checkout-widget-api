@@ -6,9 +6,12 @@ import {
   AllowNull,
   DataType,
   Default,
-  IsEmail
+  IsEmail,
+  BeforeUpdate,
+  BeforeCreate
 } from 'sequelize-typescript';
 import * as bcrypt from 'bcrypt';
+import { UserService } from '../services/userService';
 
 @Table({
   tableName: 'custodialAccounts',
@@ -153,6 +156,15 @@ export class CustodialAccount extends Model<CustodialAccount> {
       this.status === 'opened'
   }
 
+  @BeforeUpdate
+  @BeforeCreate
+  static async beforeSaveHook(user: CustodialAccount, options: any) {
+    if (user.password && user.changed('password')) {
+      const hashedPw = await UserService.encryptPassword(user.password);
+      user.password = hashedPw as string;
+    }
+  }
+
   static async findUser(email: string, password: string, cb: Function) {
     try {
       const user = await this.findOne({
@@ -164,7 +176,7 @@ export class CustodialAccount extends Model<CustodialAccount> {
         return;
       }
 
-      const isPasswordMatch = await bcrypt.compare(password, user.password);
+      const isPasswordMatch = await UserService.comparePassword(password, user.password);
       if (isPasswordMatch) {
         return cb(null, user);
       }
@@ -175,5 +187,4 @@ export class CustodialAccount extends Model<CustodialAccount> {
       cb(err, null);
     }
   }
-
 }
