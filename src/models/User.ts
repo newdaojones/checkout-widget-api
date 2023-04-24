@@ -10,7 +10,6 @@ import {
   BeforeUpdate,
   BeforeCreate
 } from 'sequelize-typescript';
-import * as bcrypt from 'bcrypt';
 import { UserService } from '../services/userService';
 
 @Table({

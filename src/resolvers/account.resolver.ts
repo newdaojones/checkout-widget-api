@@ -1,98 +1,85 @@
-import * as moment from 'moment-timezone'
-import { Resolver, Query, Arg, Mutation, Subscription, Root, Authorized } from 'type-graphql';
+import { Resolver, Query, Arg, Mutation, Subscription, Root, Authorized, Ctx } from 'type-graphql';
 import { Checkout } from '../models/Checkout';
-import { CheckoutService } from '../services/checkout';
-import { CheckoutInputType } from '../types/checkout-input.type';
-import { CheckoutType } from '../types/checkout.type';
 import { log } from '../utils';
-import { TransactionType } from '../types/transaction.type';
-import { CheckoutRequest } from '../models/CheckoutRequest';
+import { UserVerifyType } from '../types/userVerify.type';
+import { UserType } from '../types/user.type';
+import { UserInputType } from '../types/user-input.type';
+import { NotificationType } from '../services/notificationService';
+import { Config } from '../config';
+import { PrimeTrustService } from '../services/primeTrust';
+import { User } from '../models/User';
 
-const checkoutService = CheckoutService.getInstance()
+const primeTrust = PrimeTrustService.getInstance()
 
 @Resolver()
-export class CustodialAccountResolver {
-  @Query(() => [CheckoutType])
+export class UserResolver {
+  @Query(() => [UserType])
   @Authorized()
-  async me() {
-    return await Checkout.findAll();
+  async me(
+    @Ctx('user') user: any
+  ) {
+    return User.findByPk(user.id);
   }
 
-  @Mutation(() => CheckoutType)
-  async createAccount(
-    @Arg('data') data: CheckoutInputType,
+  @Mutation(() => UserType)
+  async createUser(
+    @Arg('data') data: UserInputType,
   ) {
     log.info({
-      func: 'createCheckout',
+      func: 'createUser',
       data
     })
 
-    if (data.checkoutRequestId) {
-      const checkoutRequest = await CheckoutRequest.findByPk(data.checkoutRequestId);
+    const res = await primeTrust.createCustodialAccount(data)
+    const userId = res.data.id;
 
-      if (!checkoutRequest) {
-        throw new Error('Can\'t find checkout request');
-      }
 
-      if (checkoutRequest.walletAddress !== data.walletAddress) {
-        throw new Error('Mismatch wallet address')
-      }
+    const contact = await res.included?.find((entity) => entity.type === 'contacts');
 
-      if (checkoutRequest.phoneNumber !== data.phoneNumber) {
-        throw new Error('Mismatch phone number')
-      }
-
-      if (checkoutRequest.phoneNumber && checkoutRequest.email !== data.email) {
-        throw new Error('Mismatch email address')
-      }
-
-      if (checkoutRequest.amount !== data.amount) {
-        throw new Error('Mismatch amount')
-      }
+    if (!contact) {
+      throw new Error(`Can\'t find a contact for user ${res.data.id}`)
     }
 
-    const totalAmount = data.amount + data.amount * (data.tip || 0) / 100
+    const user = await User.create({
+      id: res.data.id,
+      contactId: contact.id,
+      status: res.data.attributes.status,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phoneNumber: data.phoneNumber,
+      gender: data.gender,
+      dob: data.dob,
+      taxId: data.taxId,
+      streetAddress: data.streetAddress,
+      streetAddress2: data.streetAddress2,
+      city: data.city,
+      state: data.state,
+      zip: data.zip,
+      country: data.country,
+      deviceId: data.deviceId,
+      documentId: data.documentId
+    })
 
-    if (data.amount >= 500) {
-      if (!data.taxId) {
-        throw new Error('Required tax ID')
-      }
-
-      if (!data.dob) {
-        throw new Error('Required date of birth')
-      }
-
-      if (!moment.utc(data.dob).isValid()) {
-        throw new Error('Invalid date of birth')
-      }
-
-      if (!data.gender) {
-        throw new Error('Required gender')
-      }
-
-      if (!data.documentId) {
-        throw new Error('Required KYC document')
-      }
+    if (!Config.isProduction) {
+      await primeTrust.sandboxOpenAccount(res.data.id)
+      await primeTrust.createAccountPolicySandbox(userId)
     }
 
-    if (totalAmount >= 500) {
-     return checkoutService.processWithCustodial(data)
-    } else {
-      return checkoutService.processAlone(data);
-    }
+    return user
   }
 
   @Subscription({
-    topics: 'ACCOUNT_STATUS',
+    topics: NotificationType.ACCOUNT_STATUS,
     filter: ({ payload, args }) => {
       return !!payload && payload.userId === args.userId;
     }
   })
 
-  user(
-    @Root() messagePayload: TransactionType,
+  userVerify(
+    @Root() messagePayload: UserVerifyType,
     @Arg('userId') userId: string,
-  ): TransactionType {
+  ): UserVerifyType {
     return messagePayload;
   }
 }

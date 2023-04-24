@@ -3,11 +3,11 @@ import { Config } from "../config";
 import { PrimeTrustAccount } from "../models/PrimeTrustAccount";
 import * as moment from 'moment-timezone'
 import { log } from "../utils";
-import { CheckoutInputType } from "../types/checkout-input.type";
 import { parsePhoneNumber } from "libphonenumber-js";
+import { UserInputType } from "../types/user-input.type";
 
 export class PrimeTrustService {
-  user: PrimeTrustAccount;
+  static user: PrimeTrustAccount;
 
   constructor(private axiosInstance: AxiosInstance) { }
 
@@ -34,12 +34,16 @@ export class PrimeTrustService {
 
     const instance = new PrimeTrustService(axios)
 
-    instance.setAccount(Config.primeTrustAccountEmail)
+    PrimeTrustService.setAccount(Config.primeTrustAccountEmail)
 
     return instance
   }
 
-  async setAccount(email: string) {
+  static async setAccount(email: string) {
+    if (this.user) {
+      return
+    }
+
     const user = await PrimeTrustAccount.findOne({
       where: {
         email
@@ -67,7 +71,7 @@ export class PrimeTrustService {
 
   private async getToken() {
     try {
-      if (!this.user) {
+      if (!PrimeTrustService.user) {
         return
       }
 
@@ -93,7 +97,7 @@ export class PrimeTrustService {
         throw new Error('Failed get token')
       }
 
-      await this.user.update({
+      await PrimeTrustService.user.update({
         token,
         expiresAt: expiresAt.toDate()
       })
@@ -108,12 +112,12 @@ export class PrimeTrustService {
 
   async request<T>(config: AxiosRequestConfig<any>) {
     try {
-      if (!this.user) {
-        await this.setAccount(Config.primeTrustAccountEmail)
+      if (!PrimeTrustService.user) {
+        await PrimeTrustService.setAccount(Config.primeTrustAccountEmail)
       }
 
       const fiveMinAfter = moment.utc().add(5, 'minutes')
-      const isExpired = !this.user.expiresAt || moment.utc(this.user.expiresAt).isBefore(fiveMinAfter)
+      const isExpired = !PrimeTrustService.user.expiresAt || moment.utc(PrimeTrustService.user.expiresAt).isBefore(fiveMinAfter)
 
       if (isExpired) {
         await this.getToken()
@@ -122,7 +126,7 @@ export class PrimeTrustService {
       const res = await this.axiosInstance.request<T>({
         ...config,
         headers: {
-          Authorization: `Bearer ${this.user.token}`
+          Authorization: `Bearer ${PrimeTrustService.user.token}`
         }
       });
 
@@ -140,7 +144,7 @@ export class PrimeTrustService {
         return this.axiosInstance.request<T>({
           ...config,
           headers: {
-            Authorization: `Bearer ${this.user.token}`
+            Authorization: `Bearer ${PrimeTrustService.user.token}`
           }
         });
       }
@@ -338,7 +342,7 @@ export class PrimeTrustService {
     return res.data
   }
 
-  async createCustodialAccount(data: CheckoutInputType) {
+  async createCustodialAccount(data: UserInputType) {
     const phoneNumberObject = parsePhoneNumber(data.phoneNumber);
 
     if (!phoneNumberObject.isValid()) {

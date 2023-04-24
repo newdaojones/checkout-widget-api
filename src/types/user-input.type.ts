@@ -3,20 +3,7 @@ import { Field, InputType } from "type-graphql";
 import { TipType } from "./tip.type";
 
 @InputType()
-export class CheckoutInputType {
-  @IsString()
-  @IsOptional()
-  @Field({ nullable: true })
-  checkoutRequestId!: string;
-
-  @IsString()
-  @Field()
-  checkoutTokenId: string;
-
-  @IsString()
-  @Field()
-  walletAddress: string;
-
+export class UserInputType {
   @IsString()
   @Field()
   firstName: string;
@@ -33,25 +20,21 @@ export class CheckoutInputType {
   @Field()
   phoneNumber: string;
 
-  @IsNumber()
-  @Field()
-  amount: number;
-
-  @IsNumber()
-  @Field()
-  tip: number;
-
   @IsString()
   @Field()
-  tipType: TipType;
-
-  @IsNumber()
-  @Field()
-  fee: number;
+  password: string;
 
   @IsString()
-  @Field()
-  feeType: TipType;
+  @Field({ nullable: true })
+  gender!: string;
+
+  @IsString()
+  @Field({ nullable: true })
+  dob!: string;
+
+  @IsString()
+  @Field({ nullable: true })
+  taxId!: string;
 
   @IsString()
   @Field()
@@ -78,4 +61,12 @@ export class CheckoutInputType {
   @IsOptional()
   @Field({ nullable: true })
   country: string;
+
+  @IsString()
+  @Field({ nullable: true })
+  documentId!: string;
+
+  @IsString()
+  @Field({ nullable: true })
+  deviceId!: string;
 }

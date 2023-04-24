@@ -2,7 +2,6 @@ import { Config } from "../config";
 
 import Container from "typedi";
 import { PubSubEngine } from 'graphql-subscriptions';
-import { parsePhoneNumber } from 'libphonenumber-js';
 
 import { AssetQuote } from "../models/AssetQuote";
 import { AssetTransfer } from "../models/AssetTransfer";
@@ -18,101 +17,53 @@ import { convertToAssetTransfer, convertToCharge, convertToContact, convertToFun
 
 import { PaidStatus } from "../types/paidStatus.type";
 import { CheckoutStep } from "../types/checkoutStep.type";
-import { TransactionType } from "../types/transaction.type";
 import { asyncLock } from "../utils/lock";
 import { CheckoutInputType } from "../types/checkout-input.type";
 import { User } from "../models/User";
+import { NotificationService } from "./notificationService";
+import { CheckoutRequest } from "../models/CheckoutRequest";
 
 const checkoutSdkService = CheckoutSdkService.getInstance();
 const primeTrustService = PrimeTrustService.getInstance();
 const pubsubEngine = Container.get<PubSubEngine>('pubsub');
+const notificationService = NotificationService.getInstance();
 
 export class CheckoutService {
   static getInstance() {
 
-    return new CheckoutService(checkoutSdkService, primeTrustService, pubsubEngine)
+    return new CheckoutService(checkoutSdkService, primeTrustService, pubsubEngine, notificationService)
   }
 
-  constructor(private checkoutSdk: CheckoutSdkService, private primeTrust: PrimeTrustService, private pubSub: PubSubEngine) { }
+  constructor(private checkoutSdk: CheckoutSdkService, private primeTrust: PrimeTrustService, private pubSub: PubSubEngine, private notification: NotificationService) { }
 
-  private async publishNotification(payload: TransactionType) {
-    try {
-      if (!this.pubSub) {
-        throw new Error('Subscription is not initialized')
+  async process(data: CheckoutInputType, userId: string) {
+    if (data.checkoutRequestId) {
+      const checkoutRequest = await CheckoutRequest.findByPk(data.checkoutRequestId);
+
+      if (!checkoutRequest) {
+        throw new Error('Can\'t find checkout request');
       }
 
-      this.pubSub.publish('TRANSACTION_STATUS', payload)
-    } catch (err) {
-      log.warn({
-        func: 'publishNotification',
-        checkoutId: payload.checkoutId,
-        payload,
-        err
-      })
-    }
-  }
+      if (checkoutRequest.walletAddress !== data.walletAddress) {
+        throw new Error('Mismatch wallet address')
+      }
 
-  async processWithCustodial(data: CheckoutInputType) {
-    const res = await this.primeTrust.createCustodialAccount(data)
-    const userId = res.data.id;
+      if (checkoutRequest.phoneNumber !== data.phoneNumber) {
+        throw new Error('Mismatch phone number')
+      }
 
-    if (!Config.isProduction) {
-      await this.primeTrust.createAccountPolicySandbox(userId)
-    }
+      if (checkoutRequest.phoneNumber && checkoutRequest.email !== data.email) {
+        throw new Error('Mismatch email address')
+      }
 
-    const contact = await res.included?.find((entity) => entity.type === 'contacts');
-
-    if (!contact) {
-      throw new Error(`Can\'t find a contact for user ${res.data.id}`)
-    }
-
-    const user = await User.create({
-      id: res.data.id,
-      contactId: contact.id,
-      status: res.data.attributes.status,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      phoneNumber: data.phoneNumber,
-      gender: data.gender,
-      dob: data.dob,
-      taxId: data.taxId,
-      streetAddress: data.streetAddress,
-      streetAddress2: data.streetAddress2,
-      city: data.city,
-      state: data.state,
-      zip: data.zip,
-      country: data.country,
-      deviceId: data.deviceId,
-      documentId: data.documentId
-    })
-
-    if (!Config.isProduction) {
-      this.primeTrust.sandboxOpenAccount(res.data.id)
+      if (checkoutRequest.amount !== data.amount) {
+        throw new Error('Mismatch amount')
+      }
     }
 
     const checkout = await Checkout.create({
       ...data,
-      userId: user.id,
-    });
-
-    this.publishNotification({
-      checkoutId: checkout.id,
-      step: CheckoutStep.KYC,
-      status: 'processing',
-      paidStatus: checkout.status,
-      message: `Processing KYC`,
-      transactionId: null,
-      date: new Date()
-    })
-
-    return checkout
-  }
-
-  async processAlone(data: CheckoutInputType) {
-    const checkout = await Checkout.create({
-      ...data,
-      userId: Config.primeTrustAccountId,
+      userId,
     });
 
     this.processCheckout(checkout)
@@ -122,7 +73,7 @@ export class CheckoutService {
 
   private async processCharge(checkout: Checkout) {
     try {
-      this.publishNotification({
+      this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         step: CheckoutStep.Charge,
         status: 'processing',
@@ -139,7 +90,7 @@ export class CheckoutService {
         ...chargeData
       })
 
-      this.publishNotification({
+      this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         step: CheckoutStep.Charge,
         status: 'settled',
@@ -166,7 +117,7 @@ export class CheckoutService {
   
         await checkoutRequest?.sendWebhook()
 
-      this.publishNotification({
+      this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         status: 'failed',
         paidStatus: checkout.status,
@@ -203,7 +154,7 @@ export class CheckoutService {
         disbursementAuthorizationId: res.data.id
       })
 
-      this.publishNotification({
+      this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         status: 'processing',
         paidStatus: checkout.status,
@@ -230,7 +181,7 @@ export class CheckoutService {
   
         await checkoutRequest?.sendWebhook()
 
-      this.publishNotification({
+      this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         status: 'failed',
         paidStatus: checkout.status,
@@ -263,7 +214,7 @@ export class CheckoutService {
         await this.primeTrust.sandboxSettleFundsTransfer(fundsTransferRecord.id)
       }
 
-      this.publishNotification({
+      this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         status: 'processing',
         paidStatus: checkout.status,
@@ -290,7 +241,7 @@ export class CheckoutService {
   
         await checkoutRequest?.sendWebhook()
 
-      this.publishNotification({
+      this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         status: 'failed',
         paidStatus: checkout.status,
@@ -309,7 +260,7 @@ export class CheckoutService {
       const res = await this.primeTrust.transferFunds(checkout.userId, checkout.fundsAmountMoney)
 
       if (res.data.attributes.status === 'settled') {
-        this.publishNotification({
+        this.notification.publishTransactionStatus({
           checkoutId: checkout.id,
           status: 'settled',
           paidStatus: checkout.status,
@@ -342,7 +293,7 @@ export class CheckoutService {
   
         await checkoutRequest?.sendWebhook()
 
-      this.publishNotification({
+      this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         status: 'failed',
         paidStatus: checkout.status,
@@ -364,7 +315,7 @@ export class CheckoutService {
 
       await this.primeTrust.executeQuote(assetQuote.id)
 
-      this.publishNotification({
+      this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         status: 'processing',
         paidStatus: checkout.status,
@@ -391,7 +342,7 @@ export class CheckoutService {
   
         await checkoutRequest?.sendWebhook()
 
-      this.publishNotification({
+      this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         status: 'failed',
         paidStatus: checkout.status,
@@ -476,7 +427,7 @@ export class CheckoutService {
         }
 
         if (checkout.userId === Config.primeTrustAccountId) {
-          this.publishNotification({
+          this.notification.publishTransactionStatus({
             checkoutId: checkout.id,
             status: 'settled',
             paidStatus: checkout.status,
@@ -511,7 +462,7 @@ export class CheckoutService {
   
         await checkoutRequest?.sendWebhook()
 
-        this.publishNotification({
+        this.notification.publishTransactionStatus({
           checkoutId: checkout.id,
           status: 'failed',
           paidStatus: checkout.status,
@@ -577,7 +528,7 @@ export class CheckoutService {
   
         await checkoutRequest?.sendWebhook()
 
-        this.publishNotification({
+        this.notification.publishTransactionStatus({
           checkoutId: checkout.id,
           status: 'failed',
           paidStatus: checkout.status,
@@ -636,7 +587,7 @@ export class CheckoutService {
   
         await checkoutRequest?.sendWebhook(Math.abs(assetTransfer.unitCount), assetTransfer.transactionHash)
 
-        this.publishNotification({
+        this.notification.publishTransactionStatus({
           checkoutId: checkout.id,
           step: CheckoutStep.Asset,
           status: 'settled',
@@ -666,7 +617,7 @@ export class CheckoutService {
   
         await checkoutRequest?.sendWebhook()
 
-        this.publishNotification({
+        this.notification.publishTransactionStatus({
           checkoutId: checkout.id,
           step: CheckoutStep.Asset,
           status: 'failed',
@@ -683,7 +634,6 @@ export class CheckoutService {
 
   async contactUpdateHandler(data: any) {
     const contactId = data['resource-id']
-    let checkout: Checkout;
     let user: User;
     try {
       await asyncLock(`contact-update/${contactId}`, async () => {
@@ -694,17 +644,6 @@ export class CheckoutService {
         })
 
         if (!user) {
-          return
-        }
-
-        checkout = await Checkout.findOne({
-          where: {
-            userId: user.id,
-            status: PaidStatus.Pending
-          }
-        })
-
-        if (!checkout) {
           return
         }
 
@@ -720,50 +659,29 @@ export class CheckoutService {
           status: accountResponse.data.attributes.status
         })
 
-        if (!user.isVerified) {
-          return
-        }
-        
-        this.processCheckout(checkout)
-        this.publishNotification({
-          checkoutId: checkout.id,
-          step: CheckoutStep.KYC,
-          status: 'verified',
-          paidStatus: checkout.status,
-          transactionId: '',
-          message: `Verified KYC`,
-          date: new Date()
+
+        this.notification.publishUserStatus({
+          userId: user.id,
+          status: user.status,
+          error: ''
         })
       })
     } catch (err) {
       log.warn({
         func: 'contactUpdateHandler',
         contactId,
-        checkoutId: checkout?.id,
         err
       }, 'Failed contactUpdateHandler')
 
-      if (checkout) {
-        await checkout.update({
-          status: PaidStatus.Error
-        })
+      if (user) {
+        user.status = 'error';
+        await user.save()
 
-        const checkoutRequest = await checkout?.getCheckoutRequest()
-        await checkoutRequest?.update({
-          status: PaidStatus.Error
-        })
-  
-        await checkoutRequest?.sendWebhook()
-
-        this.publishNotification({
-          checkoutId: checkout.id,
-          step: CheckoutStep.Asset,
-          status: 'failed',
-          paidStatus: checkout.status,
-          transactionId: null,
-          message: `Failed KYC verification`,
-          date: new Date()
-        })
+        this.notification.publishUserStatus({
+          userId: user.id,
+          status: user.status,
+          error: err.message
+        })  
       }
 
       throw err

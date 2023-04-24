@@ -1,15 +1,12 @@
 import { Field, ID, ObjectType } from "type-graphql";
 
 @ObjectType()
-export class CheckoutType {
+export class UserType {
   @Field(() => ID)
   id: number;
 
   @Field({ nullable: true })
-  checkoutRequestId!: string;
-
-  @Field()
-  walletAddress: string;
+  contactId!: string;
 
   @Field()
   firstName: string;
@@ -23,23 +20,14 @@ export class CheckoutType {
   @Field()
   phoneNumber: string;
 
-  @Field()
-  currency: string;
+  @Field({ nullable: true })
+  gender!: string;
 
-  @Field()
-  amount: number;
+  @Field({ nullable: true })
+  dob!: string;
 
-  @Field()
-  fee: number;
-
-  @Field()
-  feeType: string;
-
-  @Field()
-  tip: number;
-
-  @Field()
-  tipType: string;
+  @Field({ nullable: true })
+  taxId!: string;
 
   @Field()
   streetAddress: string;
@@ -58,6 +46,21 @@ export class CheckoutType {
 
   @Field({ nullable: true })
   country: string;
+
+  @Field()
+  identityConfirmed: boolean;
+
+  @Field()
+  identityDocumentsVerified: boolean;
+
+  @Field()
+  proofOfAddressDocumentsVerified: boolean;
+
+  @Field()
+  amlCleared: boolean;
+
+  @Field()
+  cipCleared: boolean;
 
   @Field({ nullable: true })
   createdAt: Date;

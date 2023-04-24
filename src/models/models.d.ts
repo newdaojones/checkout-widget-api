@@ -15,6 +15,6 @@ export interface IDbModels {
   AssetTransfer: typeof AssetTransfer;
   FundsTransfer: typeof FundsTransfer;
   Charge: typeof Charge;
-  User: typeof User;
   CipCheck: typeof CipCheck;
+  User: typeof User;
 }
