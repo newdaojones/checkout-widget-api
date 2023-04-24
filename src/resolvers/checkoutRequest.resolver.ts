@@ -1,4 +1,4 @@
-import { Resolver, Query, Arg, Mutation } from 'type-graphql';
+import { Resolver, Query, Arg, Mutation, Authorized } from 'type-graphql';
 import { CheckoutType } from '../types/checkout.type';
 import { log } from '../utils';
 import { CheckoutRequest } from '../models/CheckoutRequest';

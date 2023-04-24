@@ -1,5 +1,5 @@
 import { Express } from 'express';
-import * as passport from 'passport';
+import passport from 'passport';
 import { initPassport } from './passport';
 
 export const initAuth = (app: Express) => {
@@ -15,5 +15,4 @@ export const initAuth = (app: Express) => {
   initPassport(passport);
 
   return passport;
-
 };

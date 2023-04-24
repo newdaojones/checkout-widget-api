@@ -11,6 +11,7 @@ import { initRoutes } from "./routes";
 import { initGraphql } from "./graphql";
 import { createServer } from "http";
 import { initAuth } from "./auth";
+import { resError } from "./middleware/resError";
 const { sequelize } = models;
 
 async function bootstrap() {
@@ -38,7 +39,7 @@ async function bootstrap() {
 
   const app = express();
   const httpServer = createServer(app);
-
+  app.use(resError);
   app.use(bodyParser.json());
   initAuth(app)
   initRoutes(app);

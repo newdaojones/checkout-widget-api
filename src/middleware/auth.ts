@@ -1,4 +1,4 @@
-import * as passport from 'passport';
+import passport from 'passport';
 import { RequestHandler } from 'express';
 import { CustodialAccount } from '../models/CustodialAccount';
 
