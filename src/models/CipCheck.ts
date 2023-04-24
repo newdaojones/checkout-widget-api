@@ -25,7 +25,7 @@ export class CipCheck extends Model<CipCheck> {
 
   @AllowNull(false)
   @Column(DataType.UUID)
-  custodialAccountId!: string;
+  userId!: string;
 
   @AllowNull(true)
   @Default(null)

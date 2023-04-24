@@ -6,7 +6,7 @@ module.exports = {
         primaryKey: true,
         allowNull: false,
       },
-      custodialAccountId: {
+      userId: {
         type: Sequelize.UUID,
         allowNull: false,
         index: true
@@ -52,10 +52,10 @@ module.exports = {
 
     await queryInterface.addConstraint('cipChecks', {
       type: 'foreign key',
-      fields: ['custodialAccountId'],
-      name: 'cipCheckCustodialAccountId',
+      fields: ['userId'],
+      name: 'cipCheck_userId',
       references: {
-        table: 'custodialAccounts',
+        table: 'users',
         field: 'id',
       },
     });

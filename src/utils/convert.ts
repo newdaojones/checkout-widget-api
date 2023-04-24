@@ -83,7 +83,7 @@ export const convertToAssetTransfer = (data) => {
     transactionHash: data.attributes['transaction-hash'],
     settlementDetails: data.attributes['settlement-details'],
     hotTransfer: data.attributes['hot-transfer'],
-    chargeAccountId: data.attributes['charge-account-id'],
+    chargeAccountId: data.attributes['charge-user-id'],
     cancelledAt: data.attributes['cancelled-at'],
     contingenciesClearedAt: data.attributes['contingencies-cleared-at'],
     contingenciesClearedOn: data.attributes['contingencies-cleared-on'],

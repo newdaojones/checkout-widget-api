@@ -14,14 +14,14 @@ import * as bcrypt from 'bcrypt';
 import { UserService } from '../services/userService';
 
 @Table({
-  tableName: 'custodialAccounts',
+  tableName: 'users',
   name: {
-    singular: 'custodialAccount',
-    plural: 'custodialAccounts'
+    singular: 'user',
+    plural: 'users'
   }
 })
 
-export class CustodialAccount extends Model<CustodialAccount> { 
+export class User extends Model<User> { 
   @PrimaryKey
   @AllowNull(false)
   @Column(DataType.UUID)
@@ -158,7 +158,7 @@ export class CustodialAccount extends Model<CustodialAccount> {
 
   @BeforeUpdate
   @BeforeCreate
-  static async beforeSaveHook(user: CustodialAccount, options: any) {
+  static async beforeSaveHook(user: User, options: any) {
     if (user.password && user.changed('password')) {
       const hashedPw = await UserService.encryptPassword(user.password);
       user.password = hashedPw as string;

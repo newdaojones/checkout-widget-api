@@ -1,6 +1,6 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn('checkouts', 'custodialAccountId', {
+    await queryInterface.addColumn('checkouts', 'userId', {
       type: Sequelize.UUID,
       allowNull: true,
       defaultValue: null
@@ -8,16 +8,16 @@ module.exports = {
 
     await queryInterface.addConstraint('checkouts', {
       type: 'foreign key',
-      fields: ['custodialAccountId'],
-      name: 'checkout_custodialAccountId_id',
+      fields: ['userId'],
+      name: 'checkout_account_id',
       references: {
-        table: 'custodialAccounts',
+        table: 'users',
         field: 'id',
       },
     }, { logging: console.log });
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.removeColumn('checkouts', 'custodialAccountId');
+    await queryInterface.removeColumn('checkouts', 'userId');
   },
 };

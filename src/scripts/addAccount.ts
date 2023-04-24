@@ -3,19 +3,19 @@
 import '../models';
 import { PrimeTrustService } from '../services/primeTrust';
 import { Config } from '../config';
-import { CustodialAccount } from '../models/CustodialAccount';
+import { User } from '../models/User';
 import { Checkout } from '../models/Checkout';
 
 export const migrateCustodialAccount = async () => {
   const primeTrustService = PrimeTrustService.getInstance()
   const contract = await primeTrustService.getContact(Config.primeTrustContactId)
-  const account = await primeTrustService.getAccount(Config.primeTrustAccountId)
+  const accountRes = await primeTrustService.getAccount(Config.primeTrustAccountId)
   const address = contract.included.find((entry) => entry.type === 'addresses')
   const phoneNumber = contract.included.find((entry) => entry.type === 'phone-numbers')
-  const custodialAccount = await CustodialAccount.create({
-    id: account.data.id,
+  const user = await User.create({
+    id: accountRes.data.id,
     contactId: contract.data.id,
-    status: account.data.attributes.status,
+    status: accountRes.data.attributes.status,
     firstName: contract.data.attributes['first-name'],
     lastName: contract.data.attributes['last-name'],
     email: contract.data.attributes['email'],
@@ -37,7 +37,7 @@ export const migrateCustodialAccount = async () => {
   })
 
   await Checkout.update({
-    custodialAccountId: custodialAccount.id,
+    userId: user.id,
   }, { where: {} })
 };
 

@@ -1,6 +1,6 @@
 import passport from 'passport';
 import { RequestHandler } from 'express';
-import { CustodialAccount } from '../models/CustodialAccount';
+import { User } from '../models/User';
 
 declare global {
   namespace Express {
@@ -50,7 +50,7 @@ export const authMiddlewareForGraphql: RequestHandler = async (req, res, next) =
   })(req, res, next);
 };
 
-const trimUser = (user: CustodialAccount) => {
+const trimUser = (user: User) => {
   return {
     id: user.id,
     firstName: user.firstName,

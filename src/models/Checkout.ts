@@ -3,7 +3,7 @@ import { PaidStatus } from '../types/paidStatus.type';
 import { TipType } from '../types/tip.type';
 import { newDinero } from '../utils/dinero';
 import { CheckoutRequest } from './CheckoutRequest';
-import { CustodialAccount } from './CustodialAccount';
+import { User } from './User';
 
 @Table({
   tableName: 'checkouts',
@@ -25,11 +25,11 @@ export class Checkout extends Model<Checkout> {
   @Column(DataType.UUID)
   checkoutRequestId!: string;
 
-  @ForeignKey(() => CustodialAccount)
+  @ForeignKey(() => User)
   @AllowNull(true)
   @Default(null)
   @Column(DataType.UUID)
-  custodialAccountId!: string;
+  userId!: string;
 
   @AllowNull(false)
   @Column(DataType.STRING(255))
@@ -134,9 +134,9 @@ export class Checkout extends Model<Checkout> {
    getCheckoutRequest!: () => Promise<CheckoutRequest>;
    setCheckoutRequest!: (checkoutRequest: CheckoutRequest) => void;
 
-   @BelongsTo(() => CustodialAccount)
-   custodialAccount!: CustodialAccount;
-   getCustodialAccount!: () => Promise<CustodialAccount>;
+   @BelongsTo(() => User)
+   user!: User;
+   getUser!: () => Promise<User>;
    
    //#endregion
 

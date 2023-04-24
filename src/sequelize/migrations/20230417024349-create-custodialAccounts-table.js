@@ -1,6 +1,6 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('custodialAccounts', {
+    await queryInterface.createTable('users', {
       id: {
         type: Sequelize.UUID,
         primaryKey: true,
@@ -128,6 +128,6 @@ module.exports = {
   },
   // eslint-disable-next-line no-unused-vars
   down: async (queryInterface, DataTypes) => {
-    await queryInterface.dropTable('custodialAccounts');
+    await queryInterface.dropTable('users');
   },
 };

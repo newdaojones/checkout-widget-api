@@ -21,7 +21,7 @@ import { CheckoutStep } from "../types/checkoutStep.type";
 import { TransactionType } from "../types/transaction.type";
 import { asyncLock } from "../utils/lock";
 import { CheckoutInputType } from "../types/checkout-input.type";
-import { CustodialAccount } from "../models/CustodialAccount";
+import { User } from "../models/User";
 
 const checkoutSdkService = CheckoutSdkService.getInstance();
 const primeTrustService = PrimeTrustService.getInstance();
@@ -54,19 +54,19 @@ export class CheckoutService {
 
   async processWithCustodial(data: CheckoutInputType) {
     const res = await this.primeTrust.createCustodialAccount(data)
-    const accountId = res.data.id;
+    const userId = res.data.id;
 
     if (!Config.isProduction) {
-      await this.primeTrust.createAccountPolicySandbox(accountId)
+      await this.primeTrust.createAccountPolicySandbox(userId)
     }
 
     const contact = await res.included?.find((entity) => entity.type === 'contacts');
 
     if (!contact) {
-      throw new Error(`Can\'t find a contact for account ${res.data.id}`)
+      throw new Error(`Can\'t find a contact for user ${res.data.id}`)
     }
 
-    const custodialAccount = await CustodialAccount.create({
+    const user = await User.create({
       id: res.data.id,
       contactId: contact.id,
       status: res.data.attributes.status,
@@ -93,7 +93,7 @@ export class CheckoutService {
 
     const checkout = await Checkout.create({
       ...data,
-      custodialAccountId: custodialAccount.id,
+      userId: user.id,
     });
 
     this.publishNotification({
@@ -112,7 +112,7 @@ export class CheckoutService {
   async processAlone(data: CheckoutInputType) {
     const checkout = await Checkout.create({
       ...data,
-      custodialAccountId: Config.primeTrustAccountId,
+      userId: Config.primeTrustAccountId,
     });
 
     this.processCheckout(checkout)
@@ -182,15 +182,15 @@ export class CheckoutService {
 
   private async processAssetTransfer(checkout: Checkout, quote: AssetQuote) {
     try {
-      const custodialAccount = await checkout.getCustodialAccount()
-      const assetTransferMethodRes = await this.primeTrust.createAssetTransferMethod(checkout.walletAddress, custodialAccount.id, custodialAccount.contactId);
+      const user = await checkout.getUser()
+      const assetTransferMethodRes = await this.primeTrust.createAssetTransferMethod(checkout.walletAddress, user.id, user.contactId);
       const assetTransferMethodId = assetTransferMethodRes.data.id
 
       await checkout.update({
         assetTransferMethodId
       })
 
-      const res = await this.primeTrust.createAssetDisbursements(custodialAccount.id, assetTransferMethodId, quote.unitCount);
+      const res = await this.primeTrust.createAssetDisbursements(user.id, assetTransferMethodId, quote.unitCount);
       const assetTransferData = res.included.find((item) => item.type === 'asset-transfers')
 
       if (!assetTransferData) {
@@ -306,7 +306,7 @@ export class CheckoutService {
 
   private async transferFunds(checkout: Checkout) {
     try {
-      const res = await this.primeTrust.transferFunds(checkout.custodialAccountId, checkout.fundsAmountMoney)
+      const res = await this.primeTrust.transferFunds(checkout.userId, checkout.fundsAmountMoney)
 
       if (res.data.attributes.status === 'settled') {
         this.publishNotification({
@@ -356,7 +356,7 @@ export class CheckoutService {
 
   private async processQuote(checkout: Checkout) {
     try {
-      const quotesRes = await this.primeTrust.createQuote(checkout.custodialAccountId, checkout.fundsAmountMoney)
+      const quotesRes = await this.primeTrust.createQuote(checkout.userId, checkout.fundsAmountMoney)
       const assetQuote = await AssetQuote.create({
         ...convertToQuote(quotesRes.data),
         checkoutId: checkout.id
@@ -475,7 +475,7 @@ export class CheckoutService {
           return
         }
 
-        if (checkout.custodialAccountId === Config.primeTrustAccountId) {
+        if (checkout.userId === Config.primeTrustAccountId) {
           this.publishNotification({
             checkoutId: checkout.id,
             status: 'settled',
@@ -684,22 +684,22 @@ export class CheckoutService {
   async contactUpdateHandler(data: any) {
     const contactId = data['resource-id']
     let checkout: Checkout;
-    let custodialAccount: CustodialAccount;
+    let user: User;
     try {
       await asyncLock(`contact-update/${contactId}`, async () => {
-        custodialAccount = await CustodialAccount.findOne({
+        user = await User.findOne({
           where: {
             contactId
           }
         })
 
-        if (!custodialAccount) {
+        if (!user) {
           return
         }
 
         checkout = await Checkout.findOne({
           where: {
-            custodialAccountId: custodialAccount.id,
+            userId: user.id,
             status: PaidStatus.Pending
           }
         })
@@ -713,14 +713,14 @@ export class CheckoutService {
         }
 
         const contactResponse = await this.primeTrust.getContact(contactId);
-        const accountResponse = await this.primeTrust.getAccount(custodialAccount.id)
+        const accountResponse = await this.primeTrust.getAccount(user.id)
 
-        await custodialAccount.update({
+        await user.update({
           ...convertToContact(contactResponse.data),
           status: accountResponse.data.attributes.status
         })
 
-        if (!custodialAccount.isVerified) {
+        if (!user.isVerified) {
           return
         }
         

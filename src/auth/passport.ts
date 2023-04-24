@@ -9,7 +9,7 @@ import * as jwt from 'jsonwebtoken';
 
 // Models
 import models from '../models';
-import { CustodialAccount } from '../models/CustodialAccount';
+import { User } from '../models/User';
 
 export const initPassport = (passport: PassportStatic) => {
 
@@ -18,7 +18,7 @@ export const initPassport = (passport: PassportStatic) => {
   });
 
   passport.deserializeUser((id: string, done: any) => {
-    models.CustodialAccount.findByPk(id).then((user) => {
+    models.User.findByPk(id).then((user) => {
       done(null, { user });
     }).catch((error) => {
       done(error);
@@ -30,7 +30,7 @@ export const initPassport = (passport: PassportStatic) => {
    */
   passport.use(new LocalStrategy({ usernameField: 'email' }, (emailParam, password, done) => {
     const email = emailParam.toLowerCase();
-    models.CustodialAccount.findUser(email, password, async (err: Error, user: CustodialAccount) => {
+    models.User.findUser(email, password, async (err: Error, user: User) => {
       if (err) {
         return done(err, null);
       }
@@ -54,7 +54,7 @@ export const initPassport = (passport: PassportStatic) => {
       if (decoded.id) {
         jwt.verify(token, Config.jwtSecret);
 
-        const user = await models.CustodialAccount.findByPk(decoded.id);
+        const user = await models.User.findByPk(decoded.id);
         if (!user) {
           throw new Error('Can not find user!');
         }
