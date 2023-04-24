@@ -5,7 +5,7 @@ import { Config } from '../config';
 import { PassportStatic } from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as BearerStrategy } from 'passport-http-bearer';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 // Models
 import models from '../models';

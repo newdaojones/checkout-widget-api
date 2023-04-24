@@ -401,7 +401,7 @@ export class PrimeTrustService {
 
     const res = await this.request<any>({
       method: 'POST',
-      url: '/v2/users?include=owners,contacts,webhook-config',
+      url: '/v2/accounts?include=owners,contacts,webhook-config',
       data: requestBody
     })
 
@@ -438,7 +438,7 @@ export class PrimeTrustService {
   async getAccount(userId: string) {
     const res = await this.request<any>({
       method: 'GET',
-      url: `/v2/users/${userId}`
+      url: `/v2/accounts/${userId}`
     })
 
     return res.data
@@ -456,7 +456,7 @@ export class PrimeTrustService {
   async sandboxOpenAccount(userId: string) {
     const res = await this.request<any>({
       method: 'POST',
-      url: `/v2/users/${userId}/sandbox/open`,
+      url: `/v2/accounts/${userId}/sandbox/open`,
     })
 
     return res.data;

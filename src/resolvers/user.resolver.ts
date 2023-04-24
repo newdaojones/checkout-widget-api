@@ -1,5 +1,4 @@
 import { Resolver, Query, Arg, Mutation, Subscription, Root, Authorized, Ctx } from 'type-graphql';
-import { Checkout } from '../models/Checkout';
 import { log } from '../utils';
 import { UserVerifyType } from '../types/userVerify.type';
 import { UserType } from '../types/user.type';
@@ -13,7 +12,7 @@ const primeTrust = PrimeTrustService.getInstance()
 
 @Resolver()
 export class UserResolver {
-  @Query(() => [UserType])
+  @Query(() => UserType)
   @Authorized()
   async me(
     @Ctx('user') user: any
@@ -29,6 +28,16 @@ export class UserResolver {
       func: 'createUser',
       data
     })
+
+    const existingUser = await User.findOne({
+      where: {
+        email: data.email
+      }
+    })
+
+    if (existingUser) {
+      throw new Error(`Already exists account with email: ${data.email}`)
+    }
 
     const res = await primeTrust.createCustodialAccount(data)
     const userId = res.data.id;
@@ -75,7 +84,6 @@ export class UserResolver {
       return !!payload && payload.userId === args.userId;
     }
   })
-
   userVerify(
     @Root() messagePayload: UserVerifyType,
     @Arg('userId') userId: string,

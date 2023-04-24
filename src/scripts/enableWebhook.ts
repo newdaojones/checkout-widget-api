@@ -1,7 +1,7 @@
 // TS_NODE_FILES=true node_modules/.bin/ts-node src/scripts/enableWebhook.ts
 
-import { Config } from '../config';
 import '../models';
+import { Config } from '../config';
 import { PrimeTrustService } from '../services/primeTrust';
 
 export const enableWebhook = async () => {

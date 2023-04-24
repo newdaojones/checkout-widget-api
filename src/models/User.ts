@@ -131,10 +131,6 @@ export class User extends Model<User> {
   @Column(DataType.TEXT)
   deviceId!: string;
 
-  @AllowNull(true)
-  @Column(DataType.TEXT)
-  token: string;
-
   @Column(DataType.DATE)
   createdAt!: Date;
 
@@ -176,6 +172,7 @@ export class User extends Model<User> {
       }
 
       const isPasswordMatch = await UserService.comparePassword(password, user.password);
+
       if (isPasswordMatch) {
         return cb(null, user);
       }

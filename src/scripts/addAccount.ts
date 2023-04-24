@@ -1,4 +1,4 @@
-// TS_NODE_FILES=true node_modules/.bin/ts-node src/scripts/addCustodialAccount.ts
+// TS_NODE_FILES=true node_modules/.bin/ts-node src/scripts/addAccount.ts
 
 import '../models';
 import { PrimeTrustService } from '../services/primeTrust';
@@ -19,6 +19,7 @@ export const migrateCustodialAccount = async () => {
     firstName: contract.data.attributes['first-name'],
     lastName: contract.data.attributes['last-name'],
     email: contract.data.attributes['email'],
+    password: Config.primeTrustAccountPassword,
     phoneNumber: `+1${phoneNumber.attributes['client-input'].replace('-', '')}`,
     gender: contract.data.attributes['sex'] || 'male',
     dob: contract.data.attributes['date-of-birth'],

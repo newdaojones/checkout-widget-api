@@ -3,10 +3,7 @@ import { Field, ID, ObjectType } from "type-graphql";
 @ObjectType()
 export class UserType {
   @Field(() => ID)
-  id: number;
-
-  @Field({ nullable: true })
-  contactId!: string;
+  id: string;
 
   @Field()
   firstName: string;
@@ -20,19 +17,19 @@ export class UserType {
   @Field()
   phoneNumber: string;
 
-  @Field({ nullable: true })
-  gender!: string;
+  @Field()
+  gender: string;
 
-  @Field({ nullable: true })
-  dob!: string;
+  @Field()
+  dob: string;
 
-  @Field({ nullable: true })
-  taxId!: string;
+  @Field()
+  taxId: string;
 
   @Field()
   streetAddress: string;
 
-  @Field({ nullable: true })
+  @Field()
   streetAddress2: string;
 
   @Field()
@@ -48,19 +45,7 @@ export class UserType {
   country: string;
 
   @Field()
-  identityConfirmed: boolean;
-
-  @Field()
-  identityDocumentsVerified: boolean;
-
-  @Field()
-  proofOfAddressDocumentsVerified: boolean;
-
-  @Field()
-  amlCleared: boolean;
-
-  @Field()
-  cipCleared: boolean;
+  isVerified: boolean;
 
   @Field({ nullable: true })
   createdAt: Date;
