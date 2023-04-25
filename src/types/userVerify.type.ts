@@ -10,4 +10,7 @@ export class UserVerifyType {
 
   @Field({ nullable: null })
   error!: string;
+
+  @Field({ nullable: null })
+  token!: string;
 }

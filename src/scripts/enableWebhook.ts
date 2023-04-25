@@ -6,7 +6,12 @@ import { PrimeTrustService } from '../services/primeTrust';
 
 export const enableWebhook = async () => {
   const primeTrustService = PrimeTrustService.getInstance()
-  await primeTrustService.enableWebHookConfig(Config.primeTrustWebhookConfigId)
+  const res = await primeTrustService.getAccount(Config.primeTrustAccountId);
+  const webhookConfigId = res?.included?.find((entry) => entry.type === 'webhook-configs')?.id
+
+  if (webhookConfigId) {
+    await primeTrustService.enableWebHookConfig(webhookConfigId)
+  }
 };
 
 (async () => {

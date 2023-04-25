@@ -163,7 +163,7 @@ export class PrimeTrustService {
           attributes: {
             "asset-id": Config.primeTrustUsdcAssetId,
             "contact-id": contactId,
-            "user-id": userId,
+            "account-id": userId,
             "asset-transfer-type": "ethereum",
             "transfer-direction": "outgoing",
             "label": "User purchase for USDC",
@@ -184,7 +184,7 @@ export class PrimeTrustService {
         data: {
           type: "asset-disbursements",
           attributes: {
-            "user-id": userId,
+            "account-id": userId,
             "unit-count": amount,
             "asset-transfer": {
               "asset-transfer-method-id": assetTransferMethodId
@@ -236,7 +236,7 @@ export class PrimeTrustService {
         data: {
           type: "contributions",
           attributes: {
-            "user-id": Config.primeTrustAccountId,
+            "account-id": Config.primeTrustAccountId,
             "contact-id": Config.primeTrustContactId,
             "funds-transfer-method-id": Config.primeTrustFundsTransferMethodId,
             amount: amount.toUnit()
@@ -283,7 +283,7 @@ export class PrimeTrustService {
         data: {
           type: "quotes",
           attributes: {
-            "user-id": userId,
+            "account-id": userId,
             "asset-id": Config.primeTrustUsdcAssetId,
             "transaction-type": "buy",
             amount: amount.toUnit(),
@@ -299,14 +299,14 @@ export class PrimeTrustService {
   async transferFunds(contactId, amount: Dinero.Dinero) {
     const res = await this.request<any>({
       method: 'POST',
-      url: 'v2/user-cash-transfers',
+      url: 'v2/account-cash-transfers',
       data: {
         data : {
-            type : "user-cash-transfers",
+            type : "account-cash-transfers",
             attributes : {
                 amount : amount.toUnit(),
-                "from-user-id" : Config.primeTrustAccountId,
-                "to-user-id" : contactId
+                "from-account-id" : Config.primeTrustAccountId,
+                "to-account-id" : contactId
             }
         }
       }
@@ -368,16 +368,16 @@ export class PrimeTrustService {
 
     const requestBody = {
       data: {
-        type: "user",
+        type: "account",
         attributes: {
-          "user-type": "custodial",
+          "account-type": "custodial",
           name: `User ${name}`,
           "authorized-signature": name,
           owner: {
             "contact-type": "natural_person",
             name: name,
             email: data.email,
-            "date-of-birth": data.dob,
+            "date-of-birth": moment.utc(data.dob).format('YYYY-MM-DD'),
             "tax-id-number": data.taxId,
             "tax-country": data.country,
             "socure-document-id": data.documentId,
@@ -438,7 +438,7 @@ export class PrimeTrustService {
   async getAccount(userId: string) {
     const res = await this.request<any>({
       method: 'GET',
-      url: `/v2/accounts/${userId}`
+      url: `/v2/accounts/${userId}?include=webhook-config`
     })
 
     return res.data
@@ -492,12 +492,12 @@ export class PrimeTrustService {
   async createAccountPolicySandbox(userId: string) {
     const res = await this.request<any>({
       method: 'POST',
-      url: `/v2/user-policies/sandbox`,
+      url: `/v2/account-policies/sandbox`,
       data: {
         "data": {
-          "type": "user-policies",
+          "type": "account-policies",
           "attributes": {
-              "user-id": userId,
+              "account-id": userId,
               "manual-authorization-on-asset-disbursements": false,
               "owner-verification-on-asset-disbursements": false,
               "require-contact-on-outgoing-asset-transfers": false,

@@ -60,6 +60,7 @@ export class UserResolver {
       gender: data.gender,
       dob: data.dob,
       taxId: data.taxId,
+      password: data.password,
       streetAddress: data.streetAddress,
       streetAddress2: data.streetAddress2,
       city: data.city,

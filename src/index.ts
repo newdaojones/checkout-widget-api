@@ -5,6 +5,7 @@ require('dotenv').config();
 import express from "express";
 import * as bodyParser from 'body-parser';
 import models from './models';
+import cors from 'cors';
 import { checkForMigrations } from "./sequelize/helpers/migrations";
 import { log } from "./utils";
 import { initRoutes } from "./routes";
@@ -39,6 +40,7 @@ async function bootstrap() {
 
   const app = express();
   const httpServer = createServer(app);
+  app.use(cors())
   app.use(resError);
   app.use(bodyParser.json());
   initAuth(app)

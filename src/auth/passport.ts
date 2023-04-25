@@ -51,7 +51,8 @@ export const initPassport = (passport: PassportStatic) => {
     try {
       const decoded: any = jwt.decode(token);
 
-      if (decoded.id) {
+      if (decoded?.id) {
+        console.log('decoded?.id', decoded?.id)
         jwt.verify(token, Config.jwtSecret);
 
         const user = await models.User.findByPk(decoded.id);
@@ -60,7 +61,7 @@ export const initPassport = (passport: PassportStatic) => {
         }
         return done(null, { user });
       } else {
-        throw new Error('Invalid token!');
+        return done(null);
       }
     } catch (err: any) {
       return done(err);

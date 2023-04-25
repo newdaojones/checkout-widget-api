@@ -22,6 +22,7 @@ import { CheckoutInputType } from "../types/checkout-input.type";
 import { User } from "../models/User";
 import { NotificationService } from "./notificationService";
 import { CheckoutRequest } from "../models/CheckoutRequest";
+import { UserService } from "./userService";
 
 const checkoutSdkService = CheckoutSdkService.getInstance();
 const primeTrustService = PrimeTrustService.getInstance();
@@ -190,6 +191,15 @@ export class CheckoutService {
         transactionId: null,
         date: new Date()
       })
+    }
+  }
+
+  async enableWebhook(userId: string) {
+    const res = await this.primeTrust.getAccount(userId);
+    const webhookConfigId = res?.included?.find((entry) => entry.type === 'webhook-configs')?.id
+
+    if (webhookConfigId) {
+      await this.primeTrust.enableWebHookConfig(webhookConfigId)
     }
   }
 
@@ -368,8 +378,14 @@ export class CheckoutService {
       })
 
       await checkoutRequest?.sendWebhook()
-
       await this.processCharge(checkout);
+
+      const user = await checkout.getUser();
+      if (user.id === Config.primeTrustAccountId) {
+        return
+      }  
+
+      await this.enableWebhook(user.id);
       await this.processFundsTransfer(checkout);
     } catch (err) {
       log.warn({
@@ -663,7 +679,8 @@ export class CheckoutService {
         this.notification.publishUserStatus({
           userId: user.id,
           status: user.status,
-          error: ''
+          error: '',
+          token: user.status === 'opened' ? UserService.generateJWTToken(user) : undefined,
         })
       })
     } catch (err) {
@@ -680,7 +697,8 @@ export class CheckoutService {
         this.notification.publishUserStatus({
           userId: user.id,
           status: user.status,
-          error: err.message
+          error: err.message,
+          token: ''
         })  
       }
 
