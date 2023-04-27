@@ -52,7 +52,6 @@ export const initPassport = (passport: PassportStatic) => {
       const decoded: any = jwt.decode(token);
 
       if (decoded?.id) {
-        console.log('decoded?.id', decoded?.id)
         jwt.verify(token, Config.jwtSecret);
 
         const user = await models.User.findByPk(decoded.id);
@@ -64,7 +63,7 @@ export const initPassport = (passport: PassportStatic) => {
         return done(null);
       }
     } catch (err: any) {
-      return done(err);
+      return done(null);
     }
   }));
 };
