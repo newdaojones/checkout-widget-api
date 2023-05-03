@@ -20,6 +20,13 @@ export class UserResolver {
     return User.findByPk(user.id);
   }
 
+  @Query(() => String)
+  async agreementPreview(
+    @Arg('name') name: string
+  ) {
+    return primeTrust.getAgreementPreview(name)
+  }
+
   @Mutation(() => UserType)
   async createUser(
     @Arg('data') data: UserInputType,

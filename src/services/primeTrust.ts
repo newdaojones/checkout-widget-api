@@ -510,4 +510,24 @@ export class PrimeTrustService {
 
     return res.data
   }
+
+  async getAgreementPreview(name: string) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: '/v2/agreement-previews',
+      data: {
+        data: {
+          type: "agreement-previews",
+          attributes: {
+            name,
+            "authorized-signature": " ",
+            "account-type": "custodial",
+            "contact-id": Config.primeTrustContactId
+          }
+        }
+      }
+    })
+
+    return res.data?.data?.attributes?.content
+  }
 }
