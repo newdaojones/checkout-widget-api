@@ -112,11 +112,11 @@ export class CheckoutService {
       })
 
       const checkoutRequest = await checkout?.getCheckoutRequest()
-        await checkoutRequest?.update({
-          status: PaidStatus.Error
-        })
-  
-        await checkoutRequest?.sendWebhook()
+      await checkoutRequest?.update({
+        status: PaidStatus.Error
+      })
+
+      await checkoutRequest?.sendWebhook()
 
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
@@ -176,11 +176,11 @@ export class CheckoutService {
       })
 
       const checkoutRequest = await checkout?.getCheckoutRequest()
-        await checkoutRequest?.update({
-          status: PaidStatus.Error
-        })
-  
-        await checkoutRequest?.sendWebhook()
+      await checkoutRequest?.update({
+        status: PaidStatus.Error
+      })
+
+      await checkoutRequest?.sendWebhook()
 
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
@@ -245,11 +245,11 @@ export class CheckoutService {
       })
 
       const checkoutRequest = await checkout?.getCheckoutRequest()
-        await checkoutRequest?.update({
-          status: PaidStatus.Error
-        })
-  
-        await checkoutRequest?.sendWebhook()
+      await checkoutRequest?.update({
+        status: PaidStatus.Error
+      })
+
+      await checkoutRequest?.sendWebhook()
 
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
@@ -297,11 +297,11 @@ export class CheckoutService {
       })
 
       const checkoutRequest = await checkout?.getCheckoutRequest()
-        await checkoutRequest?.update({
-          status: PaidStatus.Error
-        })
-  
-        await checkoutRequest?.sendWebhook()
+      await checkoutRequest?.update({
+        status: PaidStatus.Error
+      })
+
+      await checkoutRequest?.sendWebhook()
 
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
@@ -346,11 +346,11 @@ export class CheckoutService {
       })
 
       const checkoutRequest = await checkout?.getCheckoutRequest()
-        await checkoutRequest?.update({
-          status: PaidStatus.Error
-        })
-  
-        await checkoutRequest?.sendWebhook()
+      await checkoutRequest?.update({
+        status: PaidStatus.Error
+      })
+
+      await checkoutRequest?.sendWebhook()
 
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
@@ -381,12 +381,19 @@ export class CheckoutService {
       await this.processCharge(checkout);
 
       const user = await checkout.getUser();
-      if (user.id === Config.primeTrustAccountId) {
-        return
-      }  
 
       await this.enableWebhook(user.id);
-      await this.processFundsTransfer(checkout);
+      // await this.processFundsTransfer(checkout);
+
+      if (!Config.isProduction) {
+        await this.primeTrust.sandboxAddFunds(Config.primeTrustAccountId, checkout.totalChargeAmountMoney)
+      }
+
+      if (checkout.userId === Config.primeTrustAccountId) {
+        await this.processQuote(checkout)
+      } else {
+        await this.transferFunds(checkout)
+      }
     } catch (err) {
       log.warn({
         func: 'processCheckout',
@@ -475,7 +482,7 @@ export class CheckoutService {
         await checkoutRequest?.update({
           status: PaidStatus.Error
         })
-  
+
         await checkoutRequest?.sendWebhook()
 
         this.notification.publishTransactionStatus({
@@ -541,7 +548,7 @@ export class CheckoutService {
         await checkoutRequest?.update({
           status: PaidStatus.Error
         })
-  
+
         await checkoutRequest?.sendWebhook()
 
         this.notification.publishTransactionStatus({
@@ -600,7 +607,7 @@ export class CheckoutService {
         await checkoutRequest?.update({
           status: PaidStatus.Paid
         })
-  
+
         await checkoutRequest?.sendWebhook(Math.abs(assetTransfer.unitCount), assetTransfer.transactionHash)
 
         this.notification.publishTransactionStatus({
@@ -630,7 +637,7 @@ export class CheckoutService {
         await checkoutRequest?.update({
           status: PaidStatus.Error
         })
-  
+
         await checkoutRequest?.sendWebhook()
 
         this.notification.publishTransactionStatus({
@@ -699,7 +706,7 @@ export class CheckoutService {
           status: user.status,
           error: err.message,
           token: ''
-        })  
+        })
       }
 
       throw err
@@ -714,8 +721,8 @@ export class CheckoutService {
 
     try {
       switch (data['resource-type']) {
-        case 'funds_transfers':
-          await this.fundsTransferUpdateHandler(data['resource_id'])
+        // case 'funds_transfers':
+        //   await this.fundsTransferUpdateHandler(data['resource_id'])
         case 'facilitated_trades':
           await this.quotesUpdateHandler(data['resource_id'])
         case 'asset_transfers':

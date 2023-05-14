@@ -301,13 +301,13 @@ export class PrimeTrustService {
       method: 'POST',
       url: 'v2/account-cash-transfers',
       data: {
-        data : {
-            type : "account-cash-transfers",
-            attributes : {
-                amount : amount.toUnit(),
-                "from-account-id" : Config.primeTrustAccountId,
-                "to-account-id" : contactId
-            }
+        data: {
+          type: "account-cash-transfers",
+          attributes: {
+            amount: amount.toUnit(),
+            "from-account-id": Config.primeTrustAccountId,
+            "to-account-id": contactId
+          }
         }
       }
     })
@@ -462,6 +462,23 @@ export class PrimeTrustService {
     return res.data;
   }
 
+  async sandboxAddFunds(userId: string, amount: Dinero.Dinero) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: `/v2/accounts/${userId}/sandbox/fund`,
+      data: {
+        data: {
+          type: "accounts",
+          attributes: {
+            amount: amount.toUnit()
+          }
+        }
+      }
+    })
+
+    return res.data;
+  }
+
   async getWebhookConfigs() {
     const res = await this.request<any>({
       method: 'GET',
@@ -497,12 +514,12 @@ export class PrimeTrustService {
         "data": {
           "type": "account-policies",
           "attributes": {
-              "account-id": userId,
-              "manual-authorization-on-asset-disbursements": false,
-              "owner-verification-on-asset-disbursements": false,
-              "require-contact-on-outgoing-asset-transfers": false,
-              "review-asset-transfers": false,
-              "allow-organizational-contacts": true
+            "account-id": userId,
+            "manual-authorization-on-asset-disbursements": false,
+            "owner-verification-on-asset-disbursements": false,
+            "require-contact-on-outgoing-asset-transfers": false,
+            "review-asset-transfers": false,
+            "allow-organizational-contacts": true
           }
         }
       }

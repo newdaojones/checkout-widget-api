@@ -11,6 +11,9 @@ export const enableWebhook = async () => {
 
   if (webhookConfigId) {
     await primeTrustService.enableWebHookConfig(webhookConfigId)
+    console.log('enabled webhook for', Config.uri)
+  } else {
+    console.log('No webhook config id')
   }
 };
 
