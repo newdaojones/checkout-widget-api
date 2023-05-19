@@ -371,7 +371,7 @@ export class PrimeTrustService {
         type: "account",
         attributes: {
           "account-type": "custodial",
-          name: `User ${name}`,
+          name: name,
           "authorized-signature": name,
           owner: {
             "contact-type": "natural_person",
