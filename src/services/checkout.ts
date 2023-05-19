@@ -284,7 +284,6 @@ export class CheckoutService {
       } else {
         throw new Error(`Failed transfer funds: res.data.attributes.status`)
       }
-
     } catch (err) {
       log.warn({
         func: 'transferFunds',
@@ -317,14 +316,6 @@ export class CheckoutService {
 
   private async processQuote(checkout: Checkout) {
     try {
-      const quotesRes = await this.primeTrust.createQuote(checkout.userId, checkout.fundsAmountMoney)
-      const assetQuote = await AssetQuote.create({
-        ...convertToQuote(quotesRes.data),
-        checkoutId: checkout.id
-      })
-
-      await this.primeTrust.executeQuote(assetQuote.id)
-
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         status: 'processing',
@@ -334,6 +325,14 @@ export class CheckoutService {
         transactionId: null,
         date: new Date()
       })
+
+      const quotesRes = await this.primeTrust.createQuote(checkout.userId, checkout.fundsAmountMoney)
+      const assetQuote = await AssetQuote.create({
+        ...convertToQuote(quotesRes.data),
+        checkoutId: checkout.id
+      })
+
+      await this.primeTrust.executeQuote(assetQuote.id)
     } catch (err) {
       log.warn({
         func: 'processQuote',
@@ -386,14 +385,10 @@ export class CheckoutService {
       // await this.processFundsTransfer(checkout);
 
       if (!Config.isProduction) {
-        await this.primeTrust.sandboxAddFunds(Config.primeTrustAccountId, checkout.totalChargeAmountMoney)
+        await this.primeTrust.sandboxAddFunds(Config.primeTrustSettlementAccountId, checkout.totalChargeAmountMoney)
       }
 
-      if (checkout.userId === Config.primeTrustAccountId) {
-        await this.processQuote(checkout)
-      } else {
-        await this.transferFunds(checkout)
-      }
+      await this.transferFunds(checkout)
     } catch (err) {
       log.warn({
         func: 'processCheckout',
@@ -449,7 +444,7 @@ export class CheckoutService {
           return
         }
 
-        if (checkout.userId === Config.primeTrustAccountId) {
+        if (checkout.userId === Config.primeTrustSettlementAccountId) {
           this.notification.publishTransactionStatus({
             checkoutId: checkout.id,
             status: 'settled',

@@ -236,8 +236,8 @@ export class PrimeTrustService {
         data: {
           type: "contributions",
           attributes: {
-            "account-id": Config.primeTrustAccountId,
-            "contact-id": Config.primeTrustContactId,
+            "account-id": Config.primeTrustSettlementAccountId,
+            "contact-id": Config.primeTrustSettlementContactId,
             "funds-transfer-method-id": Config.primeTrustFundsTransferMethodId,
             amount: amount.toUnit()
           }
@@ -305,7 +305,7 @@ export class PrimeTrustService {
           type: "account-cash-transfers",
           attributes: {
             amount: amount.toUnit(),
-            "from-account-id": Config.primeTrustAccountId,
+            "from-account-id": Config.primeTrustSettlementAccountId,
             "to-account-id": contactId
           }
         }
@@ -539,7 +539,7 @@ export class PrimeTrustService {
             name,
             "authorized-signature": " ",
             "account-type": "custodial",
-            "contact-id": Config.primeTrustContactId
+            "contact-id": Config.primeTrustSettlementContactId
           }
         }
       }
