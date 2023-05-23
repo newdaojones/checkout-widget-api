@@ -2,6 +2,7 @@ import { Config } from "../config";
 
 import Container from "typedi";
 import { PubSubEngine } from 'graphql-subscriptions';
+import bluebird from "bluebird";
 
 import { AssetQuote } from "../models/AssetQuote";
 import { AssetTransfer } from "../models/AssetTransfer";
@@ -86,10 +87,14 @@ export class CheckoutService {
 
       const charge = await this.checkoutSdk.charge(checkout);
       const chargeData = convertToCharge(charge);
-      await Charge.create({
+      const chargeRecord = await Charge.create({
         checkoutId: checkout.id,
         ...chargeData
       })
+
+      if (chargeRecord.status !== 'Authorized') {
+        throw new Error(`Charge failed: ${chargeRecord.status}`)
+      }
 
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
@@ -364,6 +369,7 @@ export class CheckoutService {
   }
 
   async processCheckout(checkout: Checkout) {
+    await bluebird.delay(3000)
     const checkoutRequest = await checkout.getCheckoutRequest()
 
     try {
