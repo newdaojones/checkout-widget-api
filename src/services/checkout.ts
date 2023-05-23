@@ -369,7 +369,7 @@ export class CheckoutService {
   }
 
   async processCheckout(checkout: Checkout) {
-    await bluebird.delay(3000)
+    await bluebird.delay(2000)
     const checkoutRequest = await checkout.getCheckoutRequest()
 
     try {
