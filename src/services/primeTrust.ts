@@ -189,7 +189,7 @@ export class PrimeTrustService {
             "asset-transfer": {
               "asset-transfer-method-id": assetTransferMethodId
             },
-            "hot-transfer": false,
+            "hot-transfer": true,
             "owner-verification-type": "waived_by_owner"
           }
         }
@@ -223,6 +223,15 @@ export class PrimeTrustService {
           }
         }
       }
+    })
+
+    return res.data;
+  }
+
+  async sandboxOwnerVerify(disbursementAuthorizationId: string) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: `/v2/disbursement-authorizations/${disbursementAuthorizationId}/sandbox/verify-owner`,
     })
 
     return res.data;
@@ -276,20 +285,26 @@ export class PrimeTrustService {
   }
 
   async createQuote(userId: string, amount: Dinero.Dinero) {
+    const data = {
+      type: "quotes",
+      attributes: {
+        "account-id": userId,
+        "asset-id": Config.primeTrustUsdcAssetId,
+        "transaction-type": "buy",
+        amount: amount.toUnit(),
+        hot: true
+      }
+    }
+
+    if (!Config.isProduction) {
+      data["trade-desk-id"] = "0ecfe116-e2d8-4141-a5bc-0d6ea7670e3e";
+    }
+
     const res = await this.request<any>({
       method: 'POST',
       url: `/v2/quotes`,
       data: {
-        data: {
-          type: "quotes",
-          attributes: {
-            "account-id": userId,
-            "asset-id": Config.primeTrustUsdcAssetId,
-            "transaction-type": "buy",
-            amount: amount.toUnit(),
-            hot: false
-          }
-        }
+        data
       }
     })
 
