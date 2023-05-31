@@ -1,9 +1,12 @@
-import { Model, Table, Column, PrimaryKey, AllowNull, DataType, Default, IsEmail, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import { Model, Table, Column, PrimaryKey, AllowNull, DataType, Default, IsEmail, ForeignKey, BelongsTo, HasOne } from 'sequelize-typescript';
 import { PaidStatus } from '../types/paidStatus.type';
 import { TipType } from '../types/tip.type';
 import { newDinero } from '../utils/dinero';
 import { CheckoutRequest } from './CheckoutRequest';
 import { User } from './User';
+import { Charge } from './Charge';
+import { AssetTransfer } from './AssetTransfer';
+import { AssetQuote } from './AssetQuote';
 
 @Table({
   tableName: 'checkouts',
@@ -12,7 +15,7 @@ import { User } from './User';
     plural: 'checkouts'
   }
 })
-export class Checkout extends Model<Checkout> { 
+export class Checkout extends Model<Checkout> {
   @PrimaryKey
   @AllowNull(false)
   @Default(DataType.UUIDV4)
@@ -127,18 +130,30 @@ export class Checkout extends Model<Checkout> {
   @Column(DataType.DATE)
   updatedAt!: Date;
 
-   //#region Associations
+  //#region Associations
 
-   @BelongsTo(() => CheckoutRequest)
-   checkoutRequest!: CheckoutRequest;
-   getCheckoutRequest!: () => Promise<CheckoutRequest>;
-   setCheckoutRequest!: (checkoutRequest: CheckoutRequest) => void;
+  @BelongsTo(() => CheckoutRequest)
+  checkoutRequest!: CheckoutRequest;
+  getCheckoutRequest!: () => Promise<CheckoutRequest>;
+  setCheckoutRequest!: (checkoutRequest: CheckoutRequest) => void;
 
-   @BelongsTo(() => User)
-   user!: User;
-   getUser!: () => Promise<User>;
-   
-   //#endregion
+  @BelongsTo(() => User)
+  user!: User;
+  getUser!: () => Promise<User>;
+
+  @HasOne(() => Charge)
+  charge!: Charge;
+  getCharge!: () => Promise<Charge>;
+
+  @HasOne(() => AssetTransfer)
+  assetTransfer!: AssetTransfer;
+  getAssetTransfer: () => Promise<AssetTransfer>;
+
+  @HasOne(() => AssetQuote)
+  assetQuote!: AssetQuote;
+  getAssetQuote: () => Promise<AssetQuote>;
+
+  //#endregion
 
   get fullName() {
     return `${this.firstName} ${this.lastName}`
