@@ -7,6 +7,8 @@ import { User } from './User';
 import { Charge } from './Charge';
 import { AssetTransfer } from './AssetTransfer';
 import { AssetQuote } from './AssetQuote';
+import { emailService } from '../email';
+import * as moment from 'moment-timezone';
 
 @Table({
   tableName: 'checkouts',
@@ -232,5 +234,25 @@ export class Checkout extends Model<Checkout> {
     const feeMoney = this.getFeeMoney(amount)
 
     return amountMoney.subtract(feeMoney)
+  }
+
+  async sendReceipt() {
+    if (!this.email) {
+      return
+    }
+
+    const assetTransfer = await this.getAssetTransfer()
+    const charge = await this.getCharge()
+    const checkoutRequest = await this.getCheckoutRequest()
+
+    emailService.sendReceiptEmail(this.email, {
+      name: this.fullName,
+      transactionHash: assetTransfer.transactionHash,
+      paymentMethod: charge.last4,
+      dateTime: moment.utc(assetTransfer.contingenciesClearedAt).format('MMMM Do YYYY, hh:mm'),
+      amount: Math.abs(assetTransfer.unitCount),
+      fee: this.feeAmountMoney.toUnit(),
+      partnerId: checkoutRequest?.partnerOrderId
+    })
   }
 }

@@ -150,10 +150,11 @@ export class CheckoutService {
         assetTransferMethodId
       })
 
-      const assetTransferMoney = checkout.getAssetTransferMoney(quote.unitCount);
-      const feeMoney = checkout.getFeeMoney(quote.unitCount);
+      // TODO: need to calc fee correctly
+      // const assetTransferMoney = checkout.getAssetTransferMoney(quote.unitCount);
+      // const feeMoney = checkout.getFeeMoney(quote.unitCount);
 
-      const res = await this.primeTrust.createAssetDisbursements(user.id, assetTransferMethodId, assetTransferMoney);
+      const res = await this.primeTrust.createAssetDisbursements(user.id, assetTransferMethodId, quote.unitCount);
 
       const assetTransferData = res.included.find((item) => item.type === 'asset-transfers')
 
@@ -161,14 +162,14 @@ export class CheckoutService {
         throw new Error('Can not find asset transfer data')
       }
 
-      if (!feeMoney.isZero()) { // send fee to main custodial account
-        await this.primeTrust.transferAssets(user.id, Config.primeTrustMainAccountId, feeMoney)
-      }
+      // if (!feeMoney.isZero()) { // send fee to main custodial account
+      //   await this.primeTrust.transferAssets(user.id, Config.primeTrustMainAccountId, feeMoney)
+      // }
 
       await AssetTransfer.create({
         ...convertToAssetTransfer(assetTransferData),
         checkoutId: checkout.id,
-        fee: feeMoney.toUnit(),
+        fee: 0,
         disbursementAuthorizationId: res.data.id
       })
 
@@ -177,7 +178,7 @@ export class CheckoutService {
         status: 'processing',
         paidStatus: checkout.status,
         step: CheckoutStep.Asset,
-        message: `Processing transfer assets for ${assetTransferMoney.toUnit()} USDC`,
+        message: `Processing transfer assets for ${quote.unitCount} USDC`,
         transactionId: null,
         date: new Date()
       })
@@ -621,7 +622,7 @@ export class CheckoutService {
         })
 
         await checkoutRequest?.sendWebhook(Math.abs(assetTransfer.unitCount), assetTransfer.transactionHash)
-
+        await checkout.sendReceipt()
         this.notification.publishTransactionStatus({
           checkoutId: checkout.id,
           step: CheckoutStep.Asset,

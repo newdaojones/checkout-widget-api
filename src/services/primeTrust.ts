@@ -176,7 +176,7 @@ export class PrimeTrustService {
     return res.data
   }
 
-  async createAssetDisbursements(userId: string, assetTransferMethodId: string, amount: Dinero.Dinero) {
+  async createAssetDisbursements(userId: string, assetTransferMethodId: string, amount: number) {
     const res = await this.request<any>({
       method: 'POST',
       url: '/v2/asset-disbursements?include=asset-transfer,disbursement-authorization',
@@ -185,7 +185,7 @@ export class PrimeTrustService {
           type: "asset-disbursements",
           attributes: {
             "account-id": userId,
-            "unit-count": amount.toUnit(),
+            "unit-count": amount,
             "asset-transfer": {
               "asset-transfer-method-id": assetTransferMethodId
             },
