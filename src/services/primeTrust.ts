@@ -176,7 +176,7 @@ export class PrimeTrustService {
     return res.data
   }
 
-  async createAssetDisbursements(userId: string, assetTransferMethodId: string, amount: number) {
+  async createAssetDisbursements(userId: string, assetTransferMethodId: string, amount: Dinero.Dinero) {
     const res = await this.request<any>({
       method: 'POST',
       url: '/v2/asset-disbursements?include=asset-transfer,disbursement-authorization',
@@ -185,7 +185,7 @@ export class PrimeTrustService {
           type: "asset-disbursements",
           attributes: {
             "account-id": userId,
-            "unit-count": amount,
+            "unit-count": amount.toUnit(),
             "asset-transfer": {
               "asset-transfer-method-id": assetTransferMethodId
             },
@@ -311,7 +311,7 @@ export class PrimeTrustService {
     return res.data;
   }
 
-  async transferFunds(contactId, amount: Dinero.Dinero) {
+  async transferFunds(from, to, amount: Dinero.Dinero) {
     const res = await this.request<any>({
       method: 'POST',
       url: 'v2/account-cash-transfers',
@@ -320,8 +320,29 @@ export class PrimeTrustService {
           type: "account-cash-transfers",
           attributes: {
             amount: amount.toUnit(),
-            "from-account-id": Config.primeTrustSettlementAccountId,
-            "to-account-id": contactId
+            "from-account-id": from,
+            "to-account-id": to
+          }
+        }
+      }
+    })
+
+    return res.data
+  }
+
+  async transferAssets(from, to, amount: Dinero.Dinero) {
+    const res = await this.request<any>({
+      method: 'POST',
+      url: 'v2/internal-asset-transfers',
+      data: {
+        data: {
+          type: "internal-asset-transfers",
+          attributes: {
+            "unit-count": amount.toUnit(),
+            "asset-id": Config.primeTrustUsdcAssetId,
+            "from-account-id": from,
+            "to-account-id": to,
+            "reference": "For Trade Fee"
           }
         }
       }

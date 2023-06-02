@@ -37,6 +37,9 @@ export class CheckoutType {
   feeType: string;
 
   @Field()
+  feeMethod: number;
+
+  @Field()
   tip: number;
 
   @Field()

@@ -24,6 +24,7 @@ import { User } from "../models/User";
 import { NotificationService } from "./notificationService";
 import { CheckoutRequest } from "../models/CheckoutRequest";
 import { UserService } from "./userService";
+import { TipType } from "../types/tip.type";
 
 const checkoutSdkService = CheckoutSdkService.getInstance();
 const primeTrustService = PrimeTrustService.getInstance();
@@ -65,6 +66,8 @@ export class CheckoutService {
 
     const checkout = await Checkout.create({
       ...data,
+      fee: Config.defaultFee.fee,
+      feeType: Config.defaultFee.feeType as TipType,
       userId,
     });
 
@@ -147,16 +150,25 @@ export class CheckoutService {
         assetTransferMethodId
       })
 
-      const res = await this.primeTrust.createAssetDisbursements(user.id, assetTransferMethodId, quote.unitCount);
+      const assetTransferMoney = checkout.getAssetTransferMoney(quote.unitCount);
+      const feeMoney = checkout.getFeeMoney(quote.unitCount);
+
+      const res = await this.primeTrust.createAssetDisbursements(user.id, assetTransferMethodId, assetTransferMoney);
+
       const assetTransferData = res.included.find((item) => item.type === 'asset-transfers')
 
       if (!assetTransferData) {
         throw new Error('Can not find asset transfer data')
       }
 
+      if (!feeMoney.isZero()) { // send fee to main custodial account
+        await this.primeTrust.transferAssets(user.id, Config.primeTrustMainAccountId, feeMoney)
+      }
+
       await AssetTransfer.create({
         ...convertToAssetTransfer(assetTransferData),
         checkoutId: checkout.id,
+        fee: feeMoney.toUnit(),
         disbursementAuthorizationId: res.data.id
       })
 
@@ -165,7 +177,7 @@ export class CheckoutService {
         status: 'processing',
         paidStatus: checkout.status,
         step: CheckoutStep.Asset,
-        message: `Processing transfer assets for ${quote.unitCount} USDC`,
+        message: `Processing transfer assets for ${assetTransferMoney.toUnit()} USDC`,
         transactionId: null,
         date: new Date()
       })
@@ -272,7 +284,7 @@ export class CheckoutService {
 
   private async transferFunds(checkout: Checkout) {
     try {
-      const res = await this.primeTrust.transferFunds(checkout.userId, checkout.fundsAmountMoney)
+      const res = await this.primeTrust.transferFunds(Config.primeTrustSettlementAccountId, checkout.userId, checkout.fundsAmountMoney)
 
       if (res.data.attributes.status === 'settled') {
         this.notification.publishTransactionStatus({
@@ -499,7 +511,6 @@ export class CheckoutService {
 
       throw err
     }
-
   }
 
   private async quotesUpdateHandler(assetQuoteId: string) {

@@ -47,11 +47,7 @@ export class CheckoutInputType {
 
   @IsNumber()
   @Field()
-  fee: number;
-
-  @IsString()
-  @Field()
-  feeType: TipType;
+  feeMethod: number;
 
   @IsString()
   @Field()

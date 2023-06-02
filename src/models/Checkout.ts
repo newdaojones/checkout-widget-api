@@ -90,6 +90,11 @@ export class Checkout extends Model<Checkout> {
   feeType!: TipType
 
   @AllowNull(false)
+  @Default(1)
+  @Column(DataType.INTEGER.UNSIGNED)
+  feeMethod!: number
+
+  @AllowNull(false)
   @Column(DataType.STRING(255))
   streetAddress!: string;
 
@@ -179,6 +184,10 @@ export class Checkout extends Model<Checkout> {
     return this.amountMoney.multiply(this.tip / 100)
   }
 
+  get fundsAmountMoney() {
+    return this.amountMoney.add(this.tipAmountMoney)
+  }
+
   get feeAmountMoney() {
     if (!this.fee) {
       return this.zeroMoney;
@@ -188,14 +197,40 @@ export class Checkout extends Model<Checkout> {
       return newDinero(this.fee * 100, this.currency)
     }
 
-    return this.amountMoney.multiply(this.fee / 100)
+    return this.fundsAmountMoney.multiply(this.fee / 100)
   }
 
   get totalChargeAmountMoney() {
-    return this.amountMoney.add(this.tipAmountMoney).add(this.feeAmountMoney)
+    if (this.feeMethod === 1) { // Card
+      return this.fundsAmountMoney.add(this.feeAmountMoney)
+    }
+
+    return this.fundsAmountMoney;
   }
 
-  get fundsAmountMoney() {
-    return this.amountMoney.add(this.tipAmountMoney)
+  getFeeMoney(amount: number) {
+    const amountMoney = newDinero(amount * 100, this.currency);
+
+    if (this.feeMethod === 1) {
+      return this.zeroMoney
+    }
+
+    if (this.feeType === TipType.Cash) {
+      newDinero(this.fee * 100, this.currency)
+    }
+
+    return amountMoney.multiply(this.fee / 100)
+  }
+
+  getAssetTransferMoney(amount: number) {
+    const amountMoney = newDinero(amount * 100, this.currency);
+
+    if (this.feeMethod === 1) {
+      return amountMoney
+    }
+
+    const feeMoney = this.getFeeMoney(amount)
+
+    return amountMoney.subtract(feeMoney)
   }
 }

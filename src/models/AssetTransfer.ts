@@ -35,6 +35,10 @@ export class AssetTransfer extends Model<AssetTransfer> {
   @Column(DataType.DECIMAL(10, 5))
   unitCountExpected!: number;
 
+  @AllowNull(false)
+  @Column(DataType.DECIMAL(10, 5))
+  fee!: number;
+
   @AllowNull(true)
   @Default(null)
   @Column(DataType.STRING(255))
@@ -87,6 +91,6 @@ export class AssetTransfer extends Model<AssetTransfer> {
   checkout!: Checkout;
   getCheckout!: () => Promise<Checkout>;
   setCheckout!: (caller: Checkout) => void;
-  
+
   //#endregion
 }

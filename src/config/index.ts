@@ -6,10 +6,12 @@ export const Config = {
   checkoutProcessingChannelId: process.env.CHECKOUT_PROCESSING_CHANNEL_ID,
   primeTrustAccountEmail: process.env.PRIME_TRUST_ACCOUNT_EMAIL,
   primeTrustAccountPassword: process.env.PRIME_TRUST_ACCOUNT_PASSWORD,
-  primeTrustSettlementAccountId: process.env.PRIME_TRUST_SETTLEMENT_CUSTODY_ACCOUNT_ID,
-  primeTrustSettlementContactId: process.env.PRIME_TRUST_SETTLEMENT_CUSTODY_CONTACT_ID,
-  primeTrustAccountId: process.env.PRIME_TRUST_CUSTODY_ACCOUNT_ID,
-  primeTrustContactId: process.env.PRIME_TRUST_CUSTODY_CONTACT_ID,
+  primeTrustMainAccountId: process.env.PRIME_TRUST_MAIN_CUSTODIAL_ACCOUNT_ID,
+  primeTrustMainContactId: process.env.PRIME_TRUST_MAIN_CUSTODIAL_CONTACT_ID,
+  primeTrustSettlementAccountId: process.env.PRIME_TRUST_SETTLEMENT_CUSTODIAL_ACCOUNT_ID,
+  primeTrustSettlementContactId: process.env.PRIME_TRUST_SETTLEMENT_CUSTODIAL_CONTACT_ID,
+  primeTrustAccountId: process.env.PRIME_TRUST_CUSTODIAL_ACCOUNT_ID,
+  primeTrustContactId: process.env.PRIME_TRUST_CUSTODIAL_CONTACT_ID,
   primeTrustUsdcAssetId: process.env.PRIME_TRUST_USDC_ASSET_ID,
   primeTrustFundsTransferMethodId: process.env.PRIME_TRUST_FUNDS_TRANSFER_METHOD_ID,
   primeTrustApiUri: process.env.PRIME_TRUST_API_URI,
@@ -18,7 +20,7 @@ export const Config = {
   frontendUri: process.env.FRONT_END_URI || 'https://test.checkout.mybackpack.app/',
   uri: process.env.URI || 'https://test.checkout.mybackpack.app/api',
   defaultFee: {
-    fee: 2,
+    fee: 6,
     feeType: 'percent'
   }
 }
