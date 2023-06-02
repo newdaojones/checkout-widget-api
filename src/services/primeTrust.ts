@@ -342,7 +342,8 @@ export class PrimeTrustService {
             "asset-id": Config.primeTrustUsdcAssetId,
             "from-account-id": from,
             "to-account-id": to,
-            "reference": "For Trade Fee"
+            "reference": "For Trade Fee",
+            "hot-transfer": true
           }
         }
       }
