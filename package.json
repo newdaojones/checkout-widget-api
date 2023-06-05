@@ -7,11 +7,12 @@
     "start-local": "TS_NODE_FILES=true ts-node-dev ./src/index.ts",
     "start": "NODE_ENV=production node dist/index.js",
     "staging": "NODE_ENV=staging pm2 start dist/index.js",
-    "enable-webhook": "TS_NODE_FILES=true node_modules/.bin/ts-node src/scripts/enableWebhook.ts",
     "production": "NODE_ENV=production pm2 start dist/index.js",
-    "build": "tsc --extendedDiagnostics",
+    "build": "tsc --extendedDiagnostics && yarn copy-assets",
     "build:schema": "gql-gen",
-    "sequelize": "sequelize-cli"
+    "sequelize": "sequelize-cli",
+    "enable-webhook": "TS_NODE_FILES=true node_modules/.bin/ts-node src/scripts/enableWebhook.ts",
+    "copy-assets": "ts-node src/scripts/copyAssets"
   },
   "dependencies": {
     "@apollo/server": "^4.4.1",
@@ -45,6 +46,7 @@
     "sequelize": "^6.29.0",
     "sequelize-cli": "^6.6.0",
     "sequelize-typescript": "^2.1.5",
+    "shelljs": "^0.8.5",
     "short-uuid": "^4.2.2",
     "typedi": "0.8.0",
     "umzug": "^3.2.1",
