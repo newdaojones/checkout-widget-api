@@ -25,6 +25,7 @@ import { NotificationService } from "./notificationService";
 import { CheckoutRequest } from "../models/CheckoutRequest";
 import { UserService } from "./userService";
 import { TipType } from "../types/tip.type";
+import { TransactionType } from "../types/transaction.type";
 
 const checkoutSdkService = CheckoutSdkService.getInstance();
 const primeTrustService = PrimeTrustService.getInstance();
@@ -754,5 +755,41 @@ export class CheckoutService {
         err,
       }, 'Failed webhook handler')
     }
+  }
+
+  async getCheckoutStatus(checkout: Checkout) {
+    const transaction: TransactionType = {
+      checkoutId: checkout.id,
+      step: CheckoutStep.Charge,
+      status: checkout.status === PaidStatus.Paid ? 'settled' : checkout.status === PaidStatus.Error ? 'failed' : checkout.status,
+      paidStatus: checkout.status,
+      message: '',
+      transactionId: null,
+      date: new Date()
+    }
+
+
+    const charge = await checkout.getCharge()
+    const assetQuote = await checkout.getAssetQuote()
+    const assetTransfer = await checkout.getAssetTransfer()
+
+    if (assetTransfer) {
+      transaction.step = CheckoutStep.Asset
+    } else if (assetQuote) {
+      transaction.step = CheckoutStep.Quote
+    } else if (charge) {
+      transaction.step = CheckoutStep.Charge
+    }
+
+    if (checkout.status === PaidStatus.Paid && assetTransfer) {
+      transaction.transactionId = assetTransfer?.transactionHash
+      transaction.message = 'Settled transfer assets'
+    } else if (checkout.status === PaidStatus.Processing) {
+      transaction.message = `Processing ${transaction.step}`
+    } else if (transaction.paidStatus === PaidStatus.Error) {
+      transaction.message = `Failed checkout for ${transaction.step}`
+    }
+
+    return transaction
   }
 }

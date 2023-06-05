@@ -1,4 +1,5 @@
 import { Field, ID, ObjectType } from "type-graphql";
+import { CheckoutType } from "./checkout.type";
 
 @ObjectType()
 export class CheckoutRequestType {
@@ -31,4 +32,7 @@ export class CheckoutRequestType {
 
   @Field({ nullable: true })
   updatedAt: Date;
+
+  @Field(type => CheckoutType, { nullable: true, description: 'checkout' })
+  checkout: CheckoutType
 }

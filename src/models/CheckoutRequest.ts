@@ -1,8 +1,11 @@
 import axios from 'axios';
-import { Model, Table, Column, PrimaryKey, AllowNull, DataType, Default, IsEmail } from 'sequelize-typescript';
+import { Model, Table, Column, PrimaryKey, AllowNull, DataType, Default, IsEmail, HasOne } from 'sequelize-typescript';
 import { PaidStatus } from '../types/paidStatus.type';
 import { log } from '../utils';
 import shortUUID from 'short-uuid';
+
+import { Checkout } from './Checkout'
+
 @Table({
   tableName: 'checkoutRequests',
   name: {
@@ -10,7 +13,7 @@ import shortUUID from 'short-uuid';
     plural: 'checkoutRequests'
   }
 })
-export class CheckoutRequest extends Model<CheckoutRequest> { 
+export class CheckoutRequest extends Model<CheckoutRequest> {
   @PrimaryKey
   @AllowNull(false)
   @Default(DataType.UUIDV4)
@@ -60,6 +63,10 @@ export class CheckoutRequest extends Model<CheckoutRequest> {
 
   @Column(DataType.DATE)
   updatedAt!: Date;
+
+  @HasOne(() => Checkout)
+  checkout!: Checkout;
+  getCheckout!: () => Promise<Checkout>;
 
   async sendWebhook(amount?: number, transactionHash?: string) {
     if (!this.webhook) {
