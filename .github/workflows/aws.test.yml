@@ -34,6 +34,7 @@ jobs:
         username: ${{ vars.SSH_USER }}
         key: ${{ secrets.AWS_PRIVATE_KEY }}
         script: |
+          cd /home/ubuntu/checkout-widget-api
           yarn sequelize db:migrate
           yarn sequelize db:seed:all
 
