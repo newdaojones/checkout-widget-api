@@ -23,7 +23,7 @@ export class CheckoutResolver {
     const checkout = await Checkout.findByPk(id);
 
     if (!checkout) {
-      throw new Error(`Not found checkout request for ${id}`)
+      throw new Error(`Not found checkout for ${id}`)
     }
 
     const transaction = await checkoutService.getCheckoutStatus(checkout)
