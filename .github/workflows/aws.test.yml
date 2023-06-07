@@ -31,9 +31,9 @@ jobs:
     - name: Publish
       uses: burnett01/rsync-deployments@5.2
       with:
-        switches: -avzr --delete
+        switches: -avzr --delete --relative
         path: ./dist
-        remote_path: /home/ubuntu/checkout-widget-api/dist
+        remote_path: /home/ubuntu/checkout-widget-api/
         remote_host: ${{ vars.SSH_HOST }}
         remote_user: ubuntu
         remote_key: ${{ secrets.AWS_PRIVATE_KEY }}
