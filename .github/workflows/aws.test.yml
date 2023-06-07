@@ -27,6 +27,16 @@ jobs:
           yarn
           yarn build
 
+    - name: DB Migration
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ vars.SSH_HOST }}
+        username: ${{ vars.SSH_USER }}
+        key: ${{ secrets.AWS_PRIVATE_KEY }}
+        script: |
+          yarn sequelize db:migrate
+          yarn sequelize db:seed:all
+
     - name: Reload
       uses: appleboy/ssh-action@master
       with:
