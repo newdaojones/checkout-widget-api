@@ -14,59 +14,18 @@ jobs:
     environment: test
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Set up Node.js version
-      uses: actions/setup-node@v3
+    - name: Pull & Build
+      uses: appleboy/ssh-action@master
       with:
-        node-version: 16.15.0
-        cache: yarn
-
-    - name: Build
-      env:
-        PORT: ${{ vars.PORT }}
-        DB_NAME: ${{ vars.DB_NAME }}
-        DB_USERNAME: ${{ vars.DB_USERNAME }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        DB_HOST: ${{ vars.DB_HOST }}
-        DB_PORT: ${{ vars.DB_PORT }}
-        DB_LOGGING: false
-        CHECKOUT_PUBLIC_KEY: ${{ secrets.CHECKOUT_PUBLIC_KEY }}
-        CHECKOUT_SECURE_KEY: ${{ secrets.CHECKOUT_SECURE_KEY }}
-        CHECKOUT_PROCESSING_CHANNEL_ID: ${{ vars.CHECKOUT_PROCESSING_CHANNEL_ID }}
-        PRIME_TRUST_ACCOUNT_EMAIL: ${{ vars.PRIME_TRUST_ACCOUNT_EMAIL }}
-        PRIME_TRUST_ACCOUNT_PASSWORD: ${{ secrets.PRIME_TRUST_ACCOUNT_PASSWORD }}
-        PRIME_TRUST_MAIN_CUSTODIAL_ACCOUNT_ID: ${{ vars.PRIME_TRUST_MAIN_CUSTODIAL_ACCOUNT_ID }}
-        PRIME_TRUST_MAIN_CUSTODIAL_CONTACT_ID: ${{ vars.PRIME_TRUST_MAIN_CUSTODIAL_CONTACT_ID }}
-        PRIME_TRUST_CUSTODIAL_ACCOUNT_ID: ${{ vars.PRIME_TRUST_CUSTODIAL_ACCOUNT_ID }}
-        PRIME_TRUST_CUSTODIAL_CONTACT_ID: ${{ vars.PRIME_TRUST_CUSTODIAL_CONTACT_ID }}
-        PRIME_TRUST_SETTLEMENT_CUSTODIAL_ACCOUNT_ID: ${{ vars.PRIME_TRUST_SETTLEMENT_CUSTODIAL_ACCOUNT_ID }}
-        PRIME_TRUST_SETTLEMENT_CUSTODIAL_CONTACT_ID: ${{ vars.PRIME_TRUST_SETTLEMENT_CUSTODIAL_CONTACT_ID }}
-        PRIME_TRUST_USDC_ASSET_ID: ${{ vars.PRIME_TRUST_USDC_ASSET_ID }}
-        PRIME_TRUST_FUNDS_TRANSFER_METHOD_ID: ${{ vars.PRIME_TRUST_FUNDS_TRANSFER_METHOD_ID }}
-        PRIME_TRUST_API_URI: ${{ vars.PRIME_TRUST_API_URI }}
-        PRIME_TRUST_WEBHOOK_CONFIG_ID: ${{ vars.PRIME_TRUST_WEBHOOK_CONFIG_ID }}
-        FRONT_END_URI: ${{ vars.FRONT_END_URI }}
-        URI: ${{ vars.URI }}
-        NODE_ENV: staging
-        JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      run: |
-        yarn install
-        yarn build
-
-    - name: Publish
-      uses: burnett01/rsync-deployments@5.2
-      with:
-        switches: -avzr --delete --relative
-        path: ./dist
-        remote_path: /home/ubuntu/checkout-widget-api/
-        remote_host: ${{ vars.SSH_HOST }}
-        remote_user: ubuntu
-        remote_key: ${{ secrets.AWS_PRIVATE_KEY }}
+        host: ${{ vars.SSH_HOST }}
+        username: ${{ vars.SSH_USER }}
+        key: ${{ secrets.AWS_PRIVATE_KEY }}
+        script: |
+          cd /home/ubuntu/checkout-widget-api/
+          git checkout test
+          git pull
+          yarn
+          yarn build
 
     - name: Reload
       uses: appleboy/ssh-action@master
