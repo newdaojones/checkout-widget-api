@@ -40,18 +40,18 @@ export const initGraphql = async (app: Express, httpServer: http.Server) => {
     server: httpServer,
     path: '/graphql',
   });
-  
+
 
   const schema = await buildSchema({
     resolvers: resolversPattern,
     authChecker: customAuthChecker,
     pubSub: Container.get('pubsub'),
-    container: Container
+    container: Container,
   });
 
   // Save the returned server's info so we can shutdown this server later
   const serverCleanup = useServer({ schema }, wsServer);
-  
+
 
   const server = new ApolloServer({
     schema,
@@ -71,8 +71,8 @@ export const initGraphql = async (app: Express, httpServer: http.Server) => {
         },
       },
     ],
-  });  
-  
+  });
+
   await server.start();
 
   app.use('/graphql', authMiddlewareForGraphql);

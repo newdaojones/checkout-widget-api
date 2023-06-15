@@ -141,6 +141,11 @@ export class CheckoutService {
     }
   }
 
+  private toFixed(num: number, fixed: number) {
+    var re = new RegExp('^-?\\d+(?:\.\\d{0,' + (fixed || -1) + '})?');
+    return Number(num.toString().match(re)[0]);
+  }
+
   private async processAssetTransfer(checkout: Checkout, quote: AssetQuote) {
     try {
       const user = await checkout.getUser()
@@ -155,7 +160,7 @@ export class CheckoutService {
       // const assetTransferMoney = checkout.getAssetTransferMoney(quote.unitCount);
       // const feeMoney = checkout.getFeeMoney(quote.unitCount);
 
-      const res = await this.primeTrust.createAssetDisbursements(user.id, assetTransferMethodId, quote.unitCount);
+      const res = await this.primeTrust.createAssetDisbursements(user.id, assetTransferMethodId, this.toFixed(quote.unitCount, 1));
 
       const assetTransferData = res.included.find((item) => item.type === 'asset-transfers')
 

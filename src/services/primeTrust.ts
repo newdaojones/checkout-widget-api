@@ -216,8 +216,8 @@ export class PrimeTrustService {
         data: {
           type: "asset-transfers",
           attributes: {
-            "settlement-details": "Transfer confirmed in transaction with hash 0x1f265eff3ab28ada13b53f0f663164221379d0a244cd8239d999ee1cbedc83cc.",
-            "transaction-hash": "0x1f265eff3ab28ada13b53f0f663164221379d0a244cd8239d999ee1cbedc83cc",
+            "settlement-details": "Transfer confirmed in transaction with hash 0x6e0eb882b6ed087eadd01a8476b12bece54d3fb6a2407679a3396391bfe16fcc.",
+            "transaction-hash": "0x6e0eb882b6ed087eadd01a8476b12bece54d3fb6a2407679a3396391bfe16fcc",
             "comments-1": "comments: Asset received via sandbox/settle. max length 60",
             "comments-2": "comments2: This is space for additional comments."
           }
@@ -297,7 +297,7 @@ export class PrimeTrustService {
     }
 
     if (!Config.isProduction) {
-      data["trade-desk-id"] = "0ecfe116-e2d8-4141-a5bc-0d6ea7670e3e";
+      data.attributes["trade-desk-id"] = "0ecfe116-e2d8-4141-a5bc-0d6ea7670e3e";
     }
 
     const res = await this.request<any>({
