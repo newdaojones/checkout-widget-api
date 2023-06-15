@@ -160,7 +160,7 @@ export class CheckoutService {
       // const assetTransferMoney = checkout.getAssetTransferMoney(quote.unitCount);
       // const feeMoney = checkout.getFeeMoney(quote.unitCount);
 
-      const res = await this.primeTrust.createAssetDisbursements(user.id, assetTransferMethodId, this.toFixed(quote.unitCount, 1));
+      const res = await this.primeTrust.createAssetDisbursements(user.id, assetTransferMethodId, quote.unitCount);
 
       const assetTransferData = res.included.find((item) => item.type === 'asset-transfers')
 
