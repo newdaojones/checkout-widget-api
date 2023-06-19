@@ -2,11 +2,13 @@
 import * as express from 'express';
 import { CheckoutRequest } from '../models/CheckoutRequest';
 import { Config } from '../config';
+import { authMiddlewareForPartner } from '../middleware/auth';
 const router = express.Router();
 
-router.post('/checkoutRequest', async (req, res) => {
+router.post('/checkoutRequest', authMiddlewareForPartner, async (req, res) => {
   try {
     const data = req.body;
+    const partner = req.partner
     if (!data.phoneNumber) {
       throw new Error('Required phone number')
     }
@@ -19,7 +21,10 @@ router.post('/checkoutRequest', async (req, res) => {
       throw new Error('Required wallet address')
     }
 
-    const checkoutRequest = await CheckoutRequest.generateCheckoutRequest(data)
+    const checkoutRequest = await CheckoutRequest.generateCheckoutRequest({
+      ...data,
+      partnerId: partner.id
+    })
     res.status(200).json({
       id: checkoutRequest.id,
       uri: `${Config.frontendUri}/${checkoutRequest.id}`

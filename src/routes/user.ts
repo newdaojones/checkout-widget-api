@@ -24,7 +24,10 @@ router.post('/login', async (req, res, next) => {
       return res.error('Invalid email or password', 401);
     }
 
-    return res.status(202).json(UserService.generateJWTToken(user));
+    return res.status(202).json(UserService.generateJWTToken({
+      id: user.id,
+      email: user.email
+    }));
   })(req, res, next);
 });
 

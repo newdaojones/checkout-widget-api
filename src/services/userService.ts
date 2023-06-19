@@ -11,8 +11,8 @@ import { Config } from '../config';
  */
 export class UserService {
   // Generate JWT Auth Token with a user
-  static generateJWTToken(user: { id: string, email: string }) {
-    const token = jwt.sign({ id: user.id, email: user.email }, Config.jwtSecret, { expiresIn: `${Config.jwtExpires}h`});
+  static generateJWTToken(user: any) {
+    const token = jwt.sign(user, Config.jwtSecret, { expiresIn: `${Config.jwtExpires}h` });
     return token;
   }
 

@@ -1,10 +1,11 @@
 import axios from 'axios';
-import { Model, Table, Column, PrimaryKey, AllowNull, DataType, Default, IsEmail, HasOne } from 'sequelize-typescript';
+import { Model, Table, Column, PrimaryKey, AllowNull, DataType, Default, IsEmail, HasOne, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { PaidStatus } from '../types/paidStatus.type';
 import { log } from '../utils';
 import shortUUID from 'short-uuid';
 
 import { Checkout } from './Checkout'
+import { Partner } from './Partner';
 
 @Table({
   tableName: 'checkoutRequests',
@@ -19,6 +20,11 @@ export class CheckoutRequest extends Model<CheckoutRequest> {
   @Default(DataType.UUIDV4)
   @Column(DataType.UUID)
   id!: string;
+
+  @AllowNull(true)
+  @Column(DataType.UUID)
+  @ForeignKey(() => Partner)
+  partnerId!: string;
 
   @AllowNull(true)
   @Default(null)
@@ -53,11 +59,6 @@ export class CheckoutRequest extends Model<CheckoutRequest> {
   @Column(DataType.ENUM('pending', 'processing', 'paid', 'postponed', 'error'))
   status!: PaidStatus;
 
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.TEXT)
-  webhook!: string
-
   @Column(DataType.DATE)
   createdAt!: Date;
 
@@ -68,13 +69,18 @@ export class CheckoutRequest extends Model<CheckoutRequest> {
   checkout!: Checkout;
   getCheckout!: () => Promise<Checkout>;
 
+  @BelongsTo(() => Partner)
+  partner!: Partner;
+  getPartner!: () => Promise<Partner>;
+
   async sendWebhook(amount?: number, transactionHash?: string) {
-    if (!this.webhook) {
+    const partner = await this.getPartner()
+    if (!partner?.webhook) {
       return
     }
 
     try {
-      await axios.post(this.webhook, {
+      await axios.post(partner.webhook, {
         id: this.id,
         walletAddress: this.walletAddress,
         email: this.email,

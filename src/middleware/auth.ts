@@ -1,6 +1,9 @@
 import passport from 'passport';
 import { RequestHandler } from 'express';
 import { User } from '../models/User';
+import * as jwt from 'jsonwebtoken';
+import { Config } from '../config';
+import { Partner } from '../models/Partner';
 
 declare global {
   namespace Express {
@@ -13,6 +16,7 @@ declare global {
     }
     interface Request {
       user?: User
+      partner?: Partner
     }
   }
 }
@@ -59,4 +63,63 @@ const trimUser = (user: User) => {
     email: user.email,
     phoneNumber: user.phoneNumber
   };
+};
+
+export const authMiddlewareForPartner: RequestHandler = async (req, res, next) => {
+  const { authorization } = req.headers;
+  if (!authorization) {
+    res.status(401).json({
+      message: 'Authentication is required!',
+    });
+    return;
+  }
+
+  const token = authorization.replace('Bearer ', '');
+
+  jwt.verify(token, Config.jwtSecret, async (err: any, decoded: any) => {
+    if (err) {
+      const message = err.message === 'jwt expired' ? 'Token expired, please login' : err.message;
+      res.status(401).json({
+        message,
+      });
+      return;
+    }
+
+    const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+    var userAgent = req.headers['user-agent'];
+
+
+    if (decoded.ipAddress !== ipAddress) {
+      res.status(401).json({
+        message: 'Failed Authentication',
+      });
+      return;
+    }
+
+    if (decoded.userAgent !== userAgent) {
+      res.status(401).json({
+        message: 'Failed Authentication',
+      });
+      return;
+    }
+
+    const partner = await Partner.findOne({ where: { id: decoded.id } });
+
+    if (!partner) {
+      res.status(401).json({
+        message: 'Partner not found, please login',
+      });
+      return;
+    }
+
+    if (!partner.isApproved) {
+      res.status(422).json({
+        message: 'Your account is not approved yet. please wait.',
+      });
+    }
+
+    req.partner = partner
+
+    next();
+  });
 };

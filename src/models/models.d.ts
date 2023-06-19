@@ -7,6 +7,8 @@ import { FundsTransfer } from './FundsTransfer';
 import { Charge } from './Charge';
 import { User } from './User';
 import { CipCheck } from './CipCheck';
+import { Partner } from './Partner';
+
 export interface IDbModels {
   PrimeTrustAccount: typeof PrimeTrustAccount;
   Checkout: typeof Checkout;
@@ -17,4 +19,5 @@ export interface IDbModels {
   Charge: typeof Charge;
   CipCheck: typeof CipCheck;
   User: typeof User;
+  Partner: typeof Partner;
 }
