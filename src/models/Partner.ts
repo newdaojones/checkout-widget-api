@@ -23,6 +23,7 @@ import { UserService } from '../services/userService';
 export class Partner extends Model<Partner> {
   @PrimaryKey
   @AllowNull(false)
+  @Default(DataType.UUIDV4)
   @Column(DataType.UUID)
   id!: string;
 

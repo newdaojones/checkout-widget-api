@@ -13,7 +13,7 @@ module.exports = {
       fields: ['partnerId'],
       name: 'checkoutRequests_partnerId',
       references: {
-        table: 'partnerId',
+        table: 'partners',
         field: 'id',
       },
     }, { logging: console.log });
