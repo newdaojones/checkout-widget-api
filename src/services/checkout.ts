@@ -404,16 +404,34 @@ export class CheckoutService {
       await checkoutRequest?.sendWebhook()
       await this.processCharge(checkout);
 
-      const user = await checkout.getUser();
+      await checkout.update({
+        status: PaidStatus.Paid
+      })
 
-      await this.enableWebhook(user.id);
-      // await this.processFundsTransfer(checkout);
+      await checkoutRequest?.update({
+        status: PaidStatus.Paid
+      })
 
-      if (!Config.isProduction) {
-        await this.primeTrust.sandboxAddFunds(Config.primeTrustSettlementAccountId, checkout.totalChargeAmountMoney)
-      }
+      this.notification.publishTransactionStatus({
+        checkoutId: checkout.id,
+        step: CheckoutStep.Charge,
+        status: 'charged',
+        paidStatus: checkout.status,
+        transactionId: '',
+        message: `Charged ${checkout.totalChargeAmountMoney.toUnit()}`,
+        date: new Date()
+      })
 
-      await this.transferFunds(checkout)
+      // const user = await checkout.getUser();
+
+      // await this.enableWebhook(user.id);
+      // // await this.processFundsTransfer(checkout);
+
+      // if (!Config.isProduction) {
+      //   await this.primeTrust.sandboxAddFunds(Config.primeTrustSettlementAccountId, checkout.totalChargeAmountMoney)
+      // }
+
+      // await this.transferFunds(checkout)
     } catch (err) {
       log.warn({
         func: 'processCheckout',
@@ -786,6 +804,9 @@ export class CheckoutService {
       transaction.step = CheckoutStep.Charge
     }
 
+    if (checkout.status === PaidStatus.Paid) {
+      transaction.message = `Charged ${checkout.totalChargeAmountMoney.toFormat()}`
+    }
     if (checkout.status === PaidStatus.Paid && assetTransfer) {
       transaction.transactionId = assetTransfer?.transactionHash
       transaction.message = 'Settled transfer assets'
