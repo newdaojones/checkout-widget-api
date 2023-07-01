@@ -1,5 +1,6 @@
 import { Model, Table, Column, PrimaryKey, AllowNull, DataType, Default, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { Checkout } from './Checkout';
+import { PaidStatus } from '../types/paidStatus.type';
 
 @Table({
   tableName: 'assetTransfers',
@@ -14,26 +15,19 @@ export class AssetTransfer extends Model<AssetTransfer> {
   @Column(DataType.UUID)
   id!: string;
 
-  @AllowNull(false)
-  @Column(DataType.UUID)
-  disbursementAuthorizationId!: string;
-
   @ForeignKey(() => Checkout)
   @AllowNull(false)
   @Column(DataType.UUID)
   checkoutId!: string;
 
   @AllowNull(false)
-  @Column(DataType.STRING(50))
-  status!: string;
+  @Default(PaidStatus.Pending)
+  @Column(DataType.ENUM(...Object.values(PaidStatus)))
+  status!: PaidStatus;
 
   @AllowNull(false)
-  @Column(DataType.DECIMAL(10, 5))
-  unitCount!: number;
-
-  @AllowNull(false)
-  @Column(DataType.DECIMAL(10, 5))
-  unitCountExpected!: number;
+  @Column(DataType.DECIMAL(10, 6))
+  amount!: number;
 
   @AllowNull(false)
   @Column(DataType.DECIMAL(10, 5))
@@ -46,38 +40,14 @@ export class AssetTransfer extends Model<AssetTransfer> {
 
   @AllowNull(true)
   @Default(null)
-  @Column(DataType.TEXT)
-  settlementDetails!: string
+  @Column(DataType.DATE)
+  settledAt!: Date
 
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.BOOLEAN)
-  hotTransfer!: boolean;
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.STRING(255))
-  chargeAccountId!: string
 
   @AllowNull(true)
   @Default(null)
   @Column(DataType.DATE)
   cancelledAt!: Date
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.DATE)
-  contingenciesClearedAt!: Date
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.DATE)
-  contingenciesClearedOn!: Date
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.DATE)
-  reconciledAt!: Date
 
   @Column(DataType.DATE)
   createdAt!: Date;

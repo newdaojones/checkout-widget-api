@@ -56,7 +56,6 @@ export class UserResolver {
 
     const user = await User.create({
       id: res.data.id,
-      contactId: contact.id,
       status: res.data.attributes.status,
       firstName: data.firstName,
       lastName: data.lastName,
@@ -72,14 +71,7 @@ export class UserResolver {
       state: data.state,
       zip: data.zip,
       country: data.country,
-      deviceId: data.deviceId,
-      documentId: data.documentId
     })
-
-    if (!Config.isProduction) {
-      // await primeTrust.sandboxOpenAccount(res.data.id)
-      // await primeTrust.createAccountPolicySandbox(userId)
-    }
 
     return user
   }

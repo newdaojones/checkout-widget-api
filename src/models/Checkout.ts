@@ -244,8 +244,8 @@ export class Checkout extends Model<Checkout> {
       name: this.fullName,
       transactionHash: assetTransfer.transactionHash,
       paymentMethod: charge.last4,
-      dateTime: moment.utc(assetTransfer.contingenciesClearedAt).format('MMMM Do YYYY, hh:mm'),
-      amount: Math.abs(assetTransfer.unitCount),
+      dateTime: moment.utc(assetTransfer.settledAt).format('MMMM Do YYYY, hh:mm'),
+      amount: Math.abs(assetTransfer.amount),
       fee: this.feeAmountMoney.toUnit(),
       partnerId: checkoutRequest?.partnerOrderId
     })

@@ -61,12 +61,4 @@ export class UserInputType {
   @IsOptional()
   @Field({ nullable: true })
   country: string;
-
-  @IsString()
-  @Field({ nullable: true })
-  documentId!: string;
-
-  @IsString()
-  @Field({ nullable: true })
-  deviceId!: string;
 }
