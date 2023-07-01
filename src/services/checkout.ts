@@ -31,7 +31,7 @@ export class CheckoutService {
 
   constructor(private checkoutSdk: CheckoutSdkService, private pubSub: PubSubEngine, private notification: NotificationService) { }
 
-  async process(data: CheckoutInputType, userId: string) {
+  async process(data: CheckoutInputType) {
     if (data.checkoutRequestId) {
       const checkoutRequest = await CheckoutRequest.findByPk(data.checkoutRequestId);
 
@@ -60,7 +60,6 @@ export class CheckoutService {
       ...data,
       fee: Config.defaultFee.fee,
       feeType: Config.defaultFee.feeType as TipType,
-      userId,
     });
 
     this.processCheckout(checkout)
@@ -188,13 +187,10 @@ export class CheckoutService {
 
 
     const charge = await checkout.getCharge()
-    const assetQuote = await checkout.getAssetQuote()
     const assetTransfer = await checkout.getAssetTransfer()
 
     if (assetTransfer) {
       transaction.step = CheckoutStep.Asset
-    } else if (assetQuote) {
-      transaction.step = CheckoutStep.Quote
     } else if (charge) {
       transaction.step = CheckoutStep.Charge
     }

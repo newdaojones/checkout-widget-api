@@ -5,10 +5,7 @@ import { UserType } from '../types/user.type';
 import { UserInputType } from '../types/user-input.type';
 import { NotificationType } from '../services/notificationService';
 import { Config } from '../config';
-import { PrimeTrustService } from '../services/primeTrust';
 import { User } from '../models/User';
-
-const primeTrust = PrimeTrustService.getInstance()
 
 @Resolver()
 export class UserResolver {
@@ -24,7 +21,7 @@ export class UserResolver {
   async agreementPreview(
     @Arg('name') name: string
   ) {
-    return primeTrust.getAgreementPreview(name)
+    // return primeTrust.getAgreementPreview(name)
   }
 
   @Mutation(() => UserType)
@@ -46,8 +43,9 @@ export class UserResolver {
       throw new Error(`Already exists account with email: ${data.email}`)
     }
 
-    const res = await primeTrust.createCustodialAccount(data)
-    const userId = res.data.id;
+    // const res = await primeTrust.createCustodialAccount(data)
+    // const userId = res.data.id;
+    const res: any = {}
 
 
     const contact = await res.included?.find((entity) => entity.type === 'contacts');
@@ -79,8 +77,8 @@ export class UserResolver {
     })
 
     if (!Config.isProduction) {
-      await primeTrust.sandboxOpenAccount(res.data.id)
-      await primeTrust.createAccountPolicySandbox(userId)
+      // await primeTrust.sandboxOpenAccount(res.data.id)
+      // await primeTrust.createAccountPolicySandbox(userId)
     }
 
     return user

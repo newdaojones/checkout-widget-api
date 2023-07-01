@@ -48,7 +48,7 @@ export class CheckoutResolver {
     if (totalAmount >= 500) {
       throw new Error('Required user registration for purchasing over $500')
     }
-    return checkoutService.process(data, Config.primeTrustAccountId);
+    return checkoutService.process(data);
   }
 
   @Mutation(() => CheckoutType)
@@ -61,7 +61,7 @@ export class CheckoutResolver {
       data
     })
 
-    return checkoutService.process(data, user.id);
+    return checkoutService.process(data);
   }
 
   @Subscription({

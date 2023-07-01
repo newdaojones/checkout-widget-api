@@ -6,7 +6,6 @@ import { CheckoutRequest } from './CheckoutRequest';
 import { User } from './User';
 import { Charge } from './Charge';
 import { AssetTransfer } from './AssetTransfer';
-import { AssetQuote } from './AssetQuote';
 import { emailService } from '../email';
 import * as moment from 'moment-timezone';
 
@@ -155,10 +154,6 @@ export class Checkout extends Model<Checkout> {
   @HasOne(() => AssetTransfer)
   assetTransfer!: AssetTransfer;
   getAssetTransfer: () => Promise<AssetTransfer>;
-
-  @HasOne(() => AssetQuote)
-  assetQuote!: AssetQuote;
-  getAssetQuote: () => Promise<AssetQuote>;
 
   //#endregion
 
