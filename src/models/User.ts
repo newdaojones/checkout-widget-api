@@ -45,7 +45,7 @@ export class User extends Model<User> {
   @Column(DataType.STRING(100))
   email!: string;
 
-  @AllowNull(true)
+  @AllowNull(false)
   @Column(DataType.TEXT)
   password: string;
 
@@ -53,20 +53,17 @@ export class User extends Model<User> {
   @Column(DataType.STRING(100))
   phoneNumber!: string;
 
-  @AllowNull(true)
-  @Default(null)
+  @AllowNull(false)
   @Column(DataType.STRING(20))
   gender!: string;
 
-  @AllowNull(true)
-  @Default(null)
+  @AllowNull(false)
   @Column(DataType.STRING(20))
   dob!: string;
 
-  @AllowNull(true)
-  @Default(null)
+  @AllowNull(false)
   @Column(DataType.STRING(100))
-  taxId!: string;
+  ssn!: string;
 
   @AllowNull(false)
   @Column(DataType.STRING(255))
@@ -87,10 +84,9 @@ export class User extends Model<User> {
 
   @AllowNull(false)
   @Column(DataType.STRING(10))
-  zip!: string;
+  postalCode!: string;
 
-  @AllowNull(true)
-  @Default(null)
+  @AllowNull(false)
   @Column(DataType.STRING(255))
   country!: string;
 

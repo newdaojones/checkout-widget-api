@@ -7,7 +7,7 @@ import { UserInputType } from '../types/user-input.type';
 import { NotificationType } from '../services/notificationService';
 import { User } from '../models/User';
 import { BridgeService } from '../services/bridgeService';
-import { AgreementLink } from '../models/agreementLinks';
+import { AgreementLink } from '../models/AgreementLink';
 import { KycLink } from '../models/KycLink';
 
 const bridgeService = BridgeService.getInstance()
@@ -68,11 +68,11 @@ export class UserResolver {
         street_line_2: data.streetAddress2,
         city: data.city,
         state: data.state,
-        postal_code: data.zip,
+        postal_code: data.postalCode,
         country: data.country
       },
       dob: data.dob,
-      ssn: data.taxId,
+      ssn: data.ssn,
       signed_agreement_id: data.signedAgreementId
     }, idempotenceId)
 
@@ -85,13 +85,13 @@ export class UserResolver {
       phoneNumber: data.phoneNumber,
       gender: data.gender,
       dob: data.dob,
-      taxId: data.taxId,
+      ssn: data.ssn,
       password: data.password,
       streetAddress: data.streetAddress,
       streetAddress2: data.streetAddress2,
       city: data.city,
       state: data.state,
-      zip: data.zip,
+      postalCode: data.postalCode,
       country: data.country,
       requirementsDue: res.requirements_due,
       futureRequirementsDue: res.future_requirements_due,
