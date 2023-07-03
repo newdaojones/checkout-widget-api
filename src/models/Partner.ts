@@ -76,7 +76,7 @@ export class Partner extends Model<Partner> {
 
   @AllowNull(false)
   @Column(DataType.STRING(10))
-  zip!: string;
+  postalCode!: string;
 
   @AllowNull(true)
   @Default(null)

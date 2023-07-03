@@ -48,6 +48,9 @@ export class UserType {
   isVerified: boolean;
 
   @Field({ nullable: true })
+  token: string;
+
+  @Field({ nullable: true })
   createdAt: Date;
 
   @Field({ nullable: true })

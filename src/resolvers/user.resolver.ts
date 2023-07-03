@@ -9,6 +9,7 @@ import { User } from '../models/User';
 import { BridgeService } from '../services/bridgeService';
 import { AgreementLink } from '../models/AgreementLink';
 import { KycLink } from '../models/KycLink';
+import { UserService } from '../services/userService';
 
 const bridgeService = BridgeService.getInstance()
 
@@ -99,7 +100,16 @@ export class UserResolver {
       idempotenceId
     })
 
-    return user
+    const token = UserService.generateJWTToken({
+      id: user.id,
+      email: user.email
+    })
+
+    return {
+      ...user.toJSON(),
+      isVerified: user.isVerified,
+      token
+    }
   }
 
   @Authorized()

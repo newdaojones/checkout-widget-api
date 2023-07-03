@@ -30,8 +30,8 @@ router.post('/partners', async (req, res) => {
     await check('streetAddress', 'Street address is required').notEmpty().run(req);
     await check('city', 'City is required').notEmpty().run(req);
     await check('state', 'State is required').notEmpty().run(req);
-    await check('zip', 'Postal code is required').notEmpty().run(req);
-    await check('zip', 'Postal code is invalid').isPostalCode('US').run(req);
+    await check('postalCode', 'Postal code is required').notEmpty().run(req);
+    await check('postalCode', 'Postal code is invalid').isPostalCode('US').run(req);
     await check('country', 'Country is required').notEmpty().run(req);
 
     const errors = validationResult(req);

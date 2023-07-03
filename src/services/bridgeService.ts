@@ -16,7 +16,7 @@ export class BridgeService {
     axios.interceptors.response.use(
       response => response,
       error => {
-        throw error
+        throw error.response.data
       }
     )
 
@@ -32,7 +32,7 @@ export class BridgeService {
     }, `Sending ${config.url} request`)
 
     try {
-      const res = this.axios.request({
+      const res = await this.axios.request({
         ...config,
         headers: {
           ...config.headers,
@@ -49,7 +49,7 @@ export class BridgeService {
         err
       }, `Failed ${config.url} request`)
 
-      throw err
+      throw new Error(err.message)
     }
   }
 

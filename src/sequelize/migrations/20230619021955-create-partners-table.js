@@ -53,7 +53,7 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING(25),
       },
-      zip: {
+      postalCode: {
         allowNull: false,
         type: Sequelize.STRING(10),
       },

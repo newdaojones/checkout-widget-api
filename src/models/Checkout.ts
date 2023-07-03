@@ -39,11 +39,6 @@ export class Checkout extends Model<Checkout> {
   @Column(DataType.STRING(255))
   walletAddress!: string;
 
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.STRING(255))
-  assetTransferMethodId!: string;
-
   @AllowNull(false)
   @Column(DataType.STRING(100))
   firstName!: string;
@@ -114,7 +109,7 @@ export class Checkout extends Model<Checkout> {
 
   @AllowNull(false)
   @Column(DataType.STRING(10))
-  zip!: string;
+  postalCode!: string;
 
   @AllowNull(true)
   @Default(null)

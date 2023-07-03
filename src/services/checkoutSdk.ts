@@ -24,7 +24,7 @@ export class CheckoutSdkService {
             address_line2: checkout.streetAddress2,
             city: checkout.city,
             state: checkout.state,
-            zip: checkout.zip,
+            postalCode: checkout.postalCode,
             country: checkout.country,
           },
         },
@@ -43,7 +43,7 @@ export class CheckoutSdkService {
           checkoutId: checkout.id
         },
       })
-      
+
       return res as any
     } catch (err) {
       log.warn({
