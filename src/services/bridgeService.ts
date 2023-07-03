@@ -24,7 +24,7 @@ export class BridgeService {
     return instance
   }
 
-  async send(config: AxiosRequestConfig<any>, uuid: string) {
+  async send(config: AxiosRequestConfig<any>, uuid?: string) {
     log.info({
       func: 'brideService.send',
       uuid,
@@ -72,11 +72,11 @@ export class BridgeService {
     return res.data
   }
 
-  async createKycUrl(customerId, uuid: string): Promise<string> {
+  async createKycUrl(customerId): Promise<string> {
     const res = await this.send({
       method: 'GET',
       url: `customers/${customerId}/id_verification_link`
-    }, uuid)
+    })
 
     return res.data.url
   }

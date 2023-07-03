@@ -58,7 +58,10 @@ export class UserInputType {
   zip: string;
 
   @IsString()
-  @IsOptional()
-  @Field({ nullable: true })
+  @Field()
   country: string;
+
+  @IsString()
+  @Field()
+  signedAgreementId: string;
 }

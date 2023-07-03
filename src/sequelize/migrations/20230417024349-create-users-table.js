@@ -82,6 +82,14 @@ module.exports = {
         defaultValue: null,
         type: Sequelize.JSON
       },
+      signedAgreementId: {
+        allowNull: false,
+        type: Sequelize.STRING(36)
+      },
+      idempotenceId: {
+        allowNull: false,
+        type: Sequelize.STRING(36)
+      },
       createdAt: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),

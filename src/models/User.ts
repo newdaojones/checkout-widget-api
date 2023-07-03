@@ -104,6 +104,14 @@ export class User extends Model<User> {
   @Column(DataType.JSON)
   futureRequirementsDue!: string[]
 
+  @AllowNull(false)
+  @Column(DataType.STRING)
+  signedAgreementId!: string
+
+  @AllowNull(false)
+  @Column(DataType.STRING)
+  idempotenceId!: string
+
   @Column(DataType.DATE)
   createdAt!: Date;
 
@@ -118,7 +126,7 @@ export class User extends Model<User> {
   }
 
   get isVerified() {
-    return this.status === 'active'
+    return this.status === 'active' && !this.futureRequirementsDue?.length
   }
 
   @BeforeUpdate

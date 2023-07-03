@@ -1,11 +1,16 @@
+import { v4 as uuidv4 } from 'uuid';
 import { Resolver, Query, Arg, Mutation, Subscription, Root, Authorized, Ctx } from 'type-graphql';
 import { log } from '../utils';
 import { UserVerifyType } from '../types/userVerify.type';
 import { UserType } from '../types/user.type';
 import { UserInputType } from '../types/user-input.type';
 import { NotificationType } from '../services/notificationService';
-import { Config } from '../config';
 import { User } from '../models/User';
+import { BridgeService } from '../services/bridgeService';
+import { AgreementLink } from '../models/agreementLinks';
+import { KycLink } from '../models/KycLink';
+
+const bridgeService = BridgeService.getInstance()
 
 @Resolver()
 export class UserResolver {
@@ -18,10 +23,17 @@ export class UserResolver {
   }
 
   @Query(() => String)
-  async agreementPreview(
-    @Arg('name') name: string
-  ) {
-    // return primeTrust.getAgreementPreview(name)
+  async agreementLink() {
+    const idempotenceId = uuidv4()
+
+    const link = await bridgeService.createTermsOfServiceUrl(idempotenceId)
+
+    await AgreementLink.create({
+      id: idempotenceId,
+      link
+    })
+
+    return link
   }
 
   @Mutation(() => UserType)
@@ -43,20 +55,30 @@ export class UserResolver {
       throw new Error(`Already exists account with email: ${data.email}`)
     }
 
-    // const res = await primeTrust.createCustodialAccount(data)
-    // const userId = res.data.id;
-    const res: any = {}
+    const idempotenceId = uuidv4()
 
-
-    const contact = await res.included?.find((entity) => entity.type === 'contacts');
-
-    if (!contact) {
-      throw new Error(`Can\'t find a contact for user ${res.data.id}`)
-    }
+    const res = await bridgeService.createCustomer({
+      type: 'individual',
+      first_name: data.firstName,
+      last_name: data.lastName,
+      email: data.email,
+      phone: data.phoneNumber,
+      address: {
+        street_line_1: data.streetAddress,
+        street_line_2: data.streetAddress2,
+        city: data.city,
+        state: data.state,
+        postal_code: data.zip,
+        country: data.country
+      },
+      dob: data.dob,
+      ssn: data.taxId,
+      signed_agreement_id: data.signedAgreementId
+    }, idempotenceId)
 
     const user = await User.create({
-      id: res.data.id,
-      status: res.data.attributes.status,
+      id: res.id,
+      status: res.status,
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
@@ -71,9 +93,28 @@ export class UserResolver {
       state: data.state,
       zip: data.zip,
       country: data.country,
+      requirementsDue: res.requirements_due,
+      futureRequirementsDue: res.future_requirements_due,
+      signedAgreementId: data.signedAgreementId,
+      idempotenceId
     })
 
     return user
+  }
+
+  @Authorized()
+  @Query(() => String)
+  async kycLink(
+    @Ctx('user') user: User
+  ) {
+    const link = await bridgeService.createTermsOfServiceUrl(user.id)
+
+    await KycLink.create({
+      link,
+      userId: user.id
+    })
+
+    return link
   }
 
   @Subscription({
