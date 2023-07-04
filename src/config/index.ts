@@ -8,7 +8,7 @@ export const Config = {
   bridgeApiURI: process.env.BRIDGE_API_URI,
   isProduction: process.env.NODE_ENV === 'production',
   isStaging: process.env.NODE_ENV === 'staging',
-  frontendUri: process.env.FRONT_END_URI || 'https://test.checkout.mybackpack.app/',
+  frontendUri: process.env.FRONT_END_URI || 'https://test.checkout.mybackpack.app',
   uri: process.env.URI || 'https://test.checkout.mybackpack.app/api',
   defaultFee: {
     fee: 6,

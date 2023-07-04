@@ -5,7 +5,8 @@ import {
   PrimaryKey,
   AllowNull,
   DataType,
-  ForeignKey
+  ForeignKey,
+  Default
 } from 'sequelize-typescript';
 import { User } from './User';
 
@@ -20,6 +21,7 @@ import { User } from './User';
 export class KycLink extends Model<KycLink> {
   @PrimaryKey
   @AllowNull(false)
+  @Default(DataType.UUIDV4)
   @Column(DataType.UUID)
   id!: string;
 

@@ -10,8 +10,20 @@ import { BridgeService } from '../services/bridgeService';
 import { AgreementLink } from '../models/AgreementLink';
 import { KycLink } from '../models/KycLink';
 import { UserService } from '../services/userService';
+import { Config } from '../config';
+import { UserStatus } from '../types/userStatus.type';
 
 const bridgeService = BridgeService.getInstance()
+
+const syncUser = async (user: User) => {
+  const res = await bridgeService.getCustomer(user.id)
+
+  await user.update({
+    status: res.status,
+    requirementsDue: res.requirements_due,
+    futureRequirementsDue: res.future_requirements_due,
+  })
+}
 
 @Resolver()
 export class UserResolver {
@@ -20,7 +32,13 @@ export class UserResolver {
   async me(
     @Ctx('user') user: any
   ) {
-    return User.findByPk(user.id);
+    const userRecord = await User.findByPk(user.id);
+
+    if (!userRecord.isVerified) {
+      await syncUser(userRecord)
+    }
+
+    return userRecord
   }
 
   @Query(() => String)
@@ -117,14 +135,38 @@ export class UserResolver {
   async kycLink(
     @Ctx('user') user: User
   ) {
-    const link = await bridgeService.createTermsOfServiceUrl(user.id)
+    if (Config.isProduction) {
+      const link = await bridgeService.createKycUrl(user.id)
 
-    await KycLink.create({
-      link,
-      userId: user.id
-    })
+      await KycLink.create({
+        link,
+        userId: user.id
+      })
 
-    return link
+      return link
+    } else {
+      return `${Config.frontendUri}/kyc-success`
+    }
+  }
+
+  @Authorized()
+  @Mutation(() => Boolean)
+  async keyCompleted(
+    @Ctx('user') user: User
+  ) {
+    const userRecord = await User.findByPk(user.id);
+
+    if (!Config.isProduction) {
+      await userRecord.update({
+        status: UserStatus.Active,
+        requirementsDue: [],
+        futureRequirementsDue: []
+      })
+    } else {
+      await syncUser(userRecord)
+    }
+
+    return true
   }
 
   @Subscription({

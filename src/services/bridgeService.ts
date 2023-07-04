@@ -72,15 +72,24 @@ export class BridgeService {
     return res.data
   }
 
-  async createKycUrl(customerId): Promise<string> {
+  async createKycUrl(customerId: string): Promise<string> {
     const res = await this.send({
       method: 'GET',
       url: `customers/${customerId}/id_verification_link`,
       params: {
-        redirect_uri: Config.frontendUri
+        redirect_uri: `${Config.frontendUri}/kyc-success`
       }
     })
 
     return res.data.url
+  }
+
+  async getCustomer(customerId: string): Promise<any> {
+    const res = await this.send({
+      method: 'GET',
+      url: `customers/${customerId}`
+    })
+
+    return res.data
   }
 }
