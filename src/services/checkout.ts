@@ -19,6 +19,7 @@ import { NotificationService } from "./notificationService";
 import { CheckoutRequest } from "../models/CheckoutRequest";
 import { TipType } from "../types/tip.type";
 import { TransactionType } from "../types/transaction.type";
+import { User } from "../models/User";
 
 const checkoutSdkService = CheckoutSdkService.getInstance();
 const pubsubEngine = Container.get<PubSubEngine>('pubsub');
@@ -31,7 +32,7 @@ export class CheckoutService {
 
   constructor(private checkoutSdk: CheckoutSdkService, private pubSub: PubSubEngine, private notification: NotificationService) { }
 
-  async process(data: CheckoutInputType) {
+  async process(data: CheckoutInputType, user?: User) {
     if (data.checkoutRequestId) {
       const checkoutRequest = await CheckoutRequest.findByPk(data.checkoutRequestId);
 
@@ -58,6 +59,7 @@ export class CheckoutService {
 
     const checkout = await Checkout.create({
       ...data,
+      userId: user?.id,
       fee: Config.defaultFee.fee,
       feeType: Config.defaultFee.feeType as TipType,
     });

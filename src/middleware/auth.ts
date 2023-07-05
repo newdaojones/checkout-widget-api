@@ -61,7 +61,9 @@ const trimUser = (user: User) => {
     lastName: user.lastName,
     name: user.fullName,
     email: user.email,
-    phoneNumber: user.phoneNumber
+    phoneNumber: user.phoneNumber,
+    status: user.status,
+    isVerified: user.isVerified
   };
 };
 

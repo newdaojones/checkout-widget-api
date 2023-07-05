@@ -122,7 +122,11 @@ export class User extends Model<User> {
   }
 
   get isVerified() {
-    return this.status === 'active' && !this.futureRequirementsDue?.length
+    return this.status === UserStatus.Active && !this.futureRequirementsDue?.length
+  }
+
+  get isRejected() {
+    return this.status = UserStatus.Rejected
   }
 
   @BeforeUpdate

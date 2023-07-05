@@ -58,10 +58,15 @@ export class CheckoutResolver {
   ) {
     log.info({
       func: 'createCheckout',
-      data
+      data,
+      user
     })
 
-    return checkoutService.process(data);
+    if (user.isVerified) {
+      throw new Error('Please process KYC before trading')
+    }
+
+    return checkoutService.process(data, user);
   }
 
   @Subscription({
