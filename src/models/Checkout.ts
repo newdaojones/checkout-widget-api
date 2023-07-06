@@ -8,6 +8,7 @@ import { Charge } from './Charge';
 import { AssetTransfer } from './AssetTransfer';
 import { emailService } from '../email';
 import * as moment from 'moment-timezone';
+import { Config } from '../config';
 
 @Table({
   tableName: 'checkouts',
@@ -237,10 +238,10 @@ export class Checkout extends Model<Checkout> {
 
     emailService.sendReceiptEmail(this.email, {
       name: this.fullName,
-      transactionHash: assetTransfer.transactionHash,
+      transactionHash: `${Config.web3.explorerUri}/address/${assetTransfer?.transactionHash}`,
       paymentMethod: charge.last4,
-      dateTime: moment.utc(assetTransfer.settledAt).format('MMMM Do YYYY, hh:mm'),
-      amount: Math.abs(assetTransfer.amount),
+      dateTime: moment.utc(assetTransfer?.settledAt || new Date()).format('MMMM Do YYYY, hh:mm'),
+      amount: assetTransfer?.amount || this.fundsAmountMoney.toFormat(),
       fee: this.feeAmountMoney.toUnit(),
       partnerId: checkoutRequest?.partnerOrderId
     })

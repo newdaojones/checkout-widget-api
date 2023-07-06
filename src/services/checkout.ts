@@ -23,12 +23,13 @@ import { User } from "../models/User";
 import { getUSDCRate } from "../utils/exchange";
 import { AssetTransfer } from "../models/AssetTransfer";
 import { Web3Service } from "./web3Service";
+import { SettingService } from "./settingService";
 
 const checkoutSdkService = CheckoutSdkService.getInstance();
 const pubsubEngine = Container.get<PubSubEngine>('pubsub');
 const notificationService = NotificationService.getInstance();
 const web3Service = Web3Service.getInstance()
-
+const settingsService = SettingService.getInstance()
 export class CheckoutService {
   static getInstance() {
     return new CheckoutService(checkoutSdkService, pubsubEngine, notificationService)
@@ -73,6 +74,19 @@ export class CheckoutService {
     return checkout
   }
 
+  private async markAsCheckout(checkout: Checkout, status: PaidStatus) {
+    await checkout.update({
+      status
+    })
+
+    const checkoutRequest = await checkout?.getCheckoutRequest()
+    await checkoutRequest?.update({
+      status
+    })
+
+    await checkoutRequest?.sendWebhook()
+  }
+
   private async processCharge(checkout: Checkout) {
     try {
       this.notification.publishTransactionStatus({
@@ -105,6 +119,8 @@ export class CheckoutService {
         transactionId: null,
         date: new Date()
       })
+
+      checkout.sendReceipt()
     } catch (err) {
       log.warn({
         func: 'processCharge',
@@ -112,16 +128,7 @@ export class CheckoutService {
         err,
       }, 'Failed processCharge')
 
-      await checkout.update({
-        status: PaidStatus.Error
-      })
-
-      const checkoutRequest = await checkout?.getCheckoutRequest()
-      await checkoutRequest?.update({
-        status: PaidStatus.Error
-      })
-
-      await checkoutRequest?.sendWebhook()
+      await this.markAsCheckout(checkout, PaidStatus.Error)
 
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
@@ -139,40 +146,28 @@ export class CheckoutService {
 
   async processCheckout(checkout: Checkout) {
     await bluebird.delay(2000)
-    const checkoutRequest = await checkout.getCheckoutRequest()
 
     try {
-      await checkout.update({
-        status: PaidStatus.Processing
-      })
+      await this.markAsCheckout(checkout, PaidStatus.Processing)
 
-
-      await checkoutRequest?.update({
-        status: PaidStatus.Processing
-      })
-
-      await checkoutRequest?.sendWebhook()
       await this.processCharge(checkout);
 
-      await checkout.update({
-        status: PaidStatus.Paid
-      })
+      const isEnabledAssetTransfer = await settingsService.getSetting('assetTransfer')
 
-      await checkoutRequest?.update({
-        status: PaidStatus.Paid
-      })
-
-      this.notification.publishTransactionStatus({
-        checkoutId: checkout.id,
-        step: CheckoutStep.Charge,
-        status: 'charged',
-        paidStatus: checkout.status,
-        transactionId: '',
-        message: `Charged ${checkout.totalChargeAmountMoney.toUnit()}`,
-        date: new Date()
-      })
-
-      this.processTransferAsset(checkout)
+      if (!isEnabledAssetTransfer) {
+        await this.markAsCheckout(checkout, PaidStatus.Paid)
+        this.notification.publishTransactionStatus({
+          checkoutId: checkout.id,
+          step: CheckoutStep.Charge,
+          status: 'charged',
+          paidStatus: checkout.status,
+          transactionId: '',
+          message: `Charged ${checkout.totalChargeAmountMoney.toUnit()}`,
+          date: new Date()
+        })
+      } else {
+        this.processTransferAsset(checkout)
+      }
     } catch (err) {
       log.warn({
         func: 'processCheckout',
@@ -183,20 +178,77 @@ export class CheckoutService {
   }
 
   async processTransferAsset(checkout: Checkout) {
-    const price = await getUSDCRate();
-    const amount = checkout.fundsAmountMoney.toUnit() / price
+    let assetTransfer: AssetTransfer
+    try {
+      const price = await getUSDCRate();
+      const amount = Number((checkout.fundsAmountMoney.toUnit() / price).toFixed(6))
 
-    const assetTransfer = await AssetTransfer.create({
-      checkoutId: checkout.id,
-      status: PaidStatus.Processing,
-      amount,
-      fee: 0,
-    })
+      const assetTransfer = await AssetTransfer.create({
+        checkoutId: checkout.id,
+        status: PaidStatus.Processing,
+        amount,
+        fee: 0,
+      })
 
-    const receipt = await web3Service.send(checkout.walletAddress, assetTransfer.amount)
+      this.notification.publishTransactionStatus({
+        checkoutId: checkout.id,
+        step: CheckoutStep.Asset,
+        status: 'processing',
+        paidStatus: checkout.status,
+        message: `Sending ${assetTransfer.amount} USDC`,
+        transactionId: null,
+        date: new Date()
+      })
 
-    console.log('receipt=====================')
-    console.log(receipt)
+      const receipt = await web3Service.send(checkout.walletAddress, assetTransfer.amount)
+
+      await assetTransfer.update({
+        transactionHash: receipt.transactionHash,
+        status: receipt.status ? PaidStatus.Paid : PaidStatus.Error,
+        settledAt: receipt.status ? new Date() : undefined
+      })
+
+      if (!receipt.status) {
+        throw new Error(`Failed sending ${assetTransfer.amount} USDC`)
+      }
+
+      await this.markAsCheckout(checkout, PaidStatus.Paid)
+      this.notification.publishTransactionStatus({
+        checkoutId: checkout.id,
+        step: CheckoutStep.Asset,
+        status: 'settled',
+        paidStatus: checkout.status,
+        transactionId: receipt.transactionHash,
+        message: `Sent ${assetTransfer.amount} USDC`,
+        date: new Date()
+      })
+
+      checkout.sendReceipt()
+    } catch (err) {
+      log.warn({
+        func: 'processTransferAsset',
+        checkoutId: checkout.id,
+        err,
+      }, 'Failed processTransferAsset')
+
+      assetTransfer && await assetTransfer.update({
+        status: PaidStatus.Error
+      })
+
+      await this.markAsCheckout(checkout, PaidStatus.Error)
+
+      this.notification.publishTransactionStatus({
+        checkoutId: checkout.id,
+        status: 'failed',
+        paidStatus: checkout.status,
+        step: CheckoutStep.Asset,
+        message: assetTransfer ? `Failed sending ${assetTransfer.amount} USDC` : 'Failed sending assets',
+        transactionId: null,
+        date: new Date()
+      })
+
+      throw err
+    }
   }
 
   async getCheckoutStatus(checkout: Checkout) {

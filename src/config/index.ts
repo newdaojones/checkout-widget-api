@@ -17,7 +17,8 @@ export const Config = {
   web3: {
     providerUri: process.env.ALCHEMY_URI,
     usdcContractAddress: process.env.USDC_CONTRACT_ADDRESS,
-    usdcPoolPrivateKey: process.env.USDC_POOL_PRIVATE_KEY
+    usdcPoolPrivateKey: process.env.USDC_POOL_PRIVATE_KEY,
+    explorerUri: process.env.EXPLORER_URI
   },
   redis: {
     port: Number(process.env.REDIS_PORT),

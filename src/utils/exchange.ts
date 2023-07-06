@@ -14,5 +14,5 @@ export const getUSDCRate = async () => {
   };
 
   // coingecko API call rate limit: 10-30 requests a minute
-  return redisCache(getCoinRateFunc, '__cache__getCoinRate', 10);
+  return redisCache(getCoinRateFunc, '__cache__getCoinRate', 30);
 };
