@@ -13,5 +13,27 @@ export const Config = {
   defaultFee: {
     fee: 6,
     feeType: 'percent'
-  }
+  },
+  web3: {
+    providerUri: process.env.ALCHEMY_URI,
+    usdcContractAddress: process.env.USDC_CONTRACT_ADDRESS,
+    usdcPoolPrivateKey: process.env.USDC_POOL_PRIVATE_KEY
+  },
+  redis: {
+    port: Number(process.env.REDIS_PORT),
+    host: process.env.REDIS_HOST,
+    password: process.env.REDIS_PASSWORD,
+
+    // @ts-ignore
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+    reconnectOnError: (err: any) => {
+      // https://github.com/luin/ioredis#reconnect-on-error
+      if (err && err.message && err.message.includes('READONLY')) {
+        return true;
+      }
+
+      return false;
+    },
+  },
 }

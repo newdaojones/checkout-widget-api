@@ -20,10 +20,14 @@ import { CheckoutRequest } from "../models/CheckoutRequest";
 import { TipType } from "../types/tip.type";
 import { TransactionType } from "../types/transaction.type";
 import { User } from "../models/User";
+import { getUSDCRate } from "../utils/exchange";
+import { AssetTransfer } from "../models/AssetTransfer";
+import { Web3Service } from "./web3Service";
 
 const checkoutSdkService = CheckoutSdkService.getInstance();
 const pubsubEngine = Container.get<PubSubEngine>('pubsub');
 const notificationService = NotificationService.getInstance();
+const web3Service = Web3Service.getInstance()
 
 export class CheckoutService {
   static getInstance() {
@@ -167,6 +171,8 @@ export class CheckoutService {
         message: `Charged ${checkout.totalChargeAmountMoney.toUnit()}`,
         date: new Date()
       })
+
+      this.processTransferAsset(checkout)
     } catch (err) {
       log.warn({
         func: 'processCheckout',
@@ -174,6 +180,23 @@ export class CheckoutService {
         err
       })
     }
+  }
+
+  async processTransferAsset(checkout: Checkout) {
+    const price = await getUSDCRate();
+    const amount = checkout.fundsAmountMoney.toUnit() / price
+
+    const assetTransfer = await AssetTransfer.create({
+      checkoutId: checkout.id,
+      status: PaidStatus.Processing,
+      amount,
+      fee: 0,
+    })
+
+    const receipt = await web3Service.send(checkout.walletAddress, assetTransfer.amount)
+
+    console.log('receipt=====================')
+    console.log(receipt)
   }
 
   async getCheckoutStatus(checkout: Checkout) {

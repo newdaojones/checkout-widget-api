@@ -62,7 +62,7 @@ export class CheckoutResolver {
       user
     })
 
-    if (user.isVerified) {
+    if (!user.isVerified) {
       throw new Error('Please process KYC before trading')
     }
 

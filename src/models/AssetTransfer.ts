@@ -12,6 +12,7 @@ import { PaidStatus } from '../types/paidStatus.type';
 export class AssetTransfer extends Model<AssetTransfer> {
   @PrimaryKey
   @AllowNull(false)
+  @Default(DataType.UUIDV4)
   @Column(DataType.UUID)
   id!: string;
 
@@ -30,7 +31,7 @@ export class AssetTransfer extends Model<AssetTransfer> {
   amount!: number;
 
   @AllowNull(false)
-  @Column(DataType.DECIMAL(10, 5))
+  @Column(DataType.DECIMAL(10, 6))
   fee!: number;
 
   @AllowNull(true)
@@ -42,7 +43,6 @@ export class AssetTransfer extends Model<AssetTransfer> {
   @Default(null)
   @Column(DataType.DATE)
   settledAt!: Date
-
 
   @AllowNull(true)
   @Default(null)

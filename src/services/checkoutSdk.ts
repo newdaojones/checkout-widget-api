@@ -25,7 +25,7 @@ export class CheckoutSdkService {
             city: checkout.city,
             state: checkout.state,
             postalCode: checkout.postalCode,
-            country: checkout.country,
+            country: 'US',
           },
         },
         currency: checkout.totalChargeAmountMoney.getCurrency(),
