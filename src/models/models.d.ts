@@ -6,6 +6,7 @@ import { User } from './User';
 import { Partner } from './Partner';
 import { AgreementLink } from './AgreementLink';
 import { KycLink } from './KycLink';
+import { Setting } from './Setting';
 
 export interface IDbModels {
   AgreementLink: typeof AgreementLink,
@@ -16,4 +17,5 @@ export interface IDbModels {
   Charge: typeof Charge;
   User: typeof User;
   Partner: typeof Partner;
+  Setting: typeof Setting;
 }
