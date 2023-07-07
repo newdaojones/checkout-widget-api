@@ -238,7 +238,7 @@ export class Checkout extends Model<Checkout> {
 
     emailService.sendReceiptEmail(this.email, {
       name: this.fullName,
-      transactionHash: `${Config.web3.explorerUri}/address/${assetTransfer?.transactionHash}`,
+      transactionHash: `${Config.web3.explorerUri}/tx/${assetTransfer?.transactionHash}`,
       paymentMethod: charge.last4,
       dateTime: moment.utc(assetTransfer?.settledAt || new Date()).format('MMMM Do YYYY, hh:mm'),
       amount: assetTransfer?.amount || this.fundsAmountMoney.toFormat(),

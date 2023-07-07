@@ -179,12 +179,13 @@ export class CheckoutService {
   async processTransferAsset(checkout: Checkout) {
     let assetTransfer: AssetTransfer
     try {
-      const price = await getUSDCRate();
-      const amount = Number((checkout.fundsAmountMoney.toUnit() / price).toFixed(6))
+      const rate = await getUSDCRate();
+      const amount = Number((checkout.fundsAmountMoney.toUnit() / rate).toFixed(6))
 
       const assetTransfer = await AssetTransfer.create({
         checkoutId: checkout.id,
         status: PaidStatus.Processing,
+        rate,
         amount,
         fee: 0,
       })

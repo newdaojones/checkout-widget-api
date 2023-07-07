@@ -31,6 +31,11 @@ export class AssetTransfer extends Model<AssetTransfer> {
   amount!: number;
 
   @AllowNull(false)
+  @Default(0)
+  @Column(DataType.DECIMAL(10, 6))
+  rate!: number;
+
+  @AllowNull(false)
   @Column(DataType.DECIMAL(10, 6))
   fee!: number;
 
