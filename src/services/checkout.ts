@@ -119,8 +119,6 @@ export class CheckoutService {
         transactionId: null,
         date: new Date()
       })
-
-      checkout.sendReceipt()
     } catch (err) {
       log.warn({
         func: 'processCharge',
@@ -165,6 +163,7 @@ export class CheckoutService {
           message: `Charged ${checkout.totalChargeAmountMoney.toUnit()}`,
           date: new Date()
         })
+        checkout.sendReceipt()
       } else {
         this.processTransferAsset(checkout)
       }
