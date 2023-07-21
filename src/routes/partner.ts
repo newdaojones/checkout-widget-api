@@ -42,14 +42,13 @@ router.post('/partners', async (req, res) => {
     await check('lastName', 'Last name is required').notEmpty().run(req);
     await check('dob', 'Birthday is required').notEmpty().run(req);
     await check('ssn', 'SSN is required').notEmpty().run(req);
-    await check('ssn', 'SSN is invalid').isISSN().run(req);
+    await check('ssn', 'SSN is invalid').matches(/^[0-9]{3}-[0-9]{2}-[0-9]{4}$/).run(req);
     await check('streetAddress', 'Street address is required').notEmpty().run(req);
     await check('city', 'City is required').notEmpty().run(req);
     await check('state', 'State is required').notEmpty().run(req);
     await check('postalCode', 'Postal code is required').notEmpty().run(req);
     await check('postalCode', 'Postal code is invalid').isPostalCode('US').run(req);
     await check('country', 'Country is required').notEmpty().run(req);
-    await check('ssn', 'SSN is invalid').isISSN().run(req);
     await check('webhook', 'Webhook url is invalid').optional().isURL().run(req);
     await check('signedAgreementId', 'Signed agreement ID is required').notEmpty().run(req);
 
