@@ -64,14 +64,25 @@ export class UserResolver {
       data
     })
 
-    const existingUser = await User.findOne({
+    const existingUserEmail = await User.findOne({
       where: {
         email: data.email
       }
     })
 
-    if (existingUser) {
+    if (existingUserEmail) {
       throw new Error(`Already exists account with email: ${data.email}`)
+    }
+
+
+    const existingUserPhoneNumber = await User.findOne({
+      where: {
+        phoneNumber: data.phoneNumber
+      }
+    })
+
+    if (existingUserPhoneNumber) {
+      throw new Error(`Already exists account with phone number: ${data.email}`)
     }
 
     const idempotenceId = uuidv4()
@@ -136,7 +147,7 @@ export class UserResolver {
     @Ctx('user') user: User
   ) {
     if (Config.isProduction) {
-      const link = await bridgeService.createKycUrl(user.id)
+      const link = await bridgeService.createKycUrl(user.id, `${Config.frontendUri}/kyc-success`)
 
       await KycLink.create({
         link,

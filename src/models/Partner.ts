@@ -11,6 +11,7 @@ import {
   BeforeCreate
 } from 'sequelize-typescript';
 import { UserService } from '../services/userService';
+import { UserStatus } from '../types/userStatus.type';
 
 @Table({
   tableName: 'partners',
@@ -27,10 +28,10 @@ export class Partner extends Model<Partner> {
   @Column(DataType.UUID)
   id!: string;
 
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.UUID)
-  userId!: string;
+  @AllowNull(false)
+  @Default(UserStatus.Pending)
+  @Column(DataType.ENUM(...Object.values(UserStatus)))
+  status!: UserStatus
 
   @AllowNull(false)
   @Column(DataType.STRING(100))
@@ -56,6 +57,16 @@ export class Partner extends Model<Partner> {
   @AllowNull(false)
   @Column(DataType.STRING(100))
   phoneNumber!: string;
+
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.STRING(100))
+  ssn!: string;
+
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.STRING(50))
+  dob!: string;
 
   @AllowNull(false)
   @Column(DataType.STRING(255))
@@ -88,11 +99,6 @@ export class Partner extends Model<Partner> {
   @Column(DataType.TEXT)
   webhook!: string;
 
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.BOOLEAN)
-  isApproved!: boolean;
-
   @Column(DataType.DATE)
   createdAt!: Date;
 
@@ -100,6 +106,10 @@ export class Partner extends Model<Partner> {
   updatedAt!: Date;
 
   //#region Associations
+  get isApproved() {
+    return this.status === UserStatus.Active
+  }
+
   //#endregion
 
   @BeforeUpdate

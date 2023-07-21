@@ -5,10 +5,8 @@ import {
   PrimaryKey,
   AllowNull,
   DataType,
-  ForeignKey,
   Default
 } from 'sequelize-typescript';
-import { User } from './User';
 
 @Table({
   tableName: 'kycLinks',
@@ -25,7 +23,6 @@ export class KycLink extends Model<KycLink> {
   @Column(DataType.UUID)
   id!: string;
 
-  @ForeignKey(() => User)
   @AllowNull(false)
   @Column(DataType.UUID)
   userId!: string;
