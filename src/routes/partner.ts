@@ -321,7 +321,6 @@ router.get('/partners/orders', authMiddlewareForPartner, async (req, res) => {
     }
 
     const checkoutRequests = await CheckoutRequest.findAndCountAll({
-      attributes: ['id', 'partnerOrderId', 'email', 'phoneNumber', 'amount', 'status', 'transactionHash'],
       where: checkoutRequestCriteria,
       offset,
       limit
@@ -367,7 +366,6 @@ router.get('/partners/orders/:id', authMiddlewareForPartner, async (req, res) =>
 
   try {
     const checkoutRequest = await CheckoutRequest.findOne({
-      attributes: ['id', 'partnerOrderId', 'email', 'phoneNumber', 'amount', 'status', 'transactionHash'],
       where: {
         partnerId: partner.id,
         id
