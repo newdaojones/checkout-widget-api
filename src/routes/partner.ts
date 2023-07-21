@@ -80,7 +80,7 @@ router.post('/partners', async (req, res) => {
 
     const idempotenceId = uuidv4()
     const response = await bridgeService.createCustomer({
-      type: 'individual',
+      type: 'business',
       first_name: data.firstName,
       last_name: data.lastName,
       email: data.email,
@@ -126,7 +126,9 @@ router.post('/partners', async (req, res) => {
       })
     }
 
-    res.status(400).send(err);
+    res.status(400).send({
+      message: err.message
+    });
   }
 })
 
