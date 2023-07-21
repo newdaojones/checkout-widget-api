@@ -403,12 +403,21 @@ router.get('/partners/orders/:id', authMiddlewareForPartner, async (req, res) =>
 
 router.post('/partners/tos_link', async (req, res) => {
   try {
+    await check('redirectUri', 'Redirect URI is required').notEmpty().run(req);
+    await check('redirectUri', 'Redirect URI is invalid').isURL().run(req);
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      errors.throw();
+    }
+
+    const redirectUri = req.body.redirectUri
     const idempotenceId = uuidv4()
     const link = await bridgeService.createTermsOfServiceUrl(idempotenceId)
 
     await AgreementLink.create({
       id: idempotenceId,
-      link
+      link: `${link}?redirect_uri=${redirectUri}`
     })
 
     return res.status(200).json({ link });
@@ -417,6 +426,13 @@ router.post('/partners/tos_link', async (req, res) => {
       func: '/partners/tos_link',
       err
     }, 'Failed get tos link')
+
+    if (err.mapped && err.mapped()) {
+      return res.status(422).send({
+        message: 'Failed validation',
+        errors: err.mapped()
+      })
+    }
 
     if (err.code) {
       return res.status(400).send(err)
