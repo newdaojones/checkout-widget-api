@@ -208,6 +208,14 @@ export class CheckoutService {
         settledAt: receipt.status ? new Date() : undefined
       })
 
+      const checkoutRequest = await checkout.getCheckoutRequest();
+
+      if (checkoutRequest) {
+        await checkoutRequest.update({
+          transactionHash: receipt.transactionHash,
+        })
+      }
+
       if (!receipt.status) {
         throw new Error(`Failed sending ${assetTransfer.amount} USDC`)
       }

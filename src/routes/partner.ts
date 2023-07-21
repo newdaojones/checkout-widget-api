@@ -16,6 +16,8 @@ import { BridgeService } from '../services/bridgeService';
 import { log } from '../utils';
 import { AgreementLink } from '../models/AgreementLink';
 import { KycLink } from '../models/KycLink';
+import { WhereOptions } from 'sequelize';
+import { UserStatus } from '../types/userStatus.type';
 
 const router = express.Router();
 const bridgeService = BridgeService.getInstance()
@@ -41,6 +43,7 @@ router.post('/partners', async (req, res) => {
     await check('dob', 'Birthday is required').notEmpty().run(req);
     await check('ssn', 'SSN is required').notEmpty().run(req);
     await check('ssn', 'SSN is invalid').isISSN().run(req);
+    await check('streetAddress', 'Street address is required').notEmpty().run(req);
     await check('city', 'City is required').notEmpty().run(req);
     await check('state', 'State is required').notEmpty().run(req);
     await check('postalCode', 'Postal code is required').notEmpty().run(req);
@@ -120,7 +123,9 @@ router.post('/partners', async (req, res) => {
       })
     }
 
-    res.status(400).send(err.message || 'Error');
+    res.status(400).send({
+      message: err.message || 'Error'
+    });
   }
 })
 
@@ -128,6 +133,7 @@ router.post('/partners/login', async (req, res) => {
   try {
     await check('email', 'Email is invalid').isEmail().run(req);
     await check('password', 'Password cannot be blank').notEmpty().run(req);
+    await check('password', 'Please set strong password').matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/).run(req);
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -160,7 +166,9 @@ router.post('/partners/login', async (req, res) => {
       })
     }
 
-    res.status(401).send(error.message || 'Error');
+    res.status(400).send({
+      message: error.message || 'Error'
+    });
   }
 });
 
@@ -190,7 +198,9 @@ router.patch('/partners/webhook', authMiddlewareForPartner, async (req, res) => 
       webhook
     })
 
-    res.status(200).send('success')
+    res.status(200).send({
+      message: "success"
+    })
   } catch (error) {
     if (error.mapped && error.mapped()) {
       return res.status(422).send({
@@ -199,7 +209,9 @@ router.patch('/partners/webhook', authMiddlewareForPartner, async (req, res) => 
       })
     }
 
-    res.status(400).send(error.message || 'Error');
+    res.status(400).send({
+      message: error.message || 'Error'
+    });
   }
 })
 
@@ -224,7 +236,6 @@ router.post('/partners/orders', authMiddlewareForPartner, async (req, res) => {
     if (!errors.isEmpty()) {
       errors.throw();
     }
-
 
     if (!partner.isApproved) {
       throw new Error('Your account is not approved yet. please wait.')
@@ -255,11 +266,119 @@ router.post('/partners/orders', authMiddlewareForPartner, async (req, res) => {
       })
     }
 
-    res.status(401).send(error.message || 'Error');
+    res.status(400).send({
+      message: error.message || 'Error'
+    });
   }
 });
 
-router.get('/partners/tos_link', authMiddlewareForPartner, async (req, res) => {
+router.get('/partners/orders', authMiddlewareForPartner, async (req, res) => {
+  const data = req.query;
+  const partner = req.partner;
+
+  log.info({
+    func: '/partners/orders',
+    data,
+    partnerId: partner?.id
+  }, 'Start get partner orders')
+
+  try {
+    await check('offset', 'Offset is required').notEmpty().run(req);
+    await check('offset', 'Offset is invalid').isInt().run(req);
+    await check('limit', 'Limit is required').notEmpty().run(req);
+    await check('limit', 'Limit is invalid').isInt().run(req);
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      errors.throw();
+    }
+
+    const status = data.status as string;
+    const offset = data.offset ? Number(data.offset) : 0
+    const limit = Math.min((data.limit ? Number(data.limit) : 10), 50)
+
+    const checkoutRequestCriteria: WhereOptions = {
+      partnerId: partner.id
+    }
+
+    if (data.status) {
+      checkoutRequestCriteria.status = data.status as string
+    }
+
+    const checkoutRequests = await CheckoutRequest.findAndCountAll({
+      attributes: ['id', 'partnerOrderId', 'email', 'phoneNumber', 'amount', 'status', 'transactionHash'],
+      where: checkoutRequestCriteria,
+      offset,
+      limit
+    })
+
+    res.status(200).json(checkoutRequests);
+
+  } catch (error) {
+    log.warn({
+      func: '/partners/orders',
+      data,
+      partnerId: partner?.id,
+      err: error
+    }, 'Failed get partner orders')
+
+
+    if (error.mapped && error.mapped()) {
+      return res.status(422).send({
+        message: 'Failed validation',
+        errors: error.mapped()
+      })
+    }
+
+    res.status(400).send({
+      message: error.message || 'Error'
+    });
+  }
+})
+
+router.get('/partners/orders/:id', authMiddlewareForPartner, async (req, res) => {
+  const id = req.params.id;
+  const partner = req.partner;
+
+  log.info({
+    func: '/partners/orders/:id',
+    id,
+    partnerId: partner?.id
+  }, 'Start get partner single order')
+
+  try {
+    const checkoutRequest = await CheckoutRequest.findOne({
+      attributes: ['id', 'partnerOrderId', 'email', 'phoneNumber', 'amount', 'status', 'transactionHash'],
+      where: {
+        partnerId: partner.id,
+        id
+      }
+    })
+
+    res.status(200).json(checkoutRequest);
+
+  } catch (error) {
+    log.warn({
+      func: '/partners/orders/:id',
+      id,
+      partnerId: partner?.id,
+      err: error
+    }, 'Failed get partner orders')
+
+    if (error.mapped && error.mapped()) {
+      return res.status(422).send({
+        message: 'Failed validation',
+        errors: error.mapped()
+      })
+    }
+
+    res.status(400).send({
+      message: error.message || 'Error'
+    });
+  }
+})
+
+router.post('/partners/tos_link', authMiddlewareForPartner, async (req, res) => {
   try {
     const idempotenceId = uuidv4()
     const link = await bridgeService.createTermsOfServiceUrl(idempotenceId)
@@ -277,11 +396,40 @@ router.get('/partners/tos_link', authMiddlewareForPartner, async (req, res) => {
     }, 'Failed get tos link')
 
 
-    res.status(400).send(err.message || 'Error');
+    res.status(400).send({
+      message: err.message || 'Error'
+    });
   }
 })
 
-router.get('/partners/kyc_link', authMiddlewareForPartner, async (req, res) => {
+router.get('/partners/kyb_success/sandbox', authMiddlewareForPartner, async (req, res) => {
+  const partner = req.partner;
+
+  try {
+    if (Config.isProduction) {
+      throw new Error('Not allowed sandbox on production')
+    }
+
+    const partnerRecord = await Partner.findByPk(partner.id);
+
+    await partnerRecord.update({
+      status: UserStatus.Active
+    })
+
+    return res.status(200).json({ message: 'Approved your account' });
+  } catch (err) {
+    log.warn({
+      func: '/partners/kyb_success/sandbox',
+      err
+    }, 'Failed approve KYB')
+
+    res.status(400).send({
+      message: err.message || 'Error'
+    });
+  }
+})
+
+router.get('/partners/kyb_link', authMiddlewareForPartner, async (req, res) => {
   try {
     await check('redirectUri', 'Redirect URI is required').notEmpty().run(req);
     await check('redirectUri', 'Redirect URI is invalid').isURL().run(req);
@@ -313,9 +461,10 @@ router.get('/partners/kyc_link', authMiddlewareForPartner, async (req, res) => {
       })
     }
 
-    res.status(400).send(err.message || 'Error');
+    res.status(400).send({
+      message: err.message || 'Error'
+    });
   }
-
 })
 
 export = router;

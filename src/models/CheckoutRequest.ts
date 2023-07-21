@@ -59,6 +59,11 @@ export class CheckoutRequest extends Model<CheckoutRequest> {
   @Column(DataType.ENUM('pending', 'processing', 'paid', 'postponed', 'error'))
   status!: PaidStatus;
 
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.STRING(255))
+  transactionHash!: string
+
   @Column(DataType.DATE)
   createdAt!: Date;
 
