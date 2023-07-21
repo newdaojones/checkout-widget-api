@@ -49,7 +49,7 @@ export class BridgeService {
         err
       }, `Failed ${config.url} request`)
 
-      throw new Error(err.message)
+      throw err;
     }
   }
 

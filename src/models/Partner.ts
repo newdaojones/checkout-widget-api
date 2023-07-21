@@ -126,14 +126,14 @@ export class Partner extends Model<Partner> {
       where: { email },
     });
 
-    if (partner == null || partner.password == null || partner.password.length === 0) {
-      new Error('Invalid email or password')
+    if (!partner || partner.password == null || partner.password.length === 0) {
+      throw new Error('Invalid email or password')
     }
 
     const isPasswordMatch = await UserService.comparePassword(password, partner.password);
 
     if (!isPasswordMatch) {
-      new Error('Invalid email or password')
+      throw new Error('Invalid email or password')
     }
 
     return partner

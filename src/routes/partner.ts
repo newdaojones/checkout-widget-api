@@ -80,7 +80,7 @@ router.post('/partners', async (req, res) => {
 
     const idempotenceId = uuidv4()
     const response = await bridgeService.createCustomer({
-      type: 'business',
+      type: 'individual',
       first_name: data.firstName,
       last_name: data.lastName,
       email: data.email,
@@ -115,16 +115,18 @@ router.post('/partners', async (req, res) => {
       err
     }, 'Failed create partner')
 
-    if (err.mapped()) {
+    if (err.code) {
+      return res.status(400).send(err)
+    }
+
+    if (err.mapped && err.mapped()) {
       return res.status(422).send({
         message: 'Failed validation',
         errors: err.mapped()
       })
     }
 
-    res.status(400).send({
-      message: err.message || 'Error'
-    });
+    res.status(400).send(err);
   }
 })
 
@@ -163,6 +165,10 @@ router.post('/partners/login', async (req, res) => {
         message: 'Failed validation',
         errors: error.mapped()
       })
+    }
+
+    if (error.code) {
+      return res.status(400).send(error)
     }
 
     res.status(400).send({
@@ -206,6 +212,10 @@ router.patch('/partners/webhook', authMiddlewareForPartner, async (req, res) => 
         message: 'Failed validation',
         errors: error.mapped()
       })
+    }
+
+    if (error.code) {
+      return res.status(400).send(error)
     }
 
     res.status(400).send({
@@ -263,6 +273,10 @@ router.post('/partners/orders', authMiddlewareForPartner, async (req, res) => {
         message: 'Failed validation',
         errors: error.mapped()
       })
+    }
+
+    if (error.code) {
+      return res.status(400).send(error)
     }
 
     res.status(400).send({
@@ -329,6 +343,10 @@ router.get('/partners/orders', authMiddlewareForPartner, async (req, res) => {
       })
     }
 
+    if (error.code) {
+      return res.status(400).send(error)
+    }
+
     res.status(400).send({
       message: error.message || 'Error'
     });
@@ -371,6 +389,10 @@ router.get('/partners/orders/:id', authMiddlewareForPartner, async (req, res) =>
       })
     }
 
+    if (error.code) {
+      return res.status(400).send(error)
+    }
+
     res.status(400).send({
       message: error.message || 'Error'
     });
@@ -390,10 +412,13 @@ router.post('/partners/tos_link', async (req, res) => {
     return res.status(200).json({ link });
   } catch (err) {
     log.warn({
-      func: '/partners/orders',
+      func: '/partners/tos_link',
       err
     }, 'Failed get tos link')
 
+    if (err.code) {
+      return res.status(400).send(err)
+    }
 
     res.status(400).send({
       message: err.message || 'Error'
@@ -401,7 +426,7 @@ router.post('/partners/tos_link', async (req, res) => {
   }
 })
 
-router.get('/partners/kyb_success/sandbox', authMiddlewareForPartner, async (req, res) => {
+router.post('/partners/kyb_success/sandbox', authMiddlewareForPartner, async (req, res) => {
   const partner = req.partner;
 
   try {
@@ -422,6 +447,10 @@ router.get('/partners/kyb_success/sandbox', authMiddlewareForPartner, async (req
       err
     }, 'Failed approve KYB')
 
+    if (err.code) {
+      return res.status(400).send(err)
+    }
+
     res.status(400).send({
       message: err.message || 'Error'
     });
@@ -437,9 +466,9 @@ router.get('/partners/kyb_link', authMiddlewareForPartner, async (req, res) => {
     if (!errors.isEmpty()) {
       errors.throw();
     }
-
+    const redirectUri = req.params.redirectUri as string
     const partner = req.partner
-    const link = await bridgeService.createKycUrl(partner.id, `${Config.frontendUri}/kyc-success`)
+    const link = await bridgeService.createKycUrl(partner.id, redirectUri)
 
     await KycLink.create({
       link,
@@ -449,7 +478,7 @@ router.get('/partners/kyb_link', authMiddlewareForPartner, async (req, res) => {
     return res.status(200).json({ link });
   } catch (err) {
     log.warn({
-      func: '/partners/orders',
+      func: '/partners/kyb_link',
       err
     }, 'Failed get tos link')
 
