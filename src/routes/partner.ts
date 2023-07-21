@@ -378,7 +378,7 @@ router.get('/partners/orders/:id', authMiddlewareForPartner, async (req, res) =>
   }
 })
 
-router.post('/partners/tos_link', authMiddlewareForPartner, async (req, res) => {
+router.post('/partners/tos_link', async (req, res) => {
   try {
     const idempotenceId = uuidv4()
     const link = await bridgeService.createTermsOfServiceUrl(idempotenceId)
