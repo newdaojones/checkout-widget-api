@@ -50,7 +50,7 @@ router.post('/partners', async (req, res) => {
     await check('postalCode', 'Postal code is invalid').isPostalCode('US').run(req);
     await check('country', 'Country is required').notEmpty().run(req);
     await check('ssn', 'SSN is invalid').isISSN().run(req);
-    await check('webhook', 'Webhook url is invalid').isURL().run(req);
+    await check('webhook', 'Webhook url is invalid').optional().isURL().run(req);
     await check('signedAgreementId', 'Signed agreement ID is required').notEmpty().run(req);
 
     const errors = validationResult(req);
@@ -131,7 +131,7 @@ router.post('/partners', async (req, res) => {
 
 router.post('/partners/login', async (req, res) => {
   try {
-    await check('email', 'Email is invalid').isEmail().run(req);
+    await check('email', 'Email is invalid').optional().isEmail().run(req);
     await check('password', 'Password cannot be blank').notEmpty().run(req);
     await check('password', 'Please set strong password').matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/).run(req);
 
