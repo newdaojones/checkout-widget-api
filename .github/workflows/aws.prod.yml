@@ -22,7 +22,7 @@ jobs:
         key: ${{ secrets.AWS_PRIVATE_KEY }}
         script: |
           cd /home/ubuntu/checkout-widget-api
-          git checkout test
+          git checkout release
           git pull
           yarn
           yarn build
