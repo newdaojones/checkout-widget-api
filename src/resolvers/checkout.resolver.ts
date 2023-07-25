@@ -43,10 +43,9 @@ export class CheckoutResolver {
 
     const totalAmount = data.amount + data.amount * (data.tip || 0) / 100
 
-    // modified for a specific charge for snowmobile sale
-    // if (totalAmount >= 50000) {
-    //   throw new Error('Required user registration for purchasing over $500')
-    // }
+    if (totalAmount >= 500) {
+      throw new Error('Required user registration for purchasing over $500')
+    }
     return checkoutService.process(data);
   }
 
