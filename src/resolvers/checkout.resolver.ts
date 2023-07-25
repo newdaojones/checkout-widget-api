@@ -43,9 +43,11 @@ export class CheckoutResolver {
 
     const totalAmount = data.amount + data.amount * (data.tip || 0) / 100
 
-    if (totalAmount >= 500) {
-      throw new Error('Required user registration for purchasing over $500')
-    }
+    // modified for a tx to test size limit
+    // if (totalAmount >= 50000) {
+    //   throw new Error('Required user registration for purchasing over $500')
+    // }
+
     return checkoutService.process(data);
   }
 
