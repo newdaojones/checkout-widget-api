@@ -1,29 +1,18 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('primeTrustAccounts', {
+    await queryInterface.createTable('kycLinks', {
       id: {
-        type: Sequelize.INTEGER(11).UNSIGNED,
+        type: Sequelize.UUID,
         primaryKey: true,
         allowNull: false,
-        autoIncrement: true,
       },
-      email: {
+      userId: {
+        type: Sequelize.UUID,
         allowNull: false,
-        type: Sequelize.STRING(100),
       },
-      password: {
-        allowNull: false,
-        type: Sequelize.STRING(100),
-      },
-      token: {
-        allowNull: null,
-        defaultValue: null,
+      link: {
         type: Sequelize.TEXT,
-      },
-      expiresAt: {
-        allowNull: true,
-        defaultValue: null,
-        type: Sequelize.DATE
+        allowNull: false,
       },
       createdAt: {
         type: Sequelize.DATE,
@@ -39,9 +28,19 @@ module.exports = {
       engine: 'InnoDB',
       charset: 'utf8',
     });
+
+    await queryInterface.addConstraint('kycLinks', {
+      type: 'foreign key',
+      fields: ['userId'],
+      name: 'kycLinks_user_id',
+      references: {
+        table: 'users',
+        field: 'id',
+      },
+    }, { logging: console.log });
   },
   // eslint-disable-next-line no-unused-vars
   down: async (queryInterface, DataTypes) => {
-    await queryInterface.dropTable('primeTrustAccounts');
+    await queryInterface.dropTable('kycLinks');
   },
 };

@@ -11,7 +11,7 @@ export interface ReceiptData {
   transactionHash: string;
   paymentMethod: string;
   dateTime: string;
-  amount: number;
+  amount: number | string;
   fee: number;
   partnerId?: string;
 }

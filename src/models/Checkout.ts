@@ -6,9 +6,9 @@ import { CheckoutRequest } from './CheckoutRequest';
 import { User } from './User';
 import { Charge } from './Charge';
 import { AssetTransfer } from './AssetTransfer';
-import { AssetQuote } from './AssetQuote';
 import { emailService } from '../email';
 import * as moment from 'moment-timezone';
+import { Config } from '../config';
 
 @Table({
   tableName: 'checkouts',
@@ -39,11 +39,6 @@ export class Checkout extends Model<Checkout> {
   @AllowNull(false)
   @Column(DataType.STRING(255))
   walletAddress!: string;
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.STRING(255))
-  assetTransferMethodId!: string;
 
   @AllowNull(false)
   @Column(DataType.STRING(100))
@@ -115,7 +110,7 @@ export class Checkout extends Model<Checkout> {
 
   @AllowNull(false)
   @Column(DataType.STRING(10))
-  zip!: string;
+  postalCode!: string;
 
   @AllowNull(true)
   @Default(null)
@@ -155,10 +150,6 @@ export class Checkout extends Model<Checkout> {
   @HasOne(() => AssetTransfer)
   assetTransfer!: AssetTransfer;
   getAssetTransfer: () => Promise<AssetTransfer>;
-
-  @HasOne(() => AssetQuote)
-  assetQuote!: AssetQuote;
-  getAssetQuote: () => Promise<AssetQuote>;
 
   //#endregion
 
@@ -247,10 +238,10 @@ export class Checkout extends Model<Checkout> {
 
     emailService.sendReceiptEmail(this.email, {
       name: this.fullName,
-      transactionHash: assetTransfer.transactionHash,
+      transactionHash: `${Config.web3.explorerUri}/tx/${assetTransfer?.transactionHash}`,
       paymentMethod: charge.last4,
-      dateTime: moment.utc(assetTransfer.contingenciesClearedAt).format('MMMM Do YYYY, hh:mm'),
-      amount: Math.abs(assetTransfer.unitCount),
+      dateTime: moment.utc(assetTransfer?.settledAt || new Date()).format('MMMM Do YYYY, hh:mm'),
+      amount: assetTransfer?.amount || this.fundsAmountMoney.toFormat(),
       fee: this.feeAmountMoney.toUnit(),
       partnerId: checkoutRequest?.partnerOrderId
     })

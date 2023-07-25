@@ -3,6 +3,7 @@ import * as express from 'express';
 import { check, validationResult } from 'express-validator';
 import { UserService } from '../services/userService';
 import passport from 'passport';
+import { UserStatus } from '../types/userStatus.type';
 
 const router = express.Router();
 

@@ -1,5 +1,6 @@
 import { Model, Table, Column, PrimaryKey, AllowNull, DataType, Default, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { Checkout } from './Checkout';
+import { PaidStatus } from '../types/paidStatus.type';
 
 @Table({
   tableName: 'assetTransfers',
@@ -11,12 +12,9 @@ import { Checkout } from './Checkout';
 export class AssetTransfer extends Model<AssetTransfer> {
   @PrimaryKey
   @AllowNull(false)
+  @Default(DataType.UUIDV4)
   @Column(DataType.UUID)
   id!: string;
-
-  @AllowNull(false)
-  @Column(DataType.UUID)
-  disbursementAuthorizationId!: string;
 
   @ForeignKey(() => Checkout)
   @AllowNull(false)
@@ -24,19 +22,21 @@ export class AssetTransfer extends Model<AssetTransfer> {
   checkoutId!: string;
 
   @AllowNull(false)
-  @Column(DataType.STRING(50))
-  status!: string;
+  @Default(PaidStatus.Pending)
+  @Column(DataType.ENUM(...Object.values(PaidStatus)))
+  status!: PaidStatus;
 
   @AllowNull(false)
-  @Column(DataType.DECIMAL(10, 5))
-  unitCount!: number;
+  @Column(DataType.DECIMAL(10, 6))
+  amount!: number;
 
   @AllowNull(false)
-  @Column(DataType.DECIMAL(10, 5))
-  unitCountExpected!: number;
+  @Default(0)
+  @Column(DataType.DECIMAL(10, 6))
+  rate!: number;
 
   @AllowNull(false)
-  @Column(DataType.DECIMAL(10, 5))
+  @Column(DataType.DECIMAL(10, 6))
   fee!: number;
 
   @AllowNull(true)
@@ -46,38 +46,13 @@ export class AssetTransfer extends Model<AssetTransfer> {
 
   @AllowNull(true)
   @Default(null)
-  @Column(DataType.TEXT)
-  settlementDetails!: string
-
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.BOOLEAN)
-  hotTransfer!: boolean;
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.STRING(255))
-  chargeAccountId!: string
+  @Column(DataType.DATE)
+  settledAt!: Date
 
   @AllowNull(true)
   @Default(null)
   @Column(DataType.DATE)
   cancelledAt!: Date
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.DATE)
-  contingenciesClearedAt!: Date
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.DATE)
-  contingenciesClearedOn!: Date
-
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.DATE)
-  reconciledAt!: Date
 
   @Column(DataType.DATE)
   createdAt!: Date;

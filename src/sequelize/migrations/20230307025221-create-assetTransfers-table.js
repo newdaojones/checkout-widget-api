@@ -7,43 +7,20 @@ module.exports = {
         allowNull: false,
         defaultValue: Sequelize.UUIDV4,
       },
-      disbursementAuthorizationId: {
-        type: Sequelize.UUID,
-        allowNull: false
-      },
       checkoutId: {
         type: Sequelize.UUID,
         allowNull: false,
         index: true
       },
       status: {
-        type: Sequelize.STRING(50),
+        type: Sequelize.ENUM('pending', 'processing', 'paid', 'error', 'postponed'),
         allowNull: false
       },
-      unitCount: {
-        type: Sequelize.DECIMAL(10, 5),
-        allowNull: false
-      },
-      unitCountExpected: {
-        type: Sequelize.DECIMAL(10, 5),
+      amount: {
+        type: Sequelize.DECIMAL(10, 6),
         allowNull: false
       },
       transactionHash: {
-        type: Sequelize.STRING(255),
-        allowNull: true,
-        defaultValue: null
-      },
-      settlementDetails: {
-        type: Sequelize.TEXT,
-        allowNull: null,
-        defaultValue: null
-      },
-      hotTransfer: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
-      },
-      chargeAccountId: {
         type: Sequelize.STRING(255),
         allowNull: true,
         defaultValue: null
@@ -53,17 +30,7 @@ module.exports = {
         allowNull: true,
         defaultValue: null
       },
-      contingenciesClearedAt: {
-        type: Sequelize.DATE,
-        allowNull: true,
-        defaultValue: null
-      },
-      contingenciesClearedOn: {
-        type: Sequelize.DATE,
-        allowNull: true,
-        defaultValue: null
-      },
-      reconciledAt: {
+      settledAt: {
         type: Sequelize.DATE,
         allowNull: true,
         defaultValue: null

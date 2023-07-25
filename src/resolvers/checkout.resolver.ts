@@ -1,5 +1,4 @@
 import { Arg, Ctx, Mutation, Query, Resolver, Root, Subscription } from 'type-graphql';
-import { Config } from '../config';
 import { Checkout } from '../models/Checkout';
 import { CheckoutService } from '../services/checkout';
 import { NotificationType } from '../services/notificationService';
@@ -48,7 +47,8 @@ export class CheckoutResolver {
     // if (totalAmount >= 50000) {
     //   throw new Error('Required user registration for purchasing over $500')
     // }
-    return checkoutService.process(data, Config.primeTrustAccountId);
+
+    return checkoutService.process(data);
   }
 
   @Mutation(() => CheckoutType)
@@ -58,10 +58,15 @@ export class CheckoutResolver {
   ) {
     log.info({
       func: 'createCheckout',
-      data
+      data,
+      user
     })
 
-    return checkoutService.process(data, user.id);
+    if (!user.isVerified) {
+      throw new Error('Please process KYC before trading')
+    }
+
+    return checkoutService.process(data, user);
   }
 
   @Subscription({

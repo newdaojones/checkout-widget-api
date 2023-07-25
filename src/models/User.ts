@@ -11,6 +11,7 @@ import {
   BeforeCreate
 } from 'sequelize-typescript';
 import { UserService } from '../services/userService';
+import { UserStatus } from '../types/userStatus.type';
 
 @Table({
   tableName: 'users',
@@ -20,19 +21,16 @@ import { UserService } from '../services/userService';
   }
 })
 
-export class User extends Model<User> { 
+export class User extends Model<User> {
   @PrimaryKey
   @AllowNull(false)
   @Column(DataType.UUID)
   id!: string;
 
   @AllowNull(false)
-  @Column(DataType.UUID)
-  contactId!: string;
-
-  @AllowNull(false)
-  @Column(DataType.STRING(50))
-  status!: string // 'pending', 'opened'
+  @Default(UserStatus.Pending)
+  @Column(DataType.ENUM(...Object.values(UserStatus)))
+  status!: UserStatus
 
   @AllowNull(false)
   @Column(DataType.STRING(100))
@@ -47,7 +45,7 @@ export class User extends Model<User> {
   @Column(DataType.STRING(100))
   email!: string;
 
-  @AllowNull(true)
+  @AllowNull(false)
   @Column(DataType.TEXT)
   password: string;
 
@@ -55,20 +53,17 @@ export class User extends Model<User> {
   @Column(DataType.STRING(100))
   phoneNumber!: string;
 
-  @AllowNull(true)
-  @Default(null)
+  @AllowNull(false)
   @Column(DataType.STRING(20))
   gender!: string;
 
-  @AllowNull(true)
-  @Default(null)
+  @AllowNull(false)
   @Column(DataType.STRING(20))
   dob!: string;
 
-  @AllowNull(true)
-  @Default(null)
+  @AllowNull(false)
   @Column(DataType.STRING(100))
-  taxId!: string;
+  ssn!: string;
 
   @AllowNull(false)
   @Column(DataType.STRING(255))
@@ -89,47 +84,29 @@ export class User extends Model<User> {
 
   @AllowNull(false)
   @Column(DataType.STRING(10))
-  zip!: string;
+  postalCode!: string;
 
-  @AllowNull(true)
-  @Default(null)
+  @AllowNull(false)
   @Column(DataType.STRING(255))
   country!: string;
 
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.BOOLEAN)
-  identityConfirmed!: boolean;
-
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.BOOLEAN)
-  identityDocumentsVerified!: boolean;
-
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.BOOLEAN)
-  proofOfAddressDocumentsVerified!: boolean;
-
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.BOOLEAN)
-  amlCleared!: boolean;
-
-  @AllowNull(false)
-  @Default(false)
-  @Column(DataType.BOOLEAN)
-  cipCleared!: boolean;
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.JSON)
+  requirementsDue!: string[]
 
   @AllowNull(true)
   @Default(null)
-  @Column(DataType.TEXT)
-  documentId!: string;
+  @Column(DataType.JSON)
+  futureRequirementsDue!: string[]
 
-  @AllowNull(true)
-  @Default(null)
-  @Column(DataType.TEXT)
-  deviceId!: string;
+  @AllowNull(false)
+  @Column(DataType.STRING)
+  signedAgreementId!: string
+
+  @AllowNull(false)
+  @Column(DataType.STRING)
+  idempotenceId!: string
 
   @Column(DataType.DATE)
   createdAt!: Date;
@@ -137,18 +114,19 @@ export class User extends Model<User> {
   @Column(DataType.DATE)
   updatedAt!: Date;
 
-   //#region Associations
-   //#endregion
+  //#region Associations
+  //#endregion
 
   get fullName() {
     return `${this.firstName} ${this.lastName}`
   }
 
   get isVerified() {
-    return this.identityConfirmed &&
-      this.amlCleared &&
-      this.cipCleared &&
-      this.status === 'opened'
+    return this.status === UserStatus.Active && !this.futureRequirementsDue?.length
+  }
+
+  get isRejected() {
+    return this.status = UserStatus.Rejected
   }
 
   @BeforeUpdate

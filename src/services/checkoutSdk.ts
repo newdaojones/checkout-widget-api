@@ -24,8 +24,8 @@ export class CheckoutSdkService {
             address_line2: checkout.streetAddress2,
             city: checkout.city,
             state: checkout.state,
-            zip: checkout.zip,
-            country: checkout.country,
+            postalCode: checkout.postalCode,
+            country: 'US',
           },
         },
         currency: checkout.totalChargeAmountMoney.getCurrency(),
@@ -43,7 +43,7 @@ export class CheckoutSdkService {
           checkoutId: checkout.id
         },
       })
-      
+
       return res as any
     } catch (err) {
       log.warn({
