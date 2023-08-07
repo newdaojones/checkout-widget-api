@@ -49,7 +49,7 @@ router.post('/partners', async (req, res) => {
     await check('postalCode', 'Postal code is required').notEmpty().run(req);
     await check('postalCode', 'Postal code is invalid').isPostalCode('US').run(req);
     await check('country', 'Country is required').notEmpty().run(req);
-    await check('webhook', 'Webhook url is invalid').optional().isURL().run(req);
+    // await check('webhook', 'Webhook url is invalid').optional().isURL().run(req);
     await check('signedAgreementId', 'Signed agreement ID is required').notEmpty().run(req);
 
     const errors = validationResult(req);
@@ -75,12 +75,13 @@ router.post('/partners', async (req, res) => {
     })
 
     if (existingUserPhoneNumber) {
-      throw new Error(`Already exists account with phone number: ${data.email}`)
+      throw new Error(`Already exists account with phone number: ${data.phoneNumber}`)
     }
 
     const idempotenceId = uuidv4()
+
     const response = await bridgeService.createCustomer({
-      type: 'business',
+      type: 'individual',
       first_name: data.firstName,
       last_name: data.lastName,
       email: data.email,
@@ -106,6 +107,7 @@ router.post('/partners', async (req, res) => {
 
     res.status(201).json({
       id: partner.id,
+      data: partner.toJSON(),
       message: 'Created your account successfully.'
     })
   } catch (err) {
@@ -115,15 +117,15 @@ router.post('/partners', async (req, res) => {
       err
     }, 'Failed create partner')
 
-    if (err.code) {
-      return res.status(400).send(err)
-    }
-
     if (err.mapped && err.mapped()) {
       return res.status(422).send({
         message: 'Failed validation',
         errors: err.mapped()
       })
+    }
+
+    if (err.code) {
+      return res.status(400).send(err)
     }
 
     res.status(400).send({
@@ -401,8 +403,8 @@ router.get('/partners/orders/:id', authMiddlewareForPartner, async (req, res) =>
 
 router.post('/partners/tos_link', async (req, res) => {
   try {
-    await check('redirectUri', 'Redirect URI is required').notEmpty().run(req);
-    await check('redirectUri', 'Redirect URI is invalid').isURL().run(req);
+    // await check('redirectUri', 'Redirect URI is required').notEmpty().run(req);
+    // await check('redirectUri', 'Redirect URI is invalid').isURL().run(req);
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -456,6 +458,23 @@ router.post('/partners/kyb_success/sandbox', authMiddlewareForPartner, async (re
       status: UserStatus.Active
     })
 
+    await partnerRecord.sendWebhook(partner.id, 'account', {
+      id: partnerRecord.id,
+      firstName: partnerRecord.firstName,
+      lastName: partnerRecord.lastName,
+      email: partnerRecord.email,
+      phoneNumber: partnerRecord.phoneNumber,
+      ssn: partnerRecord.ssn,
+      dob: partnerRecord.dob,
+      status: partnerRecord.status,
+      streetAddress: partnerRecord.streetAddress,
+      streetAddress2: partnerRecord.streetAddress2,
+      city: partnerRecord.city,
+      postalCode: partnerRecord.postalCode,
+      state: partnerRecord.state,
+      country: partnerRecord.country,
+    })
+
     return res.status(200).json({ message: 'Approved your account' });
   } catch (err) {
     log.warn({
@@ -473,17 +492,61 @@ router.post('/partners/kyb_success/sandbox', authMiddlewareForPartner, async (re
   }
 })
 
+router.post('/partners/kyb_success/:id', async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const partnerRecord = await Partner.findByPk(id);
+
+    if (!partnerRecord) {
+      throw new Error(`Can not find partner for ${id}`)
+    }
+
+    const response = await bridgeService.getCustomer(partnerRecord.id)
+
+    await partnerRecord.update({
+      status: response.status,
+    })
+
+    await partnerRecord.sendWebhook(partnerRecord.id, 'account', {
+      id: partnerRecord.id,
+      firstName: partnerRecord.firstName,
+      lastName: partnerRecord.lastName,
+      email: partnerRecord.email,
+      phoneNumber: partnerRecord.phoneNumber,
+      status: partnerRecord.status,
+      ssn: partnerRecord.ssn,
+      dob: partnerRecord.dob,
+      streetAddress: partnerRecord.streetAddress,
+      streetAddress2: partnerRecord.streetAddress2,
+      city: partnerRecord.city,
+      postalCode: partnerRecord.postalCode,
+      state: partnerRecord.state,
+      country: partnerRecord.country,
+    })
+
+    return res.status(200).json({ message: 'Approved your account' });
+  } catch (err) {
+    log.warn({
+      func: '/partners/kyb_success/:id',
+      id,
+      err
+    }, 'Failed approve KYB')
+
+    if (err.code) {
+      return res.status(400).send(err)
+    }
+
+    res.status(400).send({
+      message: err.message || 'Error'
+    });
+  }
+})
+
 router.get('/partners/kyb_link', authMiddlewareForPartner, async (req, res) => {
   try {
-    await check('redirectUri', 'Redirect URI is required').notEmpty().run(req);
-    await check('redirectUri', 'Redirect URI is invalid').isURL().run(req);
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      errors.throw();
-    }
-    const redirectUri = req.params.redirectUri as string
     const partner = req.partner
+    const redirectUri = `${Config.frontendUri}/kyb-success/${partner.id}`
     const link = await bridgeService.createKycUrl(partner.id, redirectUri)
 
     await KycLink.create({

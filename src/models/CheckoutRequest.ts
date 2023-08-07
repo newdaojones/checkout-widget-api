@@ -78,31 +78,6 @@ export class CheckoutRequest extends Model<CheckoutRequest> {
   partner!: Partner;
   getPartner!: () => Promise<Partner>;
 
-  async sendWebhook(amount?: number, transactionHash?: string) {
-    const partner = await this.getPartner()
-    if (!partner?.webhook) {
-      return
-    }
-
-    try {
-      await axios.post(partner.webhook, {
-        id: this.id,
-        walletAddress: this.walletAddress,
-        email: this.email,
-        phoneNumber: this.phoneNumber,
-        status: this.status,
-        partnerOrderId: this.partnerOrderId,
-        amount,
-        transactionHash,
-      })
-    } catch (err) {
-      log.warn({
-        func: 'sendWebhook',
-        err
-      }, 'Failed send request')
-    }
-  }
-
   static async generateCheckoutRequest(data: Partial<CheckoutRequest>) {
     return CheckoutRequest.create({
       ...data,

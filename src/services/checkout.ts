@@ -79,12 +79,52 @@ export class CheckoutService {
       status
     })
 
-    const checkoutRequest = await checkout?.getCheckoutRequest()
+    const checkoutRequest = await checkout.getCheckoutRequest()
     await checkoutRequest?.update({
       status
     })
 
-    await checkoutRequest?.sendWebhook()
+    const partner = await checkoutRequest?.getPartner();
+
+    if (!partner) {
+      return
+    }
+
+    const charge = await checkout.getCharge()
+    const assetTransfer = await checkout.getAssetTransfer();
+    const user = await checkout.getUser()
+
+    await partner.sendWebhook(checkoutRequest.partnerOrderId, 'order', {
+      id: checkoutRequest.id,
+      walletAddress: checkoutRequest.walletAddress,
+      email: checkoutRequest.email,
+      phoneNumber: checkoutRequest.phoneNumber,
+      status: checkoutRequest.status,
+      partnerOrderId: checkoutRequest.partnerOrderId,
+      transactionHash: assetTransfer?.transactionHash,
+      feeAmount: checkout.feeAmountMoney.toUnit(),
+      tipAmount: checkout.tipAmountMoney.toUnit(),
+      chargeAmount: checkout.totalChargeAmountMoney.toUnit(),
+      unitAmount: assetTransfer?.amount,
+      chargeStatus: charge?.status,
+      last4: charge?.last4,
+      customer: {
+        id: user?.id,
+        firstName: user?.firstName || checkout.firstName,
+        lastName: user?.lastName || checkout.lastName,
+        email: user?.email || checkout.email,
+        phoneNumber: user?.phoneNumber || checkout.phoneNumber,
+        ssn: user?.ssn,
+        dob: user?.dob,
+        status: user?.status,
+        streetAddress: user?.streetAddress || checkout.streetAddress,
+        streetAddress2: user?.streetAddress2 || checkout.streetAddress2,
+        city: user?.city || checkout.city,
+        postalCode: user?.postalCode || checkout.postalCode,
+        state: user?.state || checkout.state,
+        country: user?.country || checkout.country,
+      }
+    })
   }
 
   private async processCharge(checkout: Checkout) {

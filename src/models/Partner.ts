@@ -12,6 +12,8 @@ import {
 } from 'sequelize-typescript';
 import { UserService } from '../services/userService';
 import { UserStatus } from '../types/userStatus.type';
+import axios from 'axios';
+import { log } from '../utils';
 
 @Table({
   tableName: 'partners',
@@ -138,4 +140,62 @@ export class Partner extends Model<Partner> {
 
     return partner
   }
+
+  async sendWebhook(id: string, type: 'order' | 'account', data: OrderPayload | AccountPayload) {
+    if (!this?.webhook) {
+      return
+    }
+
+    try {
+      await axios.post(this.webhook, {
+        id,
+        type,
+        accountId: this.id,
+        data
+      })
+    } catch (err) {
+      log.warn({
+        func: 'partner.sendWebhook',
+        accountId: this.id,
+        data,
+        id,
+        type,
+        err
+      }, 'Failed send webhook')
+    }
+  }
+}
+
+interface AccountPayload {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  status?: string;
+  ssn?: string;
+  dob?: string;
+  streetAddress: string;
+  streetAddress2?: string;
+  city: string;
+  postalCode: string;
+  state: string;
+  country: string
+}
+
+interface OrderPayload {
+  id: string;
+  walletAddress: string;
+  email: string;
+  phoneNumber: string;
+  status: string;
+  partnerOrderId?: string;
+  transactionHash?: string;
+  feeAmount: number;
+  tipAmount: number;
+  chargeAmount: number;
+  unitAmount?: number;
+  chargeStatus?: string;
+  last4?: string;
+  customer?: AccountPayload
 }
