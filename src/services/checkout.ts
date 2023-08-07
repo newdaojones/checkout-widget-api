@@ -165,7 +165,7 @@ export class CheckoutService {
         })
         checkout.sendReceipt()
       } else {
-        this.processTransferAsset(checkout)
+        await this.processTransferAsset(checkout)
       }
     } catch (err) {
       log.warn({
