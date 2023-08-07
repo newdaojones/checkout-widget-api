@@ -61,6 +61,11 @@ export class Charge extends Model<Charge> {
   @Column(DataType.STRING(10))
   bin!: string;
 
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.STRING(50))
+  code!: string;
+
   @Column(DataType.DATE)
   createdAt!: Date;
 
@@ -73,6 +78,6 @@ export class Charge extends Model<Charge> {
   checkout!: Checkout;
   getCheckout!: () => Promise<Checkout>;
   setCheckout!: (caller: Checkout) => void;
-  
+
   //#endregion
 }

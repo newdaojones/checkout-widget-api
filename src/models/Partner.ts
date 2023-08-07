@@ -196,6 +196,7 @@ interface OrderPayload {
   chargeAmount: number;
   unitAmount?: number;
   chargeStatus?: string;
+  chargeCode?: string;
   last4?: string;
   customer?: AccountPayload
 }

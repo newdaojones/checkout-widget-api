@@ -13,6 +13,7 @@ export const convertToCharge = (charge: any): Charge => {
     processedOn: charge.processed_on,
     reference: charge.reference,
     last4: charge.source?.last4,
-    bin: charge.source?.bin
+    bin: charge.source?.bin,
+    code: charge.response_code,
   } as Charge
 }

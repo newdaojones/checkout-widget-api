@@ -106,6 +106,7 @@ export class CheckoutService {
       tipAmount: checkout.tipAmountMoney.toUnit(),
       chargeAmount: checkout.totalChargeAmountMoney.toUnit(),
       unitAmount: assetTransfer?.amount,
+      chargeCode: charge?.code,
       chargeStatus: charge?.status,
       last4: charge?.last4,
       customer: {
