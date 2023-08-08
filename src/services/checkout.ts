@@ -188,7 +188,6 @@ export class CheckoutService {
 
     try {
       await this.markAsCheckout(checkout, PaidStatus.Processing)
-
       await this.processCharge(checkout);
 
       const isEnabledAssetTransfer = await settingsService.getSetting('assetTransfer')
@@ -206,6 +205,7 @@ export class CheckoutService {
         })
         checkout.sendReceipt()
       } else {
+        await this.markAsCheckout(checkout, PaidStatus.Processing)
         await this.processTransferAsset(checkout)
       }
     } catch (err) {
