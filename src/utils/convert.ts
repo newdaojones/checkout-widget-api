@@ -1,8 +1,9 @@
-import { Charge } from "../models/Charge"
-import { newDinero } from "./dinero"
+import { chargeMessages } from "../errors/chargeErrors";
+import { Charge } from "../models/Charge";
+import { newDinero } from "./dinero";
 
 export const convertToCharge = (charge: any): Charge => {
-  const chargeAmount = newDinero(charge.amount, charge.currency)
+  const chargeAmount = newDinero(charge.amount, charge.currency);
   return {
     id: charge.id,
     status: charge.status,
@@ -15,5 +16,6 @@ export const convertToCharge = (charge: any): Charge => {
     last4: charge.source?.last4,
     bin: charge.source?.bin,
     code: charge.response_code,
-  } as Charge
-}
+    error: chargeMessages[charge.response_code],
+  } as Charge;
+};

@@ -108,6 +108,7 @@ export class CheckoutService {
       unitAmount: assetTransfer?.amount,
       chargeId: charge?.id,
       chargeCode: charge?.code,
+      chargeError: charge?.error,
       chargeStatus: charge?.status,
       last4: charge?.last4,
       customer: {
