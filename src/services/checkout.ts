@@ -108,7 +108,7 @@ export class CheckoutService {
       unitAmount: assetTransfer?.amount,
       chargeId: charge?.id,
       chargeCode: charge?.code,
-      chargeError: charge?.error,
+      chargeMsg: charge?.message,
       chargeStatus: charge?.status,
       last4: charge?.last4,
       customer: {
@@ -150,7 +150,7 @@ export class CheckoutService {
       })
 
       if (chargeRecord.status !== 'Authorized') {
-        throw new Error(chargeRecord.error || `Charge failed: ${chargeRecord.status}`)
+        throw new Error(chargeRecord.message || `Charge failed: ${chargeRecord.status}`)
       }
 
       this.notification.publishTransactionStatus({

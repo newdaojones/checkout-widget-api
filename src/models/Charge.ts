@@ -79,7 +79,7 @@ export class Charge extends Model<Charge> {
   @AllowNull(true)
   @Default(null)
   @Column(DataType.TEXT)
-  error!: string;
+  message!: string;
 
   @Column(DataType.DATE)
   createdAt!: Date;

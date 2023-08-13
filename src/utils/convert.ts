@@ -16,6 +16,6 @@ export const convertToCharge = (charge: any): Charge => {
     last4: charge.source?.last4,
     bin: charge.source?.bin,
     code: charge.response_code,
-    error: chargeMessages[charge.response_code],
+    message: chargeMessages[charge.response_code],
   } as Charge;
 };

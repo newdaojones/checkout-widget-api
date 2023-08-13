@@ -207,7 +207,7 @@ interface OrderPayload {
   chargeStatus?: string;
   chargeId?: string;
   chargeCode?: string;
-  chargeError?: string;
+  chargeMsg?: string;
   last4?: string;
   customer?: AccountPayload;
 }
