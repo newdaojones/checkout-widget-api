@@ -150,7 +150,7 @@ export class CheckoutService {
       })
 
       if (chargeRecord.status !== 'Authorized') {
-        throw new Error(`Charge failed: ${chargeRecord.status}`)
+        throw new Error(chargeRecord.error || `Charge failed: ${chargeRecord.status}`)
       }
 
       this.notification.publishTransactionStatus({
