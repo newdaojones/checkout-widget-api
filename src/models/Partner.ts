@@ -192,7 +192,7 @@ interface AccountPayload {
   country: string;
 }
 
-interface OrderPayload {
+export interface OrderPayload {
   id: string;
   walletAddress: string;
   email: string;

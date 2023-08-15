@@ -18,6 +18,11 @@ import { AgreementLink } from '../models/AgreementLink';
 import { KycLink } from '../models/KycLink';
 import { WhereOptions } from 'sequelize';
 import { UserStatus } from '../types/userStatus.type';
+import { Checkout } from '../models/Checkout';
+import { Charge } from '../models/Charge';
+import { AssetTransfer } from '../models/AssetTransfer';
+import { User } from '../models/User';
+import { normalizeOrder } from '../utils/convert';
 
 const router = express.Router();
 const bridgeService = BridgeService.getInstance()
@@ -324,11 +329,27 @@ router.get('/partners/orders', authMiddlewareForPartner, async (req, res) => {
 
     const checkoutRequests = await CheckoutRequest.findAndCountAll({
       where: checkoutRequestCriteria,
+      include: [{
+        model: Checkout,
+        include: [{
+          model: Charge
+        }, {
+          model: AssetTransfer
+        }, {
+          model: User
+        }]
+      }],
+      distinct: true,
       offset,
       limit
     })
 
-    res.status(200).json(checkoutRequests);
+    const rows = checkoutRequests.rows.map((request) => normalizeOrder(request))
+
+    res.status(200).json({
+      rows,
+      count: checkoutRequests.count
+    });
 
   } catch (error) {
     log.warn({
@@ -371,10 +392,20 @@ router.get('/partners/orders/:id', authMiddlewareForPartner, async (req, res) =>
       where: {
         partnerId: partner.id,
         id
-      }
+      },
+      include: [{
+        model: Checkout,
+        include: [{
+          model: Charge
+        }, {
+          model: AssetTransfer
+        }, {
+          model: User
+        }]
+      }],
     })
 
-    res.status(200).json(checkoutRequest);
+    res.status(200).json(normalizeOrder(checkoutRequest));
 
   } catch (error) {
     log.warn({
