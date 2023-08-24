@@ -14,6 +14,8 @@ export interface ReceiptData {
   amount: number | string;
   fee: number;
   partnerId?: string;
+  partnerOrderId?: string;
+  requestId?: string
 }
 
 class EmailService {
