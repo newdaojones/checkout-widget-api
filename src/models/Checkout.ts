@@ -243,7 +243,8 @@ export class Checkout extends Model<Checkout> {
       dateTime: moment.utc(assetTransfer?.settledAt || new Date()).format('MMMM Do YYYY, hh:mm'),
       amount: assetTransfer?.amount || this.fundsAmountMoney.toFormat(),
       fee: this.feeAmountMoney.toUnit(),
-      partnerId: checkoutRequest?.partnerOrderId
+      partnerOrderId: checkoutRequest?.partnerOrderId,
+      requestId: checkoutRequest?.id,
     })
   }
 }
