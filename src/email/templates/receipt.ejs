@@ -353,8 +353,8 @@
                         <% if (partnerOrderId) { %>
                           <div>Order ID: <%= partnerOrderId%></div>
                         <% } %>
-                        <% if (requestId) { %>
-                          <div>Order Link: <a target="_blank" href="https://www.mybackpack.app<%= requestId%>">click here</a></div>
+                        <% if (orderLink) { %>
+                          <div>Order Link: <a target="_blank" href="<%= orderLink %>">click here</a></div>
                         <% } %>
                       </td>
                     </tr>
