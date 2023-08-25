@@ -235,6 +235,7 @@ export class Checkout extends Model<Checkout> {
     const assetTransfer = await this.getAssetTransfer()
     const charge = await this.getCharge()
     const checkoutRequest = await this.getCheckoutRequest()
+    const partner = checkoutRequest && await checkoutRequest.getPartner()
 
     emailService.sendReceiptEmail(this.email, {
       name: this.fullName,
@@ -244,6 +245,7 @@ export class Checkout extends Model<Checkout> {
       amount: assetTransfer?.amount || this.fundsAmountMoney.toFormat(),
       fee: this.feeAmountMoney.toUnit(),
       partnerOrderId: checkoutRequest?.partnerOrderId,
+      partnerName: partner?.companyName,
       orderLink: checkoutRequest?.id ? `${Config.frontendUri}/${checkoutRequest.id}` : undefined
     })
   }
