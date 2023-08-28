@@ -8,19 +8,20 @@ import {
   Default,
   IsEmail,
   BeforeUpdate,
-  BeforeCreate
-} from 'sequelize-typescript';
-import { UserService } from '../services/userService';
-import { UserStatus } from '../types/userStatus.type';
+  BeforeCreate,
+} from "sequelize-typescript";
+import { UserService } from "../services/userService";
+import { UserStatus } from "../types/userStatus.type";
+import axios from "axios";
+import { log } from "../utils";
 
 @Table({
-  tableName: 'partners',
+  tableName: "partners",
   name: {
-    singular: 'partner',
-    plural: 'partners'
-  }
+    singular: "partner",
+    plural: "partners",
+  },
 })
-
 export class Partner extends Model<Partner> {
   @PrimaryKey
   @AllowNull(false)
@@ -31,7 +32,7 @@ export class Partner extends Model<Partner> {
   @AllowNull(false)
   @Default(UserStatus.Pending)
   @Column(DataType.ENUM(...Object.values(UserStatus)))
-  status!: UserStatus
+  status!: UserStatus;
 
   @AllowNull(false)
   @Column(DataType.STRING(100))
@@ -107,7 +108,7 @@ export class Partner extends Model<Partner> {
 
   //#region Associations
   get isApproved() {
-    return this.status === UserStatus.Active
+    return this.status === UserStatus.Active;
   }
 
   //#endregion
@@ -115,7 +116,7 @@ export class Partner extends Model<Partner> {
   @BeforeUpdate
   @BeforeCreate
   static async beforeSaveHook(partner: Partner, options: any) {
-    if (partner.password && partner.changed('password')) {
+    if (partner.password && partner.changed("password")) {
       const hashedPw = await UserService.encryptPassword(partner.password);
       partner.password = hashedPw as string;
     }
@@ -127,15 +128,86 @@ export class Partner extends Model<Partner> {
     });
 
     if (!partner || partner.password == null || partner.password.length === 0) {
-      throw new Error('Invalid email or password')
+      throw new Error("Invalid email or password");
     }
 
-    const isPasswordMatch = await UserService.comparePassword(password, partner.password);
+    const isPasswordMatch = await UserService.comparePassword(
+      password,
+      partner.password
+    );
 
     if (!isPasswordMatch) {
-      throw new Error('Invalid email or password')
+      throw new Error("Invalid email or password");
     }
 
-    return partner
+    return partner;
   }
+
+  async sendWebhook(
+    id: string,
+    type: "order" | "account",
+    data: OrderPayload | AccountPayload
+  ) {
+    if (!this?.webhook) {
+      return;
+    }
+
+    try {
+      await axios.post(this.webhook, {
+        id,
+        type,
+        accountId: this.id,
+        data,
+      });
+    } catch (err) {
+      log.warn(
+        {
+          func: "partner.sendWebhook",
+          accountId: this.id,
+          data,
+          id,
+          type,
+          err,
+        },
+        "Failed send webhook"
+      );
+    }
+  }
+}
+
+interface AccountPayload {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  status?: string;
+  ssn?: string;
+  dob?: string;
+  streetAddress: string;
+  streetAddress2?: string;
+  city: string;
+  postalCode: string;
+  state: string;
+  country: string;
+}
+
+export interface OrderPayload {
+  id: string;
+  walletAddress: string;
+  email: string;
+  phoneNumber: string;
+  status: string;
+  partnerOrderId?: string;
+  transactionHash?: string;
+  feeAmount: number;
+  tipAmount: number;
+  chargeAmount: number;
+  unitAmount?: number;
+  chargeStatus?: string;
+  chargeId?: string;
+  chargeCode?: string;
+  chargeMsg?: string;
+  last4?: string;
+  customer?: AccountPayload;
 }

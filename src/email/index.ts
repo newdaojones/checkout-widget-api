@@ -15,7 +15,8 @@ export interface ReceiptData {
   fee: number;
   partnerId?: string;
   partnerOrderId?: string;
-  orderLink?: string
+  orderLink?: string;
+  partnerName?: string;
 }
 
 class EmailService {
@@ -30,7 +31,7 @@ class EmailService {
         Content: {
           Simple: {
             Subject: {
-              Data: 'MyBackpack Receipt'
+              Data: data.partnerName ? `MyBackpack Receipt - ${data.partnerName} Purchase` : 'MyBackpack Receipt'
             },
             Body: {
               Html: {
