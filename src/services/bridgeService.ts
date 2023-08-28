@@ -16,7 +16,26 @@ export class BridgeService {
     axios.interceptors.response.use(
       response => response,
       error => {
-        throw error.response.data
+        const data = error?.response?.data || error.response;
+
+        log.error({
+          func: 'BridgeService.error',
+          data
+        }, 'Error: sending bridge')
+
+        if (!data) {
+          throw error
+        }
+
+        if (data.code === 'invalid_parameters' && data.source?.key) {
+          const errors = Object.values(data.source.key);
+
+          if (errors.length) {
+            throw new Error(errors.join(', '))
+          }
+        }
+
+        throw data
       }
     )
 
