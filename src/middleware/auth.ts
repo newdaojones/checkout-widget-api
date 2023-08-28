@@ -114,11 +114,11 @@ export const authMiddlewareForPartner: RequestHandler = async (req, res, next) =
       return;
     }
 
-    if (!partner.isApproved) {
-      res.status(422).json({
-        message: 'Your account is not approved yet. please wait.',
-      });
-    }
+    // if (!partner.isApproved) {
+    //   res.status(422).json({
+    //     message: 'Your account is not approved yet. please wait.',
+    //   });
+    // }
 
     req.partner = partner
 
