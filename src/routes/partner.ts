@@ -186,6 +186,62 @@ router.post('/partners/login', async (req, res) => {
   }
 });
 
+router.patch('/partners', authMiddlewareForPartner, async (req, res) => {
+  const partner = req.partner;
+  const webhook = req.body.webhook
+  const displayName = req.body.displayName
+
+  log.info({
+    func: 'partners/partners',
+    webhook,
+    displayName,
+    partnerId: partner?.id
+  })
+  try {
+    // await check('webhook', 'Webhook url is invalid').isURL().run(req);
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      errors.throw();
+    }
+
+    if (!partner) {
+      throw new Error('Partner not found')
+    }
+
+    await partner.update({
+      webhook,
+      displayName
+    })
+
+    res.status(200).send({
+      message: "success"
+    })
+  } catch (error) {
+    log.info({
+      func: 'partners',
+      webhook,
+      displayName,
+      partnerId: partner?.id
+    }, 'Failed Update Partner')
+    
+    if (error.mapped && error.mapped()) {
+      return res.status(422).send({
+        message: 'Failed validation',
+        errors: error.mapped()
+      })
+    }
+
+    if (error.code) {
+      return res.status(400).send(error)
+    }
+
+    res.status(400).send({
+      message: error.message || 'Error'
+    });
+  }
+})
+
 router.patch('/partners/webhook', authMiddlewareForPartner, async (req, res) => {
   const partner = req.partner;
   const webhook = req.body.webhook

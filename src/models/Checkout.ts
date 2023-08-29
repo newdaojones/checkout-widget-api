@@ -245,7 +245,7 @@ export class Checkout extends Model<Checkout> {
       amount: assetTransfer?.amount || this.fundsAmountMoney.toFormat(),
       fee: this.feeAmountMoney.toUnit(),
       partnerOrderId: checkoutRequest?.partnerOrderId,
-      partnerName: partner?.companyName,
+      partnerName: partner?.displayName || partner?.companyName,
       orderLink: checkoutRequest?.id ? `${Config.frontendUri}/${checkoutRequest.id}` : undefined
     })
   }
