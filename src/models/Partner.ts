@@ -38,6 +38,11 @@ export class Partner extends Model<Partner> {
   @Column(DataType.STRING(100))
   companyName!: string;
 
+  @AllowNull(true)
+  @Default(null)
+  @Column(DataType.STRING(255))
+  displayName!: string;
+
   @AllowNull(false)
   @Column(DataType.STRING(100))
   firstName!: string;
