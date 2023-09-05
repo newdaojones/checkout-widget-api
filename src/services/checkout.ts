@@ -150,7 +150,8 @@ export class CheckoutService {
       })
 
       if (chargeRecord.status !== 'Authorized') {
-        throw new Error(chargeRecord.message || `Charge failed: ${chargeRecord.status}`)
+        const message = chargeRecord.message ? `${chargeRecord.code}: ${chargeRecord.message}` : `Failed Charge $${checkout.totalChargeAmountMoney.toUnit()} with ${chargeRecord.status}`
+        throw new Error(message)
       }
 
       this.notification.publishTransactionStatus({
@@ -176,7 +177,7 @@ export class CheckoutService {
         status: 'failed',
         paidStatus: checkout.status,
         step: CheckoutStep.Charge,
-        message: `Failed Charge $${checkout.totalChargeAmountMoney.toUnit()}`,
+        message: err.message,
         transactionId: null,
         date: new Date()
       })
@@ -332,7 +333,7 @@ export class CheckoutService {
     } else if (checkout.status === PaidStatus.Processing) {
       transaction.message = `Processing ${transaction.step}`
     } else if (transaction.paidStatus === PaidStatus.Error) {
-      transaction.message = `Failed checkout for ${transaction.step}`
+      transaction.message = charge?.code ? `${charge.code}: ${charge.message}` : `Failed checkout for ${transaction.step}`
     }
 
     return transaction
