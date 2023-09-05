@@ -186,7 +186,7 @@ export class Checkout extends Model<Checkout> {
       return this.zeroMoney;
     }
 
-    if (this.tipType === TipType.Cash) {
+    if (this.feeType === TipType.Cash) {
       return newDinero(this.fee * 100, this.currency)
     }
 
