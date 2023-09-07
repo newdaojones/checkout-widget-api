@@ -488,7 +488,7 @@ router.get('/partners/orders/:id', authMiddlewareForPartner, async (req, res) =>
   }
 })
 
-router.post('/partners/tos_link', async (req, res) => {
+router.post("/partners/tos_link", async (req, res) => {
   try {
     // await check('redirectUri', 'Redirect URI is required').notEmpty().run(req);
     // await check('redirectUri', 'Redirect URI is invalid').isURL().run(req);
@@ -498,38 +498,41 @@ router.post('/partners/tos_link', async (req, res) => {
       errors.throw();
     }
 
-    const redirectUri = req.body.redirectUri
-    const idempotenceId = uuidv4()
-    const link = await bridgeService.createTermsOfServiceUrl(idempotenceId)
-
+    const redirectUri = req.body.redirectUri;
+    const idempotenceId = uuidv4();
+    const link = await bridgeService.createTermsOfServiceUrl(idempotenceId);
+    const url = `${link}&redirect_uri=${redirectUri}`;
     await AgreementLink.create({
       id: idempotenceId,
-      link: `${link}?redirect_uri=${redirectUri}`
-    })
+      link: url,
+    });
 
-    return res.status(200).json({ link });
+    return res.status(200).json({ link: url });
   } catch (err) {
-    log.warn({
-      func: '/partners/tos_link',
-      err
-    }, 'Failed get tos link')
+    log.warn(
+      {
+        func: "/partners/tos_link",
+        err,
+      },
+      "Failed get tos link"
+    );
 
     if (err.mapped && err.mapped()) {
       return res.status(422).send({
-        message: 'Failed validation',
-        errors: err.mapped()
-      })
+        message: "Failed validation",
+        errors: err.mapped(),
+      });
     }
 
     if (err.code) {
-      return res.status(400).send(err)
+      return res.status(400).send(err);
     }
 
     res.status(400).send({
-      message: err.message || 'Error'
+      message: err.message || "Error",
     });
   }
-})
+});
 
 router.post('/partners/kyb_success/sandbox', authMiddlewareForPartner, async (req, res) => {
   const partner = req.partner;
