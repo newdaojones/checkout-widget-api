@@ -12,6 +12,6 @@ export class SubscriptionArgs {
   @Field()
   action: string;
 
-  @Field(() => GraphQLJSONObject)
+  @Field((type) => GraphQLJSONObject)
   payload: object;
 }

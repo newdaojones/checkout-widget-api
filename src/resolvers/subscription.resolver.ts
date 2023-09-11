@@ -13,15 +13,36 @@ import {
 } from "../services/notificationService";
 import { SubscriptionType } from "../types/subscription.type";
 import { SubscriptionArgs } from "../types/subscription.args";
+import { log } from "../utils";
 
 const notificationService = NotificationService.getInstance();
 
 @Resolver()
 export class SubscriptionResolver {
-  @Mutation(() => SubscriptionType)
+  @Mutation(() => Boolean)
   async publishSubscription(@Args() data: SubscriptionArgs) {
-    await notificationService.publishSubscription(data);
-    return true;
+    log.info(
+      {
+        func: "publishSubscription",
+        data,
+      },
+      "Publish subscription"
+    );
+    try {
+      await notificationService.publishSubscription(data);
+      return true;
+    } catch (err) {
+      log.warn(
+        {
+          func: "publishSubscription",
+          data,
+          err,
+        },
+        "Failed publish subscription"
+      );
+
+      return false;
+    }
   }
 
   @Subscription({
