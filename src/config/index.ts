@@ -11,7 +11,7 @@ export const Config = {
   frontendUri: process.env.FRONT_END_URI || 'https://test.checkout.mybackpack.app',
   uri: process.env.URI || 'https://test.checkout.mybackpack.app/api',
   defaultFee: {
-    fee: 6,
+    fee: 6.5,
     feeType: 'percent'
   },
   web3: {
