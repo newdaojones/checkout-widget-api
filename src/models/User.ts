@@ -8,19 +8,23 @@ import {
   Default,
   IsEmail,
   BeforeUpdate,
-  BeforeCreate
-} from 'sequelize-typescript';
-import { UserService } from '../services/userService';
-import { UserStatus } from '../types/userStatus.type';
+  BeforeCreate,
+  BelongsTo,
+  HasOne,
+  BelongsToMany,
+} from "sequelize-typescript";
+import { UserService } from "../services/userService";
+import { UserStatus } from "../types/userStatus.type";
+import { Partner } from "./Partner";
+import { PartnerUser } from "./PartnerUser";
 
 @Table({
-  tableName: 'users',
+  tableName: "users",
   name: {
-    singular: 'user',
-    plural: 'users'
-  }
+    singular: "user",
+    plural: "users",
+  },
 })
-
 export class User extends Model<User> {
   @PrimaryKey
   @AllowNull(false)
@@ -30,7 +34,7 @@ export class User extends Model<User> {
   @AllowNull(false)
   @Default(UserStatus.Pending)
   @Column(DataType.ENUM(...Object.values(UserStatus)))
-  status!: UserStatus
+  status!: UserStatus;
 
   @AllowNull(false)
   @Column(DataType.STRING(100))
@@ -49,23 +53,28 @@ export class User extends Model<User> {
   @Column(DataType.TEXT)
   password: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(100))
   phoneNumber!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(20))
   gender!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(20))
   dob!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(100))
   ssn!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(255))
   streetAddress!: string;
 
@@ -74,39 +83,45 @@ export class User extends Model<User> {
   @Column(DataType.STRING(255))
   streetAddress2!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(255))
   city!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(25))
   state!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(10))
   postalCode!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(255))
   country!: string;
 
   @AllowNull(true)
   @Default(null)
   @Column(DataType.JSON)
-  requirementsDue!: string[]
+  requirementsDue!: string[];
 
   @AllowNull(true)
   @Default(null)
   @Column(DataType.JSON)
-  futureRequirementsDue!: string[]
+  futureRequirementsDue!: string[];
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING)
-  signedAgreementId!: string
+  signedAgreementId!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING)
-  idempotenceId!: string
+  idempotenceId!: string;
 
   @Column(DataType.DATE)
   createdAt!: Date;
@@ -114,51 +129,86 @@ export class User extends Model<User> {
   @Column(DataType.DATE)
   updatedAt!: Date;
 
+  @BelongsToMany(() => Partner, () => PartnerUser)
+  partners!: Partner[];
+  getPartners!: () => Promise<Partner[]>;
+
+  @HasOne(() => PartnerUser)
+  partnerUser!: PartnerUser;
+  getPartnerUser!: () => Promise<PartnerUser>;
+
   //#region Associations
   //#endregion
 
   get fullName() {
-    return `${this.firstName} ${this.lastName}`
+    return `${this.firstName} ${this.lastName}`;
   }
 
   get isVerified() {
-    return this.status === UserStatus.Active && !this.futureRequirementsDue?.length
+    return (
+      this.status === UserStatus.Active && !this.futureRequirementsDue?.length
+    );
   }
 
   get isRejected() {
-    return this.status = UserStatus.Rejected
+    return (this.status = UserStatus.Rejected);
   }
 
   @BeforeUpdate
   @BeforeCreate
   static async beforeSaveHook(user: User, options: any) {
-    if (user.password && user.changed('password')) {
+    if (user.password && user.changed("password")) {
       const hashedPw = await UserService.encryptPassword(user.password);
       user.password = hashedPw as string;
     }
   }
 
-  static async findUser(email: string, password: string, cb: Function) {
+  static async findUser(email: string, password: string, cb?: Function) {
     try {
       const user = await this.findOne({
         where: { email },
       });
 
       if (user == null || user.password == null || user.password.length === 0) {
-        cb(new Error('Invalid email or password'), null);
+        cb(new Error("Invalid email or password"), null);
         return;
       }
 
-      const isPasswordMatch = await UserService.comparePassword(password, user.password);
+      const isPasswordMatch = await UserService.comparePassword(
+        password,
+        user.password
+      );
 
-      if (isPasswordMatch) {
-        return cb(null, user);
+      if (!isPasswordMatch) {
+        if (cb) {
+          return cb(null, user);
+        }
+
+        return user;
       }
 
-      cb(new Error('Invalid email or password'), null);
+      if (cb) {
+        return cb(new Error("Invalid email or password"), null);
+      }
 
+      new Error("Invalid email or password");
     } catch (err: any) {
-      cb(err, null);
+      if (cb) {
+        return cb(err, null);
+      }
+
+      throw err;
     }
+  }
+
+  async getPartner() {
+    return Partner.findOne({
+      include: {
+        model: PartnerUser,
+        where: {
+          userId: this.id,
+        },
+      },
+    });
   }
 }

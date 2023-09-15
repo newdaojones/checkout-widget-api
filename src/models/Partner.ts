@@ -7,13 +7,14 @@ import {
   DataType,
   Default,
   IsEmail,
-  BeforeUpdate,
-  BeforeCreate,
+  BelongsToMany,
+  HasMany,
 } from "sequelize-typescript";
-import { UserService } from "../services/userService";
 import { UserStatus } from "../types/userStatus.type";
 import axios from "axios";
 import { log } from "../utils";
+import { User } from "./User";
+import { PartnerUser } from "./PartnerUser";
 
 @Table({
   tableName: "partners",
@@ -111,41 +112,17 @@ export class Partner extends Model<Partner> {
   @Column(DataType.DATE)
   updatedAt!: Date;
 
+  @BelongsToMany(() => User, () => PartnerUser)
+  users!: User[];
+  getUsers!: () => Promise<User[]>;
+
+  @HasMany(() => PartnerUser)
+  partnerUsers!: PartnerUser[];
+  getPartnerUsers!: () => Promise<PartnerUser[]>;
+
   //#region Associations
   get isApproved() {
     return this.status === UserStatus.Active;
-  }
-
-  //#endregion
-
-  @BeforeUpdate
-  @BeforeCreate
-  static async beforeSaveHook(partner: Partner, options: any) {
-    if (partner.password && partner.changed("password")) {
-      const hashedPw = await UserService.encryptPassword(partner.password);
-      partner.password = hashedPw as string;
-    }
-  }
-
-  static async findPartner(email: string, password: string) {
-    const partner = await this.findOne({
-      where: { email },
-    });
-
-    if (!partner || partner.password == null || partner.password.length === 0) {
-      throw new Error("Invalid email or password");
-    }
-
-    const isPasswordMatch = await UserService.comparePassword(
-      password,
-      partner.password
-    );
-
-    if (!isPasswordMatch) {
-      throw new Error("Invalid email or password");
-    }
-
-    return partner;
   }
 
   async sendWebhook(
