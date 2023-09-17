@@ -110,6 +110,27 @@ export class BridgeService {
     return res.data;
   }
 
+  async createKycUrl(customerId: string, redirectUri: string): Promise<string> {
+    const res = await this.send({
+      method: "GET",
+      url: `/customers/${customerId}/id_verification_link`,
+      params: {
+        redirect_uri: redirectUri,
+      },
+    });
+
+    return res.data.url;
+  }
+
+  async getCustomer(customerId: string): Promise<any> {
+    const res = await this.send({
+      method: "GET",
+      url: `/customers/${customerId}`,
+    });
+
+    return res.data;
+  }
+
   async createKycLink({
     idempotencyKey,
     name,
@@ -137,22 +158,10 @@ export class BridgeService {
     return res.data;
   }
 
-  async createKycUrl(customerId: string, redirectUri: string): Promise<string> {
+  async getKycLink(kycLinkId: string): Promise<any> {
     const res = await this.send({
       method: "GET",
-      url: `/customers/${customerId}/id_verification_link`,
-      params: {
-        redirect_uri: redirectUri,
-      },
-    });
-
-    return res.data.url;
-  }
-
-  async getCustomer(customerId: string): Promise<any> {
-    const res = await this.send({
-      method: "GET",
-      url: `customers/${customerId}`,
+      url: `/kyc_links/${kycLinkId}`,
     });
 
     return res.data;

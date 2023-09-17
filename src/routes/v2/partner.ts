@@ -86,6 +86,8 @@ router.post("/v2/partners", async (req, res) => {
           tosLink: response.tos_link,
           kycStatus: response.kyc_status,
           tosStatus: response.tos_status,
+          associatedObjectType: 'kycLink',
+          associatedUserType: 'partner',
         },
         { transaction: t }
       );
