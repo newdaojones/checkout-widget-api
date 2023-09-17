@@ -26,7 +26,7 @@ export class KycService {
     return KycLink.findAll({
       where: {
         createdAt: {
-          [Op.lte]: moment.utc().subtract(1, "hour").toDate(),
+          [Op.gte]: moment.utc().subtract(1, "hour").toDate(),
         },
         [Op.or]: [
           {
@@ -44,8 +44,8 @@ export class KycService {
     return KycLink.findAll({
       where: {
         createdAt: {
-          [Op.gt]: moment.utc().subtract(1, "hour").toDate(),
-          [Op.lte]: moment.utc().subtract(1, "day").toDate(),
+          [Op.lt]: moment.utc().subtract(1, "hour").toDate(),
+          [Op.gte]: moment.utc().subtract(1, "day").toDate(),
         },
         [Op.or]: [
           {
@@ -63,8 +63,8 @@ export class KycService {
     return KycLink.findAll({
       where: {
         createdAt: {
-          [Op.gt]: moment.utc().subtract(1, "day").toDate(),
-          [Op.lte]: moment.utc().subtract(28, "days").toDate(),
+          [Op.lt]: moment.utc().subtract(1, "day").toDate(),
+          [Op.gte]: moment.utc().subtract(28, "days").toDate(),
         },
         [Op.or]: [
           {
