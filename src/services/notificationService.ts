@@ -42,7 +42,7 @@ export class NotificationService {
       if (!this.pubSub) {
         throw new Error("Subscription is not initialized");
       }
-
+      console.log("c13513b5-a905-4f81-97ff-ec7b9d03a7ef");
       this.pubSub.publish(NotificationType.ACCOUNT_STATUS, payload);
     } catch (err) {
       log.warn({

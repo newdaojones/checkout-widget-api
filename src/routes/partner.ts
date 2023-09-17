@@ -641,6 +641,8 @@ router.get('/partners/kyb_link', authMiddlewareForPartner, async (req, res) => {
     const link = await bridgeService.createKycUrl(partner.id, redirectUri)
 
     await KycLink.create({
+      associatedObjectType: 'user',
+      associatedUserType: 'partner',
       userId: partner.id,
       email: partner.email,
       customerId: partner.id,

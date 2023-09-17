@@ -9,6 +9,7 @@ import {
 } from "sequelize-typescript";
 import { UserStatus } from "../types/userStatus.type";
 import { TosStatus } from "../types/tosStatus.type";
+import { Col } from "sequelize/types/utils";
 
 @Table({
   tableName: "kycLinks",
@@ -24,9 +25,19 @@ export class KycLink extends Model<KycLink> {
   @Column(DataType.UUID)
   id!: string;
 
+  @AllowNull(null)
+  @Default("user")
+  @Column(DataType.STRING(50))
+  associatedObjectType!: string;
+
   @AllowNull(false)
   @Column(DataType.UUID)
   userId!: string;
+
+  @AllowNull(null)
+  @Default("user")
+  @Column(DataType.STRING(50))
+  associatedUserType!: string;
 
   @AllowNull(true)
   @Default(null)
