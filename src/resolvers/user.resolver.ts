@@ -12,6 +12,7 @@ import { KycLink } from '../models/KycLink';
 import { UserService } from '../services/userService';
 import { Config } from '../config';
 import { UserStatus } from '../types/userStatus.type';
+import { TosStatus } from '../types/tosStatus.type';
 
 const bridgeService = BridgeService.getInstance()
 
@@ -150,8 +151,11 @@ export class UserResolver {
       const link = await bridgeService.createKycUrl(user.id, `${Config.frontendUri}/kyc-success`)
 
       await KycLink.create({
-        link,
-        userId: user.id
+        userId: user.id,
+        email: user.email,
+        customerId: user.id,
+        kycLink: link,
+        tosStatus: TosStatus.Approved,
       })
 
       return link

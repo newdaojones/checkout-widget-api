@@ -60,7 +60,8 @@ export class Partner extends Model<Partner> {
   @Column(DataType.TEXT)
   password: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(100))
   phoneNumber!: string;
 
@@ -74,7 +75,8 @@ export class Partner extends Model<Partner> {
   @Column(DataType.STRING(50))
   dob!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(255))
   streetAddress!: string;
 
@@ -83,15 +85,18 @@ export class Partner extends Model<Partner> {
   @Column(DataType.STRING(255))
   streetAddress2!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(255))
   city!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(25))
   state!: string;
 
-  @AllowNull(false)
+  @AllowNull(true)
+  @Default(null)
   @Column(DataType.STRING(10))
   postalCode!: string;
 
@@ -114,6 +119,10 @@ export class Partner extends Model<Partner> {
   //#region Associations
   get isApproved() {
     return this.status === UserStatus.Active;
+  }
+
+  get name() {
+    return `${this.firstName} ${this.lastName}`;
   }
 
   //#endregion
