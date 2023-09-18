@@ -23,6 +23,7 @@ import { Charge } from '../models/Charge';
 import { AssetTransfer } from '../models/AssetTransfer';
 import { User } from '../models/User';
 import { normalizeOrder } from '../utils/convert';
+import { TosStatus } from '../types/tosStatus.type';
 
 const router = express.Router();
 const bridgeService = BridgeService.getInstance()
@@ -640,8 +641,13 @@ router.get('/partners/kyb_link', authMiddlewareForPartner, async (req, res) => {
     const link = await bridgeService.createKycUrl(partner.id, redirectUri)
 
     await KycLink.create({
-      link,
-      userId: partner.id
+      associatedObjectType: 'user',
+      associatedUserType: 'partner',
+      userId: partner.id,
+      email: partner.email,
+      customerId: partner.id,
+      kycLink: link,
+      tosStatus: TosStatus.Approved,
     })
 
     return res.status(200).json({ link });
