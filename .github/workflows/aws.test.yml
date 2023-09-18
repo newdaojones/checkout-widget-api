@@ -45,4 +45,5 @@ jobs:
         username: ${{ vars.SSH_USER }}
         key: ${{ secrets.AWS_PRIVATE_KEY }}
         script: |
-          pm2 reload 0
+          cd /home/ubuntu/checkout-widget-api
+          yarn reload

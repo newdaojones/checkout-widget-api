@@ -6,19 +6,20 @@ export const Config = {
   checkoutProcessingChannelId: process.env.CHECKOUT_PROCESSING_CHANNEL_ID,
   bridgeApiKey: process.env.BRIDGE_API_KEY,
   bridgeApiURI: process.env.BRIDGE_API_URI,
-  isProduction: process.env.NODE_ENV === 'production',
-  isStaging: process.env.NODE_ENV === 'staging',
-  frontendUri: process.env.FRONT_END_URI || 'https://test.checkout.mybackpack.app',
-  uri: process.env.URI || 'https://test.checkout.mybackpack.app/api',
+  isProduction: process.env.NODE_ENV === "production",
+  isStaging: process.env.NODE_ENV === "staging",
+  frontendUri:
+    process.env.FRONT_END_URI || "https://test.checkout.mybackpack.app",
+  uri: process.env.URI || "https://test.checkout.mybackpack.app/api",
   defaultFee: {
-    fee: 6,
-    feeType: 'percent'
+    fee: 6.5,
+    feeType: "percent",
   },
   web3: {
     providerUri: process.env.ALCHEMY_URI,
     usdcContractAddress: process.env.USDC_CONTRACT_ADDRESS,
     usdcPoolPrivateKey: process.env.USDC_POOL_PRIVATE_KEY,
-    explorerUri: process.env.EXPLORER_URI
+    explorerUri: process.env.EXPLORER_URI,
   },
   redis: {
     port: Number(process.env.REDIS_PORT),
@@ -30,11 +31,19 @@ export const Config = {
     enableReadyCheck: false,
     reconnectOnError: (err: any) => {
       // https://github.com/luin/ioredis#reconnect-on-error
-      if (err && err.message && err.message.includes('READONLY')) {
+      if (err && err.message && err.message.includes("READONLY")) {
         return true;
       }
 
       return false;
     },
   },
-}
+  bull: {
+    // Keep the bull history only for one week to avoid redis overflow
+    historyTTLInHours: 7 * 24,
+    admin: {
+      name: process.env.BULL_ADMIN_NAME,
+      password: process.env.BULL_ADMIN_PASSWORD,
+    },
+  },
+};

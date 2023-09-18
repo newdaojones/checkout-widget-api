@@ -23,6 +23,7 @@ import { Charge } from '../models/Charge';
 import { AssetTransfer } from '../models/AssetTransfer';
 import { User } from '../models/User';
 import { normalizeOrder } from '../utils/convert';
+import { TosStatus } from '../types/tosStatus.type';
 
 const router = express.Router();
 const bridgeService = BridgeService.getInstance()
@@ -548,6 +549,19 @@ router.post('/partners/kyb_success/sandbox', authMiddlewareForPartner, async (re
       status: UserStatus.Active
     })
 
+    const kycLink = await KycLink.findOne({
+      where: {
+        userId: partner.id,
+      },
+    });
+
+    if (kycLink) {
+      await kycLink.update({
+        kycStatus: UserStatus.Active,
+        tosStatus: TosStatus.Approved,
+      });
+    }
+
     await partnerRecord.sendWebhook(partner.id, 'account', {
       id: partnerRecord.id,
       firstName: partnerRecord.firstName,
@@ -598,6 +612,18 @@ router.post('/partners/kyb_success/:id', async (req, res) => {
       status: response.status,
     })
 
+    const kycLink = await KycLink.findOne({
+      where: {
+        userId: partnerRecord.id,
+      },
+    });
+
+    if (kycLink) {
+      await kycLink.update({
+        kycStatus: response.status,
+      });
+    }
+
     await partnerRecord.sendWebhook(partnerRecord.id, 'account', {
       id: partnerRecord.id,
       firstName: partnerRecord.firstName,
@@ -640,8 +666,13 @@ router.get('/partners/kyb_link', authMiddlewareForPartner, async (req, res) => {
     const link = await bridgeService.createKycUrl(partner.id, redirectUri)
 
     await KycLink.create({
-      link,
-      userId: partner.id
+      associatedObjectType: 'user',
+      associatedUserType: 'partner',
+      userId: partner.id,
+      email: partner.email,
+      customerId: partner.id,
+      kycLink: link,
+      tosStatus: TosStatus.Approved,
     })
 
     return res.status(200).json({ link });
