@@ -6,14 +6,10 @@ module.exports = {
         primaryKey: true,
         allowNull: false,
       },
-      contactId: {
-        type: Sequelize.UUID,
-        allowNull: false,
-        index: true
-      },
       status: {
-        type: Sequelize.STRING(50),
-        allowNull: false
+        type: Sequelize.ENUM('pending', 'active', 'manual_review', 'rejected'),
+        allowNull: false,
+        defaultValue: 'pending'
       },
       firstName: {
         allowNull: false,
@@ -46,7 +42,7 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING(100),
       },
-      taxId: {
+      ssn: {
         allowNull: false,
         type: Sequelize.STRING(100),
       },
@@ -67,7 +63,7 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING(25),
       },
-      zip: {
+      postalCode: {
         allowNull: false,
         type: Sequelize.STRING(10),
       },
@@ -76,40 +72,23 @@ module.exports = {
         defaultValue: null,
         type: Sequelize.STRING(255),
       },
-      identityConfirmed: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
-      },
-      identityDocumentsVerified: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
-      },
-      proofOfAddressDocumentsVerified: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
-      },
-      amlCleared: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
-      },
-      cipCleared: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
-      },
-      documentId: {
-        type: Sequelize.TEXT,
+      requirementsDue: {
         allowNull: true,
-        defaultValue: null
+        defaultValue: null,
+        type: Sequelize.JSON
       },
-      deviceId: {
-        type: Sequelize.TEXT,
+      futureRequirementsDue: {
         allowNull: true,
-        defaultValue: null
+        defaultValue: null,
+        type: Sequelize.JSON
+      },
+      signedAgreementId: {
+        allowNull: false,
+        type: Sequelize.STRING(36)
+      },
+      idempotenceId: {
+        allowNull: false,
+        type: Sequelize.STRING(36)
       },
       createdAt: {
         type: Sequelize.DATE,

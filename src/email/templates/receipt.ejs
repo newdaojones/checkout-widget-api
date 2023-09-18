@@ -340,16 +340,25 @@
                   <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                     <tr>
                       <td>
-                        <p>Thanks for your checkout</p>
+                        <p>Thanks for your checkout
+                          <% if (partnerName) { %>
+                            with <%= partnerName%>
+                          <% } %>
+                        </p>
                         <div>Customer name: <%= name%></div>
                         <div>Timestamp: <%= dateTime%></div>
                         <div>Payment method: ***<%= paymentMethod%></div>
                         <div>USDC Amount ($USD): <%= amount%></div>
                         <div>Service fee: $<%= fee%></div>
-                        <div>Transaction hash: <a target="_blank" href="https://etherscan.io/tx/<%= transactionHash%>">click here</a></div>
+                        <% if (transactionHash) { %>
+                          <div>Transaction hash: <a target="_blank" href="<%= transactionHash %>">click here</a></div>
+                        <% } %>
                         <div>Bank statement identifier: <a target="_blank" href="https://www.mybackpack.app">MyBackpack Bellevue</a></div>
-                        <% if (partnerId) { %>
-                          <div>Partner ID: <%= partnerId%></div>
+                        <% if (partnerOrderId) { %>
+                          <div>Order ID: <%= partnerOrderId%></div>
+                        <% } %>
+                        <% if (orderLink) { %>
+                          <div>Order Link: <a target="_blank" href="<%= orderLink %>">click here</a></div>
                         <% } %>
                       </td>
                     </tr>

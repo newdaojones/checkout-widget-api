@@ -58,7 +58,7 @@ export class CheckoutType {
   state: string;
 
   @Field()
-  zip: string;
+  postalCode: string;
 
   @Field({ nullable: true })
   country: string;

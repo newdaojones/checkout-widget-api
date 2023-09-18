@@ -15,11 +15,6 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING(255),
       },
-      assetTransferMethodId: {
-        allowNull: true,
-        type: Sequelize.STRING(255),
-        defaultValue: null,
-      },
       firstName: {
         allowNull: false,
         type: Sequelize.STRING(100),
@@ -83,7 +78,7 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING(25),
       },
-      zip: {
+      postalCode: {
         allowNull: false,
         type: Sequelize.STRING(10),
       },

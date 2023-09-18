@@ -1,9 +1,11 @@
-import { Charge } from "../models/Charge"
-import { FundsTransfer } from "../models/FundsTransfer"
-import { newDinero } from "./dinero"
+import { chargeMessages } from "../errors/chargeErrors";
+import { Charge } from "../models/Charge";
+import { CheckoutRequest } from "../models/CheckoutRequest";
+import { OrderPayload } from "../models/Partner";
+import { newDinero } from "./dinero";
 
 export const convertToCharge = (charge: any): Charge => {
-  const chargeAmount = newDinero(charge.amount, charge.currency)
+  const chargeAmount = newDinero(charge.amount, charge.currency);
   return {
     id: charge.id,
     status: charge.status,
@@ -14,89 +16,46 @@ export const convertToCharge = (charge: any): Charge => {
     processedOn: charge.processed_on,
     reference: charge.reference,
     last4: charge.source?.last4,
-    bin: charge.source?.bin
-  } as Charge
-}
+    bin: charge.source?.bin,
+    code: charge.response_code,
+    message: chargeMessages[charge.response_code],
+  } as Charge;
+};
 
-export const convertToFundsTransfer = (data: any): FundsTransfer => {
+export const normalizeOrder = (checkoutRequest: CheckoutRequest): OrderPayload => {
   return {
-    id: data.id,
-    status: data.attributes.status,
-    amount: data.attributes.amount,
-    amountExcepted: data.attributes['amount-expected'],
-    currencyType: data.attributes['currency-type'],
-    cancelledAt: data.attributes['cancelled-at'],
-    cancellationDetails: data.attributes['cancellation-details'],
-    clearsOn: data.attributes['clears-on'],
-    contingenciesClearedAt: data.attributes['contingencies-cleared-at'],
-    contingenciesClearedOn: data.attributes['contingencies-cleared-on'],
-    equalityHash: data.attributes['equality-hash'],
-    fundsSourceName: data.attributes['funds-source-name'],
-    fundsTransferType: data.attributes['funds-transfer-type'],
-    nachaIndividualId: data.attributes['nacha-individual-id'],
-    privateMemo: data.attributes['private-memo'],
-    receivedChargeBack: data.attributes['received-chargeback'],
-    receiverName: data.attributes['receiver-name'],
-    reference: data.attributes['reference'],
-    reviewReasons: data.attributes['review-reasons'],
-    reversedAmount: data.attributes['reversed-amount'],
-    reversalDetails: data.attributes['reversal-details'],
-    reversedAt: data.attributes['reversed-at'],
-    settledAt: data.attributes['settled-at'],
-    settlementDetails: data.attributes['settlement-details'],
-    signetDepositAddress: data.attributes['signet-deposit-address'],
-    specialInstructions: data.attributes['special-instructions'],
-    specialType: data.attributes['special-type'],
-    wireInstructions: data.attributes['wire-instructions'],
-    wireInstructionsIntl: data.attributes['wire-instructions-intl'],
-    altCurrencyWireInstructions: data.attributes['alt-currency-wire-instructions'],
-  } as FundsTransfer
-}
+    id: checkoutRequest.id,
+    walletAddress: checkoutRequest.walletAddress,
+    email: checkoutRequest.email,
+    phoneNumber: checkoutRequest.phoneNumber,
+    status: checkoutRequest.status,
+    partnerOrderId: checkoutRequest.partnerOrderId,
+    transactionHash: checkoutRequest.checkout?.assetTransfer?.transactionHash,
+    feeAmount: checkoutRequest.checkout?.feeAmountMoney.toUnit(),
+    tipAmount: checkoutRequest.checkout?.tipAmountMoney.toUnit(),
+    chargeAmount: checkoutRequest.checkout?.totalChargeAmountMoney.toUnit(),
+    unitAmount: checkoutRequest.checkout?.assetTransfer?.amount,
+    chargeId: checkoutRequest.checkout?.charge?.id,
+    chargeCode: checkoutRequest.checkout?.charge?.code,
+    chargeMsg: checkoutRequest.checkout?.charge?.message,
+    chargeStatus: checkoutRequest.checkout?.charge?.status,
+    last4: checkoutRequest.checkout?.charge?.last4,
+    customer: {
+      id: checkoutRequest.checkout?.user?.id,
+      firstName: checkoutRequest.checkout?.user?.firstName || checkoutRequest.checkout?.firstName,
+      lastName: checkoutRequest.checkout?.user?.lastName || checkoutRequest.checkout?.lastName,
+      email: checkoutRequest.checkout?.user?.email || checkoutRequest.checkout?.email,
+      phoneNumber: checkoutRequest.checkout?.user?.phoneNumber || checkoutRequest.checkout?.phoneNumber,
+      ssn: checkoutRequest.checkout?.user?.ssn,
+      dob: checkoutRequest.checkout?.user?.dob,
+      status: checkoutRequest.checkout?.user?.status,
+      streetAddress: checkoutRequest.checkout?.user?.streetAddress || checkoutRequest.checkout?.streetAddress,
+      streetAddress2: checkoutRequest.checkout?.user?.streetAddress2 || checkoutRequest.checkout?.streetAddress2,
+      city: checkoutRequest.checkout?.user?.city || checkoutRequest.checkout?.city,
+      postalCode: checkoutRequest.checkout?.user?.postalCode || checkoutRequest.checkout?.postalCode,
+      state: checkoutRequest.checkout?.user?.state || checkoutRequest.checkout?.state,
+      country: checkoutRequest.checkout?.user?.country || checkoutRequest.checkout?.country,
+    }
 
-export const convertToQuote = (data: any) => {
-  return {
-    id: data.id,
-    status: data.attributes.status,
-    assetName: data.attributes['asset-name'],
-    baseAmount: data.attributes['base-amount'],
-    feeAmount: data.attributes['fee-amount'],
-    totalAmount: data.attributes['total-amount'],
-    pricePerUnit: data.attributes['price-per-unit'],
-    unitCount: data.attributes['unit-count'],
-    transactionType: data.attributes['transaction-type'],
-    hot: data.attributes.hot,
-    delayedSettlement: data.attributes['delayed-settlement'],
-    integratorSettled: data.attributes['integrator-settled'],
-    executedAt: data.attributes['executed-at'],
-    expiresAt: data.attributes['expires-at'],
-    rejectedAt: data.attributes['rejected-at'],
-    settledAt: data.attributes['settled-at'],
-  }
-}
-
-export const convertToAssetTransfer = (data) => {
-  return {
-    id: data.id,
-    status: data.attributes.status,
-    unitCount: data.attributes['unit-count'],
-    unitCountExpected: data.attributes['unit-count-expected'],
-    transactionHash: data.attributes['transaction-hash'],
-    settlementDetails: data.attributes['settlement-details'],
-    hotTransfer: data.attributes['hot-transfer'],
-    chargeAccountId: data.attributes['charge-user-id'],
-    cancelledAt: data.attributes['cancelled-at'],
-    contingenciesClearedAt: data.attributes['contingencies-cleared-at'],
-    contingenciesClearedOn: data.attributes['contingencies-cleared-on'],
-    reconciledAt: data.attributes['reconciled-at'],
-  }
-}
-
-export const convertToContact = (data) => {
-  return {
-    identityConfirmed: data.attributes['identity-confirmed'],
-    identityDocumentsVerified: data.attributes['identity-documents-verified'],
-    proofOfAddressDocumentsVerified: data.attributes['proof-of-address-documents-verified'],
-    amlCleared: data.attributes['aml-cleared'],
-    cipCleared: data.attributes['cip-cleared'],
   }
 }

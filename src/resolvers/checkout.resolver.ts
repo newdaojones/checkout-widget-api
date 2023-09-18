@@ -1,13 +1,11 @@
-import * as moment from 'moment-timezone'
-import { Resolver, Query, Arg, Mutation, Subscription, Root, Ctx } from 'type-graphql';
+import { Arg, Ctx, Mutation, Query, Resolver, Root, Subscription } from 'type-graphql';
 import { Checkout } from '../models/Checkout';
 import { CheckoutService } from '../services/checkout';
+import { NotificationType } from '../services/notificationService';
 import { CheckoutInputType } from '../types/checkout-input.type';
 import { CheckoutType } from '../types/checkout.type';
-import { log } from '../utils';
 import { TransactionType } from '../types/transaction.type';
-import { NotificationType } from '../services/notificationService';
-import { Config } from '../config';
+import { log } from '../utils';
 
 const checkoutService = CheckoutService.getInstance()
 
@@ -45,10 +43,12 @@ export class CheckoutResolver {
 
     const totalAmount = data.amount + data.amount * (data.tip || 0) / 100
 
-    if (totalAmount >= 500) {
-      throw new Error('Required user registration for purchasing over $500')
-    }
-    return checkoutService.process(data, Config.primeTrustAccountId);
+    // modified for a tx to test size limit
+    // if (totalAmount >= 50000) {
+    //   throw new Error('Required user registration for purchasing over $500')
+    // }
+
+    return checkoutService.process(data);
   }
 
   @Mutation(() => CheckoutType)
@@ -58,10 +58,15 @@ export class CheckoutResolver {
   ) {
     log.info({
       func: 'createCheckout',
-      data
+      data,
+      user
     })
 
-    return checkoutService.process(data, user.id);
+    if (!user.isVerified) {
+      throw new Error('Please process KYC before trading')
+    }
+
+    return checkoutService.process(data, user);
   }
 
   @Subscription({

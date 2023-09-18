@@ -25,16 +25,16 @@ export class UserInputType {
   password: string;
 
   @IsString()
-  @Field({ nullable: true })
+  @Field()
   gender!: string;
 
   @IsString()
-  @Field({ nullable: true })
+  @Field()
   dob!: string;
 
   @IsString()
-  @Field({ nullable: true })
-  taxId!: string;
+  @Field()
+  ssn!: string;
 
   @IsString()
   @Field()
@@ -55,18 +55,13 @@ export class UserInputType {
 
   @IsString()
   @Field()
-  zip: string;
+  postalCode: string;
 
   @IsString()
-  @IsOptional()
-  @Field({ nullable: true })
+  @Field()
   country: string;
 
   @IsString()
-  @Field({ nullable: true })
-  documentId!: string;
-
-  @IsString()
-  @Field({ nullable: true })
-  deviceId!: string;
+  @Field()
+  signedAgreementId: string;
 }

@@ -1,20 +1,21 @@
 import { CheckoutRequest } from './CheckoutRequest';
 import { Checkout } from './Checkout';
-import { PrimeTrustAccount } from './PrimeTrustAccount';
-import { AssetQuote } from './AssetQuote';
 import { AssetTransfer } from './AssetTransfer';
-import { FundsTransfer } from './FundsTransfer';
 import { Charge } from './Charge';
 import { User } from './User';
-import { CipCheck } from './CipCheck';
+import { Partner } from './Partner';
+import { AgreementLink } from './AgreementLink';
+import { KycLink } from './KycLink';
+import { Setting } from './Setting';
+
 export interface IDbModels {
-  PrimeTrustAccount: typeof PrimeTrustAccount;
+  AgreementLink: typeof AgreementLink,
   Checkout: typeof Checkout;
   CheckoutRequest: typeof CheckoutRequest;
-  AssetQuote: typeof AssetQuote;
   AssetTransfer: typeof AssetTransfer;
-  FundsTransfer: typeof FundsTransfer;
+  KycLink: typeof KycLink,
   Charge: typeof Charge;
-  CipCheck: typeof CipCheck;
   User: typeof User;
+  Partner: typeof Partner;
+  Setting: typeof Setting;
 }

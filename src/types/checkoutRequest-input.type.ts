@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from "class-validator";
+import { IsNumber, IsString } from "class-validator";
 import { Field, InputType } from "type-graphql";
 
 @InputType()
@@ -21,9 +21,4 @@ export class CheckoutRequestInputType {
 
   @Field({ nullable: true })
   partnerOrderId!: string;
-
-  @IsString()
-  @IsOptional()
-  @Field({ nullable: true })
-  webhook!: string;
 }

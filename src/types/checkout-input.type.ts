@@ -68,7 +68,7 @@ export class CheckoutInputType {
 
   @IsString()
   @Field()
-  zip: string;
+  postalCode: string;
 
   @IsString()
   @IsOptional()

@@ -24,7 +24,7 @@ export class UserType {
   dob: string;
 
   @Field()
-  taxId: string;
+  ssn: string;
 
   @Field()
   streetAddress: string;
@@ -39,13 +39,16 @@ export class UserType {
   state: string;
 
   @Field()
-  zip: string;
+  postalCode: string;
 
   @Field({ nullable: true })
   country: string;
 
   @Field()
   isVerified: boolean;
+
+  @Field({ nullable: true })
+  token: string;
 
   @Field({ nullable: true })
   createdAt: Date;
