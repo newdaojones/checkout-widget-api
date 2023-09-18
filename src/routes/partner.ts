@@ -549,6 +549,19 @@ router.post('/partners/kyb_success/sandbox', authMiddlewareForPartner, async (re
       status: UserStatus.Active
     })
 
+    const kycLink = await KycLink.findOne({
+      where: {
+        userId: partner.id,
+      },
+    });
+
+    if (kycLink) {
+      await kycLink.update({
+        kycStatus: UserStatus.Active,
+        tosStatus: TosStatus.Approved,
+      });
+    }
+
     await partnerRecord.sendWebhook(partner.id, 'account', {
       id: partnerRecord.id,
       firstName: partnerRecord.firstName,
@@ -598,6 +611,18 @@ router.post('/partners/kyb_success/:id', async (req, res) => {
     await partnerRecord.update({
       status: response.status,
     })
+
+    const kycLink = await KycLink.findOne({
+      where: {
+        userId: partnerRecord.id,
+      },
+    });
+
+    if (kycLink) {
+      await kycLink.update({
+        kycStatus: response.status,
+      });
+    }
 
     await partnerRecord.sendWebhook(partnerRecord.id, 'account', {
       id: partnerRecord.id,

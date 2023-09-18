@@ -28,6 +28,18 @@ const bridgeService = BridgeService.getInstance();
 const syncUser = async (user: User) => {
   const res = await bridgeService.getCustomer(user.id);
 
+  const kycLink = await KycLink.findOne({
+    where: {
+      userId: user.id,
+    },
+  });
+
+  if (kycLink) {
+    await kycLink.update({
+      kycStatus: res.status,
+    });
+  }
+
   await user.update({
     status: res.status,
     requirementsDue: res.requirements_due,
