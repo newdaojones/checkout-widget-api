@@ -21,7 +21,7 @@ jobs:
         username: ${{ vars.SSH_USER }}
         key: ${{ secrets.AWS_PRIVATE_KEY }}
         script: |
-          cd /home/ubuntu/checkout-widget-api/
+          cd  ${{ vars.DEPLOY_PATH }}/
           git checkout test
           git pull
           yarn
@@ -34,7 +34,7 @@ jobs:
         username: ${{ vars.SSH_USER }}
         key: ${{ secrets.AWS_PRIVATE_KEY }}
         script: |
-          cd /home/ubuntu/checkout-widget-api
+          cd  ${{ vars.DEPLOY_PATH }}
           yarn sequelize db:migrate
           yarn sequelize db:seed:all
 
@@ -45,4 +45,5 @@ jobs:
         username: ${{ vars.SSH_USER }}
         key: ${{ secrets.AWS_PRIVATE_KEY }}
         script: |
-          pm2 reload 0
+          cd  ${{ vars.DEPLOY_PATH }}
+          yarn reload
