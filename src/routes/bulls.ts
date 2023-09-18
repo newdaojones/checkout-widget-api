@@ -14,13 +14,16 @@ const jobs = [
     name: "KYC Single Worker",
   },
   {
+    name: "KYC 10 Minutes Worker",
+  },
+  {
     name: "KYC 1 Hour Worker",
   },
   {
-    name: "KYC 24 Hours Worker",
+    name: "KYC 2 Days Worker",
   },
   {
-    name: "KYC 28 Days Worker",
+    name: "KYC 10 Days Worker",
   },
 ];
 
@@ -40,13 +43,13 @@ const arena = bullArena(
     queues: [...jobsList],
   },
   {
-    basePath: "/jobs-dashboard",
+    basePath: "/jobs",
     disableListen: true,
   }
 );
 
 router.use(
-  "/jobs-dashboard",
+  "/jobs",
   basicAuth({
     users: {
       [Config.bull.admin.name]: Config.bull.admin.password,

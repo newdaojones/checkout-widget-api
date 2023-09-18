@@ -22,10 +22,29 @@ export class KycService {
     return new KycService(bridgeServiceInstance, notificationService);
   }
 
+  private async getKycLinks10Minutes() {
+    return KycLink.findAll({
+      where: {
+        createdAt: {
+          [Op.gte]: moment.utc().subtract(10, "minutes").toDate(),
+        },
+        [Op.or]: [
+          {
+            kycStatus: { [Op.notIn]: [UserStatus.Active, UserStatus.Rejected] },
+          },
+          {
+            tosLink: TosStatus.Pending,
+          },
+        ],
+      },
+    });
+  }
+
   private async getKycLinksInAnHour() {
     return KycLink.findAll({
       where: {
         createdAt: {
+          [Op.lt]: moment.utc().subtract(10, "minutes").toDate(),
           [Op.gte]: moment.utc().subtract(1, "hour").toDate(),
         },
         [Op.or]: [
@@ -40,12 +59,12 @@ export class KycService {
     });
   }
 
-  private async getKycLinksIn24Hours() {
+  private async getKycLinksIn2Days() {
     return KycLink.findAll({
       where: {
         createdAt: {
           [Op.lt]: moment.utc().subtract(1, "hour").toDate(),
-          [Op.gte]: moment.utc().subtract(1, "day").toDate(),
+          [Op.gte]: moment.utc().subtract(2, "day").toDate(),
         },
         [Op.or]: [
           {
@@ -59,12 +78,12 @@ export class KycService {
     });
   }
 
-  private async getKycLinksIn28Days() {
+  private async getKycLinksIn10Days() {
     return KycLink.findAll({
       where: {
         createdAt: {
-          [Op.lt]: moment.utc().subtract(1, "day").toDate(),
-          [Op.gte]: moment.utc().subtract(28, "days").toDate(),
+          [Op.lt]: moment.utc().subtract(2, "day").toDate(),
+          [Op.gte]: moment.utc().subtract(10, "days").toDate(),
         },
         [Op.or]: [
           {
@@ -76,6 +95,12 @@ export class KycService {
         ],
       },
     });
+  }
+
+  async syncKycIn10Minutes(job: Job) {
+    const kycLinks = await this.getKycLinksIn10Days();
+
+    await this.syncKycLinks(job, kycLinks);
   }
 
   async syncKycInAnHour(job: Job) {
@@ -84,14 +109,14 @@ export class KycService {
     await this.syncKycLinks(job, kycLinks);
   }
 
-  async syncKycIn24Hours(job: Job) {
-    const kycLinks = await this.getKycLinksIn24Hours();
+  async syncKycIn2Days(job: Job) {
+    const kycLinks = await this.getKycLinksIn2Days();
 
     await this.syncKycLinks(job, kycLinks);
   }
 
-  async syncKycIn28Days(job: Job) {
-    const kycLinks = await this.getKycLinksIn28Days();
+  async syncKycIn10Days(job: Job) {
+    const kycLinks = await this.getKycLinksIn10Days();
 
     await this.syncKycLinks(job, kycLinks);
   }

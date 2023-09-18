@@ -72,14 +72,14 @@ const singleKycWorker = new Queue("KYC Single Worker", {
 singleKycWorker.process(async (job) => kycService.singleSyncKyc(job));
 
 // ---------------------------------------------
-const kyc1HourWorker = new Queue("KYC 1 Hour Worker", {
+const kyc10MinutesWorker = new Queue("KYC 10 Minutes Worker", {
   redis: Config.redis,
 });
 
-kyc1HourWorker.process(async (job) => kycService.syncKycInAnHour(job));
+kyc10MinutesWorker.process(async (job) => kycService.syncKycIn10Days(job));
 
-kyc1HourWorker.clean(0, "delayed");
-kyc1HourWorker.add(
+kyc10MinutesWorker.clean(0, "delayed");
+kyc10MinutesWorker.add(
   {},
   {
     // every minute
@@ -92,33 +92,53 @@ kyc1HourWorker.add(
 );
 
 // ---------------------------------------------
-const kyc24HoursWorker = new Queue("KYC 24 Hours Worker", {
+const kyc1HourWorker = new Queue("KYC 1 Hour Worker", {
   redis: Config.redis,
 });
 
-kyc24HoursWorker.process(async (job) => kycService.syncKycIn24Hours(job));
+kyc1HourWorker.process(async (job) => kycService.syncKycInAnHour(job));
 
-kyc24HoursWorker.clean(0, "delayed");
-kyc24HoursWorker.add(
+kyc1HourWorker.clean(0, "delayed");
+kyc1HourWorker.add(
   {},
   {
-    // every minute
-    repeat: { cron: `0 * * * *` },
+    // every 5 minutes
+    repeat: { cron: `*/5 * * * *` },
 
     // keep the history for a week
-    removeOnComplete: Config.bull.historyTTLInHours,
+    removeOnComplete: Config.bull.historyTTLInHours * 12,
+    removeOnFail: Config.bull.historyTTLInHours * 12,
+  }
+);
+
+// ---------------------------------------------
+const kyc2DaysWorker = new Queue("KYC 2 Days Worker", {
+  redis: Config.redis,
+});
+
+kyc2DaysWorker.process(async (job) => kycService.syncKycIn2Days(job));
+
+kyc2DaysWorker.clean(0, "delayed");
+kyc2DaysWorker.add(
+  {},
+  {
+    // every 30 minute
+    repeat: { cron: `*/30 * * * *` },
+
+    // keep the history for a week
+    removeOnComplete: Config.bull.historyTTLInHours * 2,
     removeOnFail: Config.bull.historyTTLInHours,
   }
 );
 
-const kyc28DaysWorker = new Queue("KYC 28 Days Worker", {
+const kyc10DaysWorker = new Queue("KYC 10 Days Worker", {
   redis: Config.redis,
 });
 
-kyc28DaysWorker.process(async (job) => kycService.syncKycIn28Days(job));
+kyc10DaysWorker.process(async (job) => kycService.syncKycIn10Days(job));
 
-kyc28DaysWorker.clean(0, "delayed");
-kyc28DaysWorker.add(
+kyc10DaysWorker.clean(0, "delayed");
+kyc10DaysWorker.add(
   {},
   {
     // run the job every day at 8AM
