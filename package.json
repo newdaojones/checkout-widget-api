@@ -15,7 +15,8 @@
     "build:schema": "gql-gen",
     "sequelize": "sequelize-cli",
     "enable-webhook": "TS_NODE_FILES=true node_modules/.bin/ts-node src/scripts/enableWebhook.ts",
-    "copy-assets": "ts-node src/scripts/copyAssets"
+    "copy-assets": "ts-node src/scripts/copyAssets",
+    "reload": "pm2 reload index --update-env && pm2 reload kycJobs --update-env"
   },
   "dependencies": {
     "@apollo/server": "^4.4.1",
