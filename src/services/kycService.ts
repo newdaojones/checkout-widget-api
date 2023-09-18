@@ -98,7 +98,7 @@ export class KycService {
   }
 
   async syncKycIn10Minutes(job: Job) {
-    const kycLinks = await this.getKycLinksIn10Days();
+    const kycLinks = await this.getKycLinks10Minutes();
 
     await this.syncKycLinks(job, kycLinks);
   }
