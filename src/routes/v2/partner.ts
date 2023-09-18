@@ -21,6 +21,7 @@ import { Charge } from "../../models/Charge";
 import { AssetTransfer } from "../../models/AssetTransfer";
 import { User } from "../../models/User";
 import { normalizeOrder } from "../../utils/convert";
+import { TosStatus } from "../../types/tosStatus.type";
 
 const router = express.Router();
 const bridgeService = BridgeService.getInstance();
@@ -86,8 +87,8 @@ router.post("/v2/partners", async (req, res) => {
           tosLink: response.tos_link,
           kycStatus: response.kyc_status,
           tosStatus: response.tos_status,
-          associatedObjectType: 'kycLink',
-          associatedUserType: 'partner',
+          associatedObjectType: "kycLink",
+          associatedUserType: "partner",
         },
         { transaction: t }
       );
@@ -552,6 +553,19 @@ router.post(
       await partnerRecord.update({
         status: UserStatus.Active,
       });
+
+      const kycLink = await KycLink.findOne({
+        where: {
+          userId: partner.id,
+        },
+      });
+
+      if (kycLink) {
+        await kycLink.update({
+          kycStatus: UserStatus.Active,
+          tosStatus: TosStatus.Approved,
+        });
+      }
 
       await partnerRecord.sendWebhook(partner.id, "account", {
         id: partnerRecord.id,
