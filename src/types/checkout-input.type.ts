@@ -46,6 +46,13 @@ export class CheckoutInputType {
   tipType: TipType;
 
   @IsNumber()
+  @Field({ nullable: true })
+  fee!: number;
+
+  @Field({ nullable: true })
+  feeType!: string;
+
+  @IsNumber()
   @Field()
   feeMethod: number;
 

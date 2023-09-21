@@ -22,6 +22,15 @@ export class CheckoutRequestType {
   amount: number;
 
   @Field()
+  fee: number;
+
+  @Field()
+  feeType: string;
+
+  @Field()
+  feeMethod: number;
+
+  @Field()
   status: string;
 
   @Field({ nullable: true })
@@ -30,6 +39,6 @@ export class CheckoutRequestType {
   @Field({ nullable: true })
   updatedAt: Date;
 
-  @Field(type => CheckoutType, { nullable: true, description: 'checkout' })
-  checkout: CheckoutType
+  @Field((type) => CheckoutType, { nullable: true, description: "checkout" })
+  checkout: CheckoutType;
 }

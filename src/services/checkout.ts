@@ -1,7 +1,7 @@
 import { Config } from "../config";
 
 import Container from "typedi";
-import { PubSubEngine } from 'graphql-subscriptions';
+import { PubSubEngine } from "graphql-subscriptions";
 import bluebird from "bluebird";
 
 import { Charge } from "../models/Charge";
@@ -26,75 +26,97 @@ import { Web3Service } from "./web3Service";
 import { SettingService } from "./settingService";
 
 const checkoutSdkService = CheckoutSdkService.getInstance();
-const pubsubEngine = Container.get<PubSubEngine>('pubsub');
+const pubsubEngine = Container.get<PubSubEngine>("pubsub");
 const notificationService = NotificationService.getInstance();
-const web3Service = Web3Service.getInstance()
-const settingsService = SettingService.getInstance()
+const web3Service = Web3Service.getInstance();
+const settingsService = SettingService.getInstance();
 export class CheckoutService {
   static getInstance() {
-    return new CheckoutService(checkoutSdkService, pubsubEngine, notificationService)
+    return new CheckoutService(
+      checkoutSdkService,
+      pubsubEngine,
+      notificationService
+    );
   }
 
-  constructor(private checkoutSdk: CheckoutSdkService, private pubSub: PubSubEngine, private notification: NotificationService) { }
+  constructor(
+    private checkoutSdk: CheckoutSdkService,
+    private pubSub: PubSubEngine,
+    private notification: NotificationService
+  ) {}
 
   async process(data: CheckoutInputType, user?: User) {
     if (data.checkoutRequestId) {
-      const checkoutRequest = await CheckoutRequest.findByPk(data.checkoutRequestId);
+      const checkoutRequest = await CheckoutRequest.findByPk(
+        data.checkoutRequestId
+      );
 
       if (!checkoutRequest) {
-        throw new Error('Can\'t find checkout request');
+        throw new Error("Can't find checkout request");
       }
 
       if (checkoutRequest.walletAddress !== data.walletAddress) {
-        throw new Error('Mismatch wallet address')
+        throw new Error("Mismatch wallet address");
       }
 
       if (checkoutRequest.phoneNumber !== data.phoneNumber) {
-        throw new Error('Mismatch phone number')
+        throw new Error("Mismatch phone number");
       }
 
-      if (checkoutRequest.phoneNumber && checkoutRequest.email !== data.email) {
-        throw new Error('Mismatch email address')
+      if (checkoutRequest.email && checkoutRequest.email !== data.email) {
+        throw new Error("Mismatch email address");
       }
 
       if (checkoutRequest.amount !== data.amount) {
-        throw new Error('Mismatch amount')
+        throw new Error("Mismatch amount");
+      }
+
+      if (data.fee && checkoutRequest.fee !== data.fee) {
+        throw new Error("Mismatch fee");
+      }
+
+      if (data.feeType && checkoutRequest.feeType !== data.feeType) {
+        throw new Error("Mismatch fee type");
+      }
+
+      if (checkoutRequest.feeMethod !== data.feeMethod) {
+        throw new Error("Mismatch fee method");
       }
     }
 
     const checkout = await Checkout.create({
       ...data,
       userId: user?.id,
-      fee: Config.defaultFee.fee,
-      feeType: Config.defaultFee.feeType as TipType,
+      fee: data.fee || Config.defaultFee.fee,
+      feeType: (data.feeType || Config.defaultFee.feeType) as TipType,
     });
 
-    this.processCheckout(checkout)
+    this.processCheckout(checkout);
 
-    return checkout
+    return checkout;
   }
 
   private async markAsCheckout(checkout: Checkout, status: PaidStatus) {
     await checkout.update({
-      status
-    })
+      status,
+    });
 
-    const checkoutRequest = await checkout.getCheckoutRequest()
+    const checkoutRequest = await checkout.getCheckoutRequest();
     await checkoutRequest?.update({
-      status
-    })
+      status,
+    });
 
     const partner = await checkoutRequest?.getPartner();
 
     if (!partner) {
-      return
+      return;
     }
 
-    const charge = await checkout.getCharge()
+    const charge = await checkout.getCharge();
     const assetTransfer = await checkout.getAssetTransfer();
-    const user = await checkout.getUser()
+    const user = await checkout.getUser();
 
-    await partner.sendWebhook(checkoutRequest.partnerOrderId, 'order', {
+    await partner.sendWebhook(checkoutRequest.partnerOrderId, "order", {
       id: checkoutRequest.id,
       walletAddress: checkoutRequest.walletAddress,
       email: checkoutRequest.email,
@@ -126,8 +148,8 @@ export class CheckoutService {
         postalCode: user?.postalCode || checkout.postalCode,
         state: user?.state || checkout.state,
         country: user?.country || checkout.country,
-      }
-    })
+      },
+    });
   }
 
   private async processCharge(checkout: Checkout) {
@@ -135,96 +157,107 @@ export class CheckoutService {
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         step: CheckoutStep.Charge,
-        status: 'processing',
+        status: "processing",
         paidStatus: checkout.status,
         message: `Processing charge $${checkout.totalChargeAmountMoney.toUnit()}`,
         transactionId: null,
-        date: new Date()
-      })
+        date: new Date(),
+      });
 
       const charge = await this.checkoutSdk.charge(checkout);
       const chargeData = convertToCharge(charge);
       const chargeRecord = await Charge.create({
         checkoutId: checkout.id,
-        ...chargeData
-      })
+        ...chargeData,
+      });
 
-      if (chargeRecord.status !== 'Authorized') {
-        const message = chargeRecord.message ? `${chargeRecord.code}: ${chargeRecord.message}` : `Failed Charge $${checkout.totalChargeAmountMoney.toUnit()} with ${chargeRecord.status}`
-        throw new Error(message)
+      if (chargeRecord.status !== "Authorized") {
+        const message = chargeRecord.message
+          ? `${chargeRecord.code}: ${chargeRecord.message}`
+          : `Failed Charge $${checkout.totalChargeAmountMoney.toUnit()} with ${
+              chargeRecord.status
+            }`;
+        throw new Error(message);
       }
 
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         step: CheckoutStep.Charge,
-        status: 'settled',
+        status: "settled",
         paidStatus: checkout.status,
         message: `Charged $${checkout.totalChargeAmountMoney.toUnit()}`,
         transactionId: null,
-        date: new Date()
-      })
+        date: new Date(),
+      });
     } catch (err) {
-      log.warn({
-        func: 'processCharge',
-        checkoutId: checkout.id,
-        err,
-      }, 'Failed processCharge')
+      log.warn(
+        {
+          func: "processCharge",
+          checkoutId: checkout.id,
+          err,
+        },
+        "Failed processCharge"
+      );
 
-      await this.markAsCheckout(checkout, PaidStatus.Error)
+      await this.markAsCheckout(checkout, PaidStatus.Error);
 
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
-        status: 'failed',
+        status: "failed",
         paidStatus: checkout.status,
         step: CheckoutStep.Charge,
         message: err.message,
         transactionId: null,
-        date: new Date()
-      })
+        date: new Date(),
+      });
 
-      throw err
+      throw err;
     }
   }
 
   async processCheckout(checkout: Checkout) {
-    await bluebird.delay(2000)
+    await bluebird.delay(2000);
 
     try {
-      await this.markAsCheckout(checkout, PaidStatus.Processing)
+      await this.markAsCheckout(checkout, PaidStatus.Processing);
       await this.processCharge(checkout);
 
-      const isEnabledAssetTransfer = await settingsService.getSetting('assetTransfer')
+      const isEnabledAssetTransfer = await settingsService.getSetting(
+        "assetTransfer"
+      );
 
       if (!isEnabledAssetTransfer) {
-        await this.markAsCheckout(checkout, PaidStatus.Paid)
+        await this.markAsCheckout(checkout, PaidStatus.Paid);
         this.notification.publishTransactionStatus({
           checkoutId: checkout.id,
           step: CheckoutStep.Charge,
-          status: 'charged',
+          status: "charged",
           paidStatus: checkout.status,
-          transactionId: '',
+          transactionId: "",
           message: `Charged ${checkout.totalChargeAmountMoney.toUnit()}`,
-          date: new Date()
-        })
-        checkout.sendReceipt()
+          date: new Date(),
+        });
+        checkout.sendReceipt();
       } else {
-        await this.markAsCheckout(checkout, PaidStatus.Processing)
-        await this.processTransferAsset(checkout)
+        await this.markAsCheckout(checkout, PaidStatus.Processing);
+        await this.processTransferAsset(checkout);
       }
     } catch (err) {
       log.warn({
-        func: 'processCheckout',
+        func: "processCheckout",
         checkoutId: checkout.id,
-        err
-      })
+        err,
+      });
     }
   }
 
   async processTransferAsset(checkout: Checkout) {
-    let assetTransfer: AssetTransfer
+    let assetTransfer: AssetTransfer;
     try {
       const rate = await getUSDCRate();
-      const amount = Number((checkout.fundsAmountMoney.toUnit() / rate).toFixed(6))
+      const amount = Number(
+        (checkout.fundsAmountMoney.toUnit() / rate).toFixed(6)
+      );
 
       const assetTransfer = await AssetTransfer.create({
         checkoutId: checkout.id,
@@ -232,74 +265,83 @@ export class CheckoutService {
         rate,
         amount,
         fee: 0,
-      })
+      });
 
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         step: CheckoutStep.Asset,
-        status: 'processing',
+        status: "processing",
         paidStatus: checkout.status,
         message: `Sending ${assetTransfer.amount} USDC`,
         transactionId: null,
-        date: new Date()
-      })
+        date: new Date(),
+      });
 
-      const receipt = await web3Service.send(checkout.walletAddress, assetTransfer.amount)
+      const receipt = await web3Service.send(
+        checkout.walletAddress,
+        assetTransfer.amount
+      );
 
       await assetTransfer.update({
         transactionHash: receipt.transactionHash,
         status: receipt.status ? PaidStatus.Paid : PaidStatus.Error,
-        settledAt: receipt.status ? new Date() : undefined
-      })
+        settledAt: receipt.status ? new Date() : undefined,
+      });
 
       const checkoutRequest = await checkout.getCheckoutRequest();
 
       if (checkoutRequest) {
         await checkoutRequest.update({
           transactionHash: receipt.transactionHash,
-        })
+        });
       }
 
       if (!receipt.status) {
-        throw new Error(`Failed sending ${assetTransfer.amount} USDC`)
+        throw new Error(`Failed sending ${assetTransfer.amount} USDC`);
       }
 
-      await this.markAsCheckout(checkout, PaidStatus.Paid)
+      await this.markAsCheckout(checkout, PaidStatus.Paid);
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
         step: CheckoutStep.Asset,
-        status: 'settled',
+        status: "settled",
         paidStatus: checkout.status,
         transactionId: receipt.transactionHash,
         message: `Sent ${assetTransfer.amount} USDC`,
-        date: new Date()
-      })
+        date: new Date(),
+      });
 
-      checkout.sendReceipt()
+      checkout.sendReceipt();
     } catch (err) {
-      log.warn({
-        func: 'processTransferAsset',
-        checkoutId: checkout.id,
-        err,
-      }, 'Failed processTransferAsset')
+      log.warn(
+        {
+          func: "processTransferAsset",
+          checkoutId: checkout.id,
+          err,
+        },
+        "Failed processTransferAsset"
+      );
 
-      assetTransfer && await assetTransfer.update({
-        status: PaidStatus.Error
-      })
+      assetTransfer &&
+        (await assetTransfer.update({
+          status: PaidStatus.Error,
+        }));
 
-      await this.markAsCheckout(checkout, PaidStatus.Error)
+      await this.markAsCheckout(checkout, PaidStatus.Error);
 
       this.notification.publishTransactionStatus({
         checkoutId: checkout.id,
-        status: 'failed',
+        status: "failed",
         paidStatus: checkout.status,
         step: CheckoutStep.Asset,
-        message: assetTransfer ? `Failed sending ${assetTransfer.amount} USDC` : 'Failed sending assets',
+        message: assetTransfer
+          ? `Failed sending ${assetTransfer.amount} USDC`
+          : "Failed sending assets",
         transactionId: null,
-        date: new Date()
-      })
+        date: new Date(),
+      });
 
-      throw err
+      throw err;
     }
   }
 
@@ -307,35 +349,41 @@ export class CheckoutService {
     const transaction: TransactionType = {
       checkoutId: checkout.id,
       step: CheckoutStep.Charge,
-      status: checkout.status === PaidStatus.Paid ? 'settled' : checkout.status === PaidStatus.Error ? 'failed' : checkout.status,
+      status:
+        checkout.status === PaidStatus.Paid
+          ? "settled"
+          : checkout.status === PaidStatus.Error
+          ? "failed"
+          : checkout.status,
       paidStatus: checkout.status,
-      message: '',
+      message: "",
       transactionId: null,
-      date: new Date()
-    }
+      date: new Date(),
+    };
 
-
-    const charge = await checkout.getCharge()
-    const assetTransfer = await checkout.getAssetTransfer()
+    const charge = await checkout.getCharge();
+    const assetTransfer = await checkout.getAssetTransfer();
 
     if (assetTransfer) {
-      transaction.step = CheckoutStep.Asset
+      transaction.step = CheckoutStep.Asset;
     } else if (charge) {
-      transaction.step = CheckoutStep.Charge
+      transaction.step = CheckoutStep.Charge;
     }
 
     if (checkout.status === PaidStatus.Paid) {
-      transaction.message = `Charged ${checkout.totalChargeAmountMoney.toFormat()}`
+      transaction.message = `Charged ${checkout.totalChargeAmountMoney.toFormat()}`;
     }
     if (checkout.status === PaidStatus.Paid && assetTransfer) {
-      transaction.transactionId = assetTransfer?.transactionHash
-      transaction.message = 'Settled transfer assets'
+      transaction.transactionId = assetTransfer?.transactionHash;
+      transaction.message = "Settled transfer assets";
     } else if (checkout.status === PaidStatus.Processing) {
-      transaction.message = `Processing ${transaction.step}`
+      transaction.message = `Processing ${transaction.step}`;
     } else if (transaction.paidStatus === PaidStatus.Error) {
-      transaction.message = charge?.code ? `${charge.code}: ${charge.message}` : `Failed checkout for ${transaction.step}`
+      transaction.message = charge?.code
+        ? `${charge.code}: ${charge.message}`
+        : `Failed checkout for ${transaction.step}`;
     }
 
-    return transaction
+    return transaction;
   }
 }
