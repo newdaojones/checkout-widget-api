@@ -1,21 +1,34 @@
-import { Model, Table, Column, PrimaryKey, AllowNull, DataType, Default, IsEmail, ForeignKey, BelongsTo, HasOne } from 'sequelize-typescript';
-import { PaidStatus } from '../types/paidStatus.type';
-import { TipType } from '../types/tip.type';
-import { newDinero } from '../utils/dinero';
-import { CheckoutRequest } from './CheckoutRequest';
-import { User } from './User';
-import { Charge } from './Charge';
-import { AssetTransfer } from './AssetTransfer';
-import { emailService } from '../email';
-import * as moment from 'moment-timezone';
-import { Config } from '../config';
+import {
+  Model,
+  Table,
+  Column,
+  PrimaryKey,
+  AllowNull,
+  DataType,
+  Default,
+  IsEmail,
+  ForeignKey,
+  BelongsTo,
+  HasOne,
+} from "sequelize-typescript";
+import { PaidStatus } from "../types/paidStatus.type";
+import { TipType } from "../types/tip.type";
+import { newDinero } from "../utils/dinero";
+import { CheckoutRequest } from "./CheckoutRequest";
+import { User } from "./User";
+import { Charge } from "./Charge";
+import { AssetTransfer } from "./AssetTransfer";
+import { emailService } from "../email";
+import * as moment from "moment-timezone";
+import { Config } from "../config";
+import { FeeMethod } from "../types/feeMethod.enum";
 
 @Table({
-  tableName: 'checkouts',
+  tableName: "checkouts",
   name: {
-    singular: 'checkout',
-    plural: 'checkouts'
-  }
+    singular: "checkout",
+    plural: "checkouts",
+  },
 })
 export class Checkout extends Model<Checkout> {
   @PrimaryKey
@@ -58,38 +71,38 @@ export class Checkout extends Model<Checkout> {
   phoneNumber!: string;
 
   @AllowNull(false)
-  @Default('USD')
+  @Default("USD")
   @Column(DataType.STRING(3))
   currency!: string;
 
   @AllowNull(false)
   @Column(DataType.DECIMAL(10, 2))
-  amount!: number
+  amount!: number;
 
   @AllowNull(false)
   @Default(0)
   @Column(DataType.DECIMAL(10, 2))
-  tip!: number
+  tip!: number;
 
   @AllowNull(false)
-  @Default('cash')
-  @Column(DataType.ENUM('cash', 'percent'))
-  tipType!: TipType
+  @Default("percent")
+  @Column(DataType.ENUM("cash", "percent"))
+  tipType!: TipType;
 
   @AllowNull(false)
   @Default(0)
   @Column(DataType.DECIMAL(10, 2))
-  fee!: number
+  fee!: number;
 
   @AllowNull(false)
-  @Default('cash')
-  @Column(DataType.ENUM('cash', 'percent'))
-  feeType!: TipType
+  @Default("cash")
+  @Column(DataType.ENUM("cash", "percent"))
+  feeType!: TipType;
 
   @AllowNull(false)
   @Default(1)
   @Column(DataType.INTEGER.UNSIGNED)
-  feeMethod!: number
+  feeMethod!: FeeMethod;
 
   @AllowNull(false)
   @Column(DataType.STRING(255))
@@ -122,8 +135,8 @@ export class Checkout extends Model<Checkout> {
   checkoutTokenId!: string;
 
   @AllowNull(false)
-  @Default('pending')
-  @Column(DataType.ENUM('pending', 'processing', 'paid', 'postponed', 'error'))
+  @Default("pending")
+  @Column(DataType.ENUM("pending", "processing", "paid", "postponed", "error"))
   status!: PaidStatus;
 
   @Column(DataType.DATE)
@@ -154,15 +167,15 @@ export class Checkout extends Model<Checkout> {
   //#endregion
 
   get fullName() {
-    return `${this.firstName} ${this.lastName}`
+    return `${this.firstName} ${this.lastName}`;
   }
 
   get zeroMoney() {
-    return newDinero(0, this.currency)
+    return newDinero(0, this.currency);
   }
 
   get amountMoney() {
-    return newDinero(this.amount * 100, this.currency)
+    return newDinero(this.amount * 100, this.currency);
   }
 
   get tipAmountMoney() {
@@ -171,14 +184,14 @@ export class Checkout extends Model<Checkout> {
     }
 
     if (this.tipType === TipType.Cash) {
-      return newDinero(this.tip * 100, this.currency)
+      return newDinero(this.tip * 100, this.currency);
     }
 
-    return this.amountMoney.multiply(this.tip / 100)
+    return this.amountMoney.multiply(this.tip / 100);
   }
 
   get fundsAmountMoney() {
-    return this.amountMoney.add(this.tipAmountMoney)
+    return this.amountMoney.add(this.tipAmountMoney);
   }
 
   get feeAmountMoney() {
@@ -187,66 +200,71 @@ export class Checkout extends Model<Checkout> {
     }
 
     if (this.feeType === TipType.Cash) {
-      return newDinero(this.fee * 100, this.currency)
+      return newDinero(this.fee * 100, this.currency);
     }
 
-    return this.fundsAmountMoney.multiply(this.fee / 100)
+    return this.fundsAmountMoney.multiply(this.fee / 100);
   }
 
   get totalChargeAmountMoney() {
-    if (this.feeMethod === 1) { // Card
-      return this.fundsAmountMoney.add(this.feeAmountMoney)
+    if (this.feeMethod === FeeMethod.Card) {
+      // Card
+      return this.fundsAmountMoney.add(this.feeAmountMoney);
     }
 
     return this.fundsAmountMoney;
   }
 
-  getFeeMoney(amount: number) {
+  getUSDCFeeMoney(amount: number) {
     const amountMoney = newDinero(amount * 100, this.currency);
 
-    if (this.feeMethod === 1) {
-      return this.zeroMoney
+    if (this.feeMethod === FeeMethod.Card) {
+      return this.zeroMoney;
     }
 
     if (this.feeType === TipType.Cash) {
-      newDinero(this.fee * 100, this.currency)
+      newDinero(this.fee * 100, this.currency);
     }
 
-    return amountMoney.multiply(this.fee / 100)
+    return amountMoney.multiply(this.fee / 100);
   }
 
   getAssetTransferMoney(amount: number) {
     const amountMoney = newDinero(amount * 100, this.currency);
 
-    if (this.feeMethod === 1) {
-      return amountMoney
+    if (this.feeMethod === FeeMethod.Card) {
+      return amountMoney;
     }
 
-    const feeMoney = this.getFeeMoney(amount)
+    const feeMoney = this.getUSDCFeeMoney(amount);
 
-    return amountMoney.subtract(feeMoney)
+    return amountMoney.subtract(feeMoney);
   }
 
   async sendReceipt() {
     if (!this.email) {
-      return
+      return;
     }
 
-    const assetTransfer = await this.getAssetTransfer()
-    const charge = await this.getCharge()
-    const checkoutRequest = await this.getCheckoutRequest()
-    const partner = checkoutRequest && await checkoutRequest.getPartner()
+    const assetTransfer = await this.getAssetTransfer();
+    const charge = await this.getCharge();
+    const checkoutRequest = await this.getCheckoutRequest();
+    const partner = checkoutRequest && (await checkoutRequest.getPartner());
 
     emailService.sendReceiptEmail(this.email, {
       name: this.fullName,
       transactionHash: `${Config.web3.explorerUri}/tx/${assetTransfer?.transactionHash}`,
       paymentMethod: charge.last4,
-      dateTime: moment.utc(assetTransfer?.settledAt || new Date()).format('MMMM Do YYYY, hh:mm'),
+      dateTime: moment
+        .utc(assetTransfer?.settledAt || new Date())
+        .format("MMMM Do YYYY, hh:mm"),
       amount: assetTransfer?.amount || this.fundsAmountMoney.toFormat(),
       fee: this.feeAmountMoney.toUnit(),
       partnerOrderId: checkoutRequest?.partnerOrderId,
       partnerName: partner?.displayName || partner?.companyName,
-      orderLink: checkoutRequest?.id ? `${Config.frontendUri}/${checkoutRequest.id}` : undefined
-    })
+      orderLink: checkoutRequest?.id
+        ? `${Config.frontendUri}/${checkoutRequest.id}`
+        : undefined,
+    });
   }
 }
