@@ -4,6 +4,7 @@ import { User } from '../models/User';
 import * as jwt from 'jsonwebtoken';
 import { Config } from '../config';
 import { Partner } from '../models/Partner';
+import { log } from '../utils';
 
 declare global {
   namespace Express {
@@ -87,11 +88,17 @@ export const authMiddlewareForPartner: RequestHandler = async (req, res, next) =
       return;
     }
 
-    const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+    const ipAddresses = (req.headers['x-forwarded-for'] || req.socket.remoteAddress) as string
+    const ipAddress = ipAddresses.split(',')[0]
     var userAgent = req.headers['user-agent'];
 
 
     if (decoded.ipAddress !== ipAddress) {
+      log.info({
+        func: 'authMiddlewareForPartner',
+        ipAddress,
+        decoded
+      }, 'Mismatch ip address')
       res.status(401).json({
         message: 'Failed Authentication',
       });
@@ -99,6 +106,12 @@ export const authMiddlewareForPartner: RequestHandler = async (req, res, next) =
     }
 
     if (decoded.userAgent !== userAgent) {
+      log.info({
+        func: 'authMiddlewareForPartner',
+        userAgent,
+        decoded
+      }, 'Mismatch user agent')
+ 
       res.status(401).json({
         message: 'Failed Authentication',
       });
