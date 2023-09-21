@@ -177,8 +177,8 @@ router.post("/partners/login", async (req, res) => {
     }
 
     const { email, password } = req.body;
-    const ipAddress =
-      req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const ipAddresses = (req.headers['x-forwarded-for'] || req.socket.remoteAddress) as string
+    const ipAddress = ipAddresses.split(',')[0]
     const userAgent = req.headers["user-agent"];
 
     const partner = await Partner.findPartner(email, password);

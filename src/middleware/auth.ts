@@ -88,7 +88,8 @@ export const authMiddlewareForPartner: RequestHandler = async (req, res, next) =
       return;
     }
 
-    const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+    const ipAddresses = (req.headers['x-forwarded-for'] || req.socket.remoteAddress) as string
+    const ipAddress = ipAddresses.split(',')[0]
     var userAgent = req.headers['user-agent'];
 
 
