@@ -185,28 +185,38 @@ router.post("/v2/partners/login", async (req, res) => {
 
 router.patch("/v2/partners", authMiddlewareForPartner, async (req, res) => {
   const partner = req.partner;
-  const webhook = req.body.webhook;
-  const displayName = req.body.displayName;
+  const { webhook, displayName, fee } = req.body;
 
   log.info({
     func: "partners/partners",
     webhook,
     displayName,
     partnerId: partner?.id,
+    fee,
   });
   try {
-    // await check('webhook', 'Webhook url is invalid').isURL().run(req);
+    if (!partner) {
+      throw new Error("Partner not found");
+    }
+
+    await check("webhook", "Webhook url is invalid")
+      .optional()
+      .isURL()
+      .run(req);
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       errors.throw();
     }
 
-    if (!partner) {
-      throw new Error("Partner not found");
+    if (fee !== undefined && fee < Config.defaultFee.minFee) {
+      throw new Error(
+        `The fee should greater than or equal to ${Config.defaultFee.minFee}%`
+      );
     }
 
     await partner.update({
+      fee,
       webhook,
       displayName,
     });
@@ -332,7 +342,14 @@ router.post(
       }
 
       const checkoutRequest = await CheckoutRequest.generateCheckoutRequest({
-        ...data,
+        email: data.email,
+        phoneNumber: data.phoneNumber,
+        amount: data.amount,
+        walletAddress: data.walletAddress,
+        partnerOrderId: data.partnerOrderId,
+        fee: partner.fee,
+        feeType: partner.feeType,
+        feeMethod: partner.feeMethod,
         partnerId: partner.id,
       });
       res.status(200).json({

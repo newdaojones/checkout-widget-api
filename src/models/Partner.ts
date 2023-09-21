@@ -14,6 +14,8 @@ import { UserService } from "../services/userService";
 import { UserStatus } from "../types/userStatus.type";
 import axios from "axios";
 import { log } from "../utils";
+import { TipType } from "../types/tip.type";
+import { FeeMethod } from "../types/feeMethod.enum";
 
 @Table({
   tableName: "partners",
@@ -104,6 +106,21 @@ export class Partner extends Model<Partner> {
   @Default(null)
   @Column(DataType.STRING(255))
   country!: string;
+
+  @AllowNull(false)
+  @Default(0)
+  @Column(DataType.DECIMAL(10, 2))
+  fee!: number;
+
+  @AllowNull(false)
+  @Default("percent")
+  @Column(DataType.ENUM("cash", "percent"))
+  feeType!: TipType;
+
+  @AllowNull(false)
+  @Default(1)
+  @Column(DataType.INTEGER.UNSIGNED)
+  feeMethod!: FeeMethod;
 
   @AllowNull(true)
   @Default(null)
