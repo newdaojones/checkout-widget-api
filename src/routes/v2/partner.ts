@@ -147,8 +147,9 @@ router.post("/v2/partners/login", async (req, res) => {
     }
 
     const { email, password } = req.body;
-    const ipAddresses = (req.headers['x-forwarded-for'] || req.socket.remoteAddress) as string
-    const ipAddress = ipAddresses.split(',')[0]
+    const ipAddresses = (req.headers["x-forwarded-for"] ||
+      req.socket.remoteAddress) as string;
+    const ipAddress = ipAddresses.split(",")[0];
     const userAgent = req.headers["user-agent"];
 
     const partner = await Partner.findPartner(email, password);
@@ -622,52 +623,35 @@ router.post(
   }
 );
 
-router.post("/v2/partners/kyb_success/:id", async (req, res) => {
-  const id = req.params.id;
-
+router.get("/partners/kyb_link", authMiddlewareForPartner, async (req, res) => {
   try {
-    const partnerRecord = await Partner.findByPk(id);
+    const partner = req.partner;
+    const kycLink = await KycLink.findOne({
+      where: {
+        associatedUserType: "partner",
+        userId: partner.id,
+      },
+    });
 
-    if (!partnerRecord) {
-      throw new Error(`Can not find partner for ${id}`);
+    if (!kycLink) {
+      throw new Error("Not found kyc link");
     }
 
-    const response = await bridgeService.getCustomer(partnerRecord.id);
-
-    await partnerRecord.update({
-      status: response.status,
-    });
-
-    await partnerRecord.sendWebhook(partnerRecord.id, "account", {
-      id: partnerRecord.id,
-      firstName: partnerRecord.firstName,
-      lastName: partnerRecord.lastName,
-      email: partnerRecord.email,
-      phoneNumber: partnerRecord.phoneNumber,
-      status: partnerRecord.status,
-      ssn: partnerRecord.ssn,
-      dob: partnerRecord.dob,
-      streetAddress: partnerRecord.streetAddress,
-      streetAddress2: partnerRecord.streetAddress2,
-      city: partnerRecord.city,
-      postalCode: partnerRecord.postalCode,
-      state: partnerRecord.state,
-      country: partnerRecord.country,
-    });
-
-    return res.status(200).json({ message: "Approved your account" });
+    return res.status(200).json({ link: kycLink.kycLink });
   } catch (err) {
     log.warn(
       {
-        func: "/partners/kyb_success/:id",
-        id,
+        func: "/partners/kyb_link",
         err,
       },
-      "Failed approve KYB"
+      "Failed get tos link"
     );
 
-    if (err.code) {
-      return res.status(400).send(err);
+    if (err.mapped && err.mapped()) {
+      return res.status(422).send({
+        message: "Failed validation",
+        errors: err.mapped(),
+      });
     }
 
     res.status(400).send({
