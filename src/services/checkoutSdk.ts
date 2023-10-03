@@ -15,6 +15,9 @@ export class CheckoutSdkService {
 
   async charge(checkout: Checkout) {
     try {
+      const checkoutRequest = await checkout.getCheckoutRequest()
+      const partner = await checkoutRequest?.getPartner();
+    
       const res = await cko.payments.request({
         source: {
           type: 'token',
@@ -31,7 +34,7 @@ export class CheckoutSdkService {
         currency: checkout.totalChargeAmountMoney.getCurrency(),
         amount: checkout.totalChargeAmountMoney.getAmount(),
         payment_type: 'Regular',
-        reference: `ORDER ${checkout.id}`,
+        reference: partner?.id || `ORDER ${checkout.id}`,
         description: `Purchase USDC for $${checkout.amount}`,
         processing_channel_id: Config.checkoutProcessingChannelId,
         customer: {
