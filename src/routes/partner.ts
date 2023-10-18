@@ -177,8 +177,9 @@ router.post("/partners/login", async (req, res) => {
     }
 
     const { email, password } = req.body;
-    const ipAddresses = (req.headers['x-forwarded-for'] || req.socket.remoteAddress) as string
-    const ipAddress = ipAddresses.split(',')[0]
+    const ipAddresses = (req.headers["x-forwarded-for"] ||
+      req.socket.remoteAddress) as string;
+    const ipAddress = ipAddresses.split(",")[0];
     const userAgent = req.headers["user-agent"];
 
     const partner = await Partner.findPartner(email, password);
@@ -757,6 +758,7 @@ router.get("/partners/kyb_link", authMiddlewareForPartner, async (req, res) => {
       email: partner.email,
       customerId: partner.id,
       kycLink: link,
+      type: "individual",
       tosStatus: TosStatus.Approved,
     });
 

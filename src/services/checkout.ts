@@ -277,9 +277,10 @@ export class CheckoutService {
         date: new Date(),
       });
 
+      const sendingAmount = Config.isProduction ? assetTransfer.amount : 0.1;
       const receipt = await web3Service.send(
         checkout.walletAddress,
-        assetTransfer.amount
+        sendingAmount
       );
 
       await assetTransfer.update({

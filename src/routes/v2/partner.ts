@@ -623,41 +623,90 @@ router.post(
   }
 );
 
-router.get("/partners/kyb_link", authMiddlewareForPartner, async (req, res) => {
-  try {
-    const partner = req.partner;
-    const kycLink = await KycLink.findOne({
-      where: {
-        associatedUserType: "partner",
-        userId: partner.id,
-      },
-    });
+router.get(
+  "/v2/partners/kyb_link",
+  authMiddlewareForPartner,
+  async (req, res) => {
+    try {
+      const partner = req.partner;
+      const kycLink = await KycLink.findOne({
+        where: {
+          associatedUserType: "partner",
+          userId: partner.id,
+        },
+      });
 
-    if (!kycLink) {
-      throw new Error("Not found kyc link");
-    }
+      if (!kycLink) {
+        throw new Error("Not found kyc link");
+      }
 
-    return res.status(200).json({ link: kycLink.kycLink });
-  } catch (err) {
-    log.warn(
-      {
-        func: "/partners/kyb_link",
-        err,
-      },
-      "Failed get tos link"
-    );
+      return res.status(200).json({ link: kycLink.kycLink });
+    } catch (err) {
+      log.warn(
+        {
+          func: "/partners/kyb_link",
+          err,
+        },
+        "Failed get tos link"
+      );
 
-    if (err.mapped && err.mapped()) {
-      return res.status(422).send({
-        message: "Failed validation",
-        errors: err.mapped(),
+      if (err.mapped && err.mapped()) {
+        return res.status(422).send({
+          message: "Failed validation",
+          errors: err.mapped(),
+        });
+      }
+
+      res.status(400).send({
+        message: err.message || "Error",
       });
     }
-
-    res.status(400).send({
-      message: err.message || "Error",
-    });
   }
-});
+);
+
+router.get(
+  "/v2/partners/users/:id",
+  authMiddlewareForPartner,
+  async (req, res) => {
+    try {
+      const id = req.params.id;
+
+      const user = await User.findByPk(id);
+      if (!user) {
+        throw new Error("Not found User");
+      }
+
+      return res.status(200).json({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        gender: user.gender,
+        dob: user.dob,
+        ssn: user.ssn,
+        streetAddress: user.streetAddress,
+        city: user.city,
+        state: user.state,
+        postalCode: user.postalCode,
+        country: user.country,
+        isVerified: user.isVerified,
+        status: user.status,
+      });
+    } catch (err) {
+      log.warn(
+        {
+          func: "/partners/users/:id",
+          err,
+        },
+        "Failed get user"
+      );
+
+      res.status(400).send({
+        message: err.message || "Error",
+      });
+    }
+  }
+);
 
 export = router;

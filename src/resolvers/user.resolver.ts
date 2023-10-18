@@ -61,6 +61,11 @@ export class UserResolver {
     return userRecord;
   }
 
+  @Query(() => UserType, { nullable: true })
+  async user(@Arg("userId") userId: string) {
+    return User.findByPk(userId);
+  }
+
   @Query(() => String)
   async agreementLink() {
     const idempotenceId = uuidv4();
@@ -179,6 +184,7 @@ export class UserResolver {
         email: user.email,
         customerId: user.id,
         kycLink: link,
+        type: "individual",
         tosStatus: TosStatus.Approved,
       });
 
@@ -188,10 +194,58 @@ export class UserResolver {
     }
   }
 
+  @Query(() => String)
+  async userKycLink(@Arg("userId") userId: string) {
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      throw new Error("Not found user");
+    }
+
+    if (Config.isProduction) {
+      const link = await bridgeService.createKycUrl(
+        user.id,
+        `${Config.frontendUri}/kyc-success?userId=${userId}`
+      );
+
+      await KycLink.create({
+        userId: user.id,
+        associatedObjectType: "user",
+        associatedUserType: "user",
+        email: user.email,
+        customerId: user.id,
+        kycLink: link,
+        type: "individual",
+        tosStatus: TosStatus.Approved,
+      });
+
+      return link;
+    } else {
+      return `${Config.frontendUri}/kyc-success?userId=${userId}`;
+    }
+  }
+
   @Authorized()
   @Mutation(() => Boolean)
-  async keyCompleted(@Ctx("user") user: User) {
+  async kycCompleted(@Ctx("user") user: User) {
     const userRecord = await User.findByPk(user.id);
+
+    if (!Config.isProduction) {
+      await userRecord.update({
+        status: UserStatus.Active,
+        requirementsDue: [],
+        futureRequirementsDue: [],
+      });
+    } else {
+      await syncUser(userRecord);
+    }
+
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  async userKycCompleted(@Arg("userId") userId: string) {
+    const userRecord = await User.findByPk(userId);
 
     if (!Config.isProduction) {
       await userRecord.update({
@@ -209,7 +263,6 @@ export class UserResolver {
   @Subscription({
     topics: NotificationType.ACCOUNT_STATUS,
     filter: ({ payload, args }) => {
-      console.log("===================", payload);
       return !!payload && payload.userId === args.userId;
     },
   })

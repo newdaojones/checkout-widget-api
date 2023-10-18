@@ -21,8 +21,8 @@ export class UserInputType {
   phoneNumber: string;
 
   @IsString()
-  @Field()
-  password: string;
+  @Field({ nullable: true })
+  password!: string;
 
   @IsString()
   @Field()

@@ -8,19 +8,18 @@ import {
   Default,
   IsEmail,
   BeforeUpdate,
-  BeforeCreate
-} from 'sequelize-typescript';
-import { UserService } from '../services/userService';
-import { UserStatus } from '../types/userStatus.type';
+  BeforeCreate,
+} from "sequelize-typescript";
+import { UserService } from "../services/userService";
+import { UserStatus } from "../types/userStatus.type";
 
 @Table({
-  tableName: 'users',
+  tableName: "users",
   name: {
-    singular: 'user',
-    plural: 'users'
-  }
+    singular: "user",
+    plural: "users",
+  },
 })
-
 export class User extends Model<User> {
   @PrimaryKey
   @AllowNull(false)
@@ -30,7 +29,7 @@ export class User extends Model<User> {
   @AllowNull(false)
   @Default(UserStatus.Pending)
   @Column(DataType.ENUM(...Object.values(UserStatus)))
-  status!: UserStatus
+  status!: UserStatus;
 
   @AllowNull(false)
   @Column(DataType.STRING(100))
@@ -93,20 +92,20 @@ export class User extends Model<User> {
   @AllowNull(true)
   @Default(null)
   @Column(DataType.JSON)
-  requirementsDue!: string[]
+  requirementsDue!: string[];
 
   @AllowNull(true)
   @Default(null)
   @Column(DataType.JSON)
-  futureRequirementsDue!: string[]
+  futureRequirementsDue!: string[];
 
   @AllowNull(false)
   @Column(DataType.STRING)
-  signedAgreementId!: string
+  signedAgreementId!: string;
 
   @AllowNull(false)
   @Column(DataType.STRING)
-  idempotenceId!: string
+  idempotenceId!: string;
 
   @Column(DataType.DATE)
   createdAt!: Date;
@@ -118,21 +117,21 @@ export class User extends Model<User> {
   //#endregion
 
   get fullName() {
-    return `${this.firstName} ${this.lastName}`
+    return `${this.firstName} ${this.lastName}`;
   }
 
   get isVerified() {
-    return this.status === UserStatus.Active && !this.futureRequirementsDue?.length
+    return this.status === UserStatus.Active;
   }
 
   get isRejected() {
-    return this.status = UserStatus.Rejected
+    return (this.status = UserStatus.Rejected);
   }
 
   @BeforeUpdate
   @BeforeCreate
   static async beforeSaveHook(user: User, options: any) {
-    if (user.password && user.changed('password')) {
+    if (user.password && user.changed("password")) {
       const hashedPw = await UserService.encryptPassword(user.password);
       user.password = hashedPw as string;
     }
@@ -144,19 +143,25 @@ export class User extends Model<User> {
         where: { email },
       });
 
-      if (user == null || user.password == null || user.password.length === 0) {
-        cb(new Error('Invalid email or password'), null);
+      if (
+        user == null ||
+        user.password === null ||
+        user.password.length === 0
+      ) {
+        cb(new Error("Invalid email or password"), null);
         return;
       }
 
-      const isPasswordMatch = await UserService.comparePassword(password, user.password);
+      const isPasswordMatch = await UserService.comparePassword(
+        password,
+        user.password
+      );
 
       if (isPasswordMatch) {
         return cb(null, user);
       }
 
-      cb(new Error('Invalid email or password'), null);
-
+      cb(new Error("Invalid email or password"), null);
     } catch (err: any) {
       cb(err, null);
     }

@@ -81,4 +81,9 @@ export class CheckoutInputType {
   @IsOptional()
   @Field({ nullable: true })
   country: string;
+
+  @IsString()
+  @IsOptional()
+  @Field({ nullable: true })
+  userId!: string;
 }

@@ -6,6 +6,7 @@ import { CheckoutInputType } from '../types/checkout-input.type';
 import { CheckoutType } from '../types/checkout.type';
 import { TransactionType } from '../types/transaction.type';
 import { log } from '../utils';
+import { User } from '../models/User';
 
 const checkoutService = CheckoutService.getInstance()
 
@@ -42,11 +43,16 @@ export class CheckoutResolver {
     })
 
     const totalAmount = data.amount + data.amount * (data.tip || 0) / 100
+    const user = data.userId && await User.findByPk(data.userId)
+
+    if (user && !user.isVerified) {
+      throw new Error('Please process KYC before trading')
+    }
 
     // modified for a tx to test size limit
-    // if (totalAmount >= 50000) {
-    //   throw new Error('Required user registration for purchasing over $500')
-    // }
+    if (totalAmount >= 500 && !user) {
+      throw new Error('Required user registration for purchasing over $500')
+    }
 
     return checkoutService.process(data);
   }
