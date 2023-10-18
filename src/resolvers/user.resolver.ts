@@ -105,7 +105,7 @@ export class UserResolver {
 
     if (existingUserPhoneNumber) {
       throw new Error(
-        `Already exists account with phone number: ${data.email}`
+        `Already exists account with phone number: ${data.phoneNumber}`
       );
     }
 
@@ -135,7 +135,7 @@ export class UserResolver {
 
     const user = await User.create({
       id: res.id,
-      status: res.status,
+      status: Config.isProduction ? res.status : 'pending',
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
@@ -156,10 +156,12 @@ export class UserResolver {
       idempotenceId,
     });
 
-    const token = UserService.generateJWTToken({
-      id: user.id,
-      email: user.email,
-    });
+    const token = user.password
+      ? UserService.generateJWTToken({
+          id: user.id,
+          email: user.email,
+        })
+      : "";
 
     return {
       ...user.toJSON(),
@@ -202,27 +204,29 @@ export class UserResolver {
       throw new Error("Not found user");
     }
 
-    if (Config.isProduction) {
-      const link = await bridgeService.createKycUrl(
-        user.id,
-        `${Config.frontendUri}/kyc-success?userId=${userId}`
-      );
+    const link = await bridgeService.createKycUrl(
+      user.id,
+      `${Config.frontendUri}/kyc-success?userId=${userId}`
+    );
 
-      await KycLink.create({
-        userId: user.id,
-        associatedObjectType: "user",
-        associatedUserType: "user",
-        email: user.email,
-        customerId: user.id,
-        kycLink: link,
-        type: "individual",
-        tosStatus: TosStatus.Approved,
-      });
+    await KycLink.create({
+      userId: user.id,
+      associatedObjectType: "user",
+      associatedUserType: "user",
+      email: user.email,
+      customerId: user.id,
+      kycLink: link,
+      type: "individual",
+      tosStatus: TosStatus.Approved,
+    });
 
-      return link;
-    } else {
-      return `${Config.frontendUri}/kyc-success?userId=${userId}`;
-    }
+    return link;
+
+    // if (Config.isProduction) {
+
+    // } else {
+    //   return `${Config.frontendUri}/kyc-success?userId=${userId}`;
+    // }
   }
 
   @Authorized()
