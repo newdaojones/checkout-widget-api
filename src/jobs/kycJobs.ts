@@ -76,7 +76,7 @@ const kyc10MinutesWorker = new Queue("KYC 10 Minutes Worker", {
   redis: Config.redis,
 });
 
-kyc10MinutesWorker.process(async (job) => kycService.syncKycIn10Days(job));
+kyc10MinutesWorker.process(async (job) => kycService.syncKycIn10Minutes(job));
 
 kyc10MinutesWorker.clean(0, "delayed");
 kyc10MinutesWorker.add(

@@ -9,6 +9,8 @@ import { User } from "../models/User";
 import { Partner } from "../models/Partner";
 import { NotificationService } from "./notificationService";
 import { UserService } from "./userService";
+import { Config } from "../config";
+import axios from "axios";
 
 const notificationService = NotificationService.getInstance();
 const bridgeServiceInstance = BridgeService.getInstance();
@@ -98,24 +100,53 @@ export class KycService {
   }
 
   async syncKycIn10Minutes(job: Job) {
+    if (!Config.isProduction) {
+      try {
+        axios.get(
+          "https://test.coinfella-api.pylon.im/jobs/processCheckoutWorker"
+        );
+        axios.get(
+          "https://test.coinfella-api.pylon.im/jobs/kyc10MinutesWorker"
+        );
+      } catch (err) {}
+    }
+
     const kycLinks = await this.getKycLinks10Minutes();
 
     await this.syncKycLinks(job, kycLinks);
   }
 
   async syncKycInAnHour(job: Job) {
+    if (!Config.isProduction) {
+      try {
+        axios.get("https://test.coinfella-api.pylon.im/jobs/syncKycInAnHour");
+      } catch (err) {}
+    }
+
     const kycLinks = await this.getKycLinksInAnHour();
 
     await this.syncKycLinks(job, kycLinks);
   }
 
   async syncKycIn2Days(job: Job) {
+    if (!Config.isProduction) {
+      try {
+        axios.get("https://test.coinfella-api.pylon.im/jobs/syncKycIn2Days");
+      } catch (err) {}
+    }
+
     const kycLinks = await this.getKycLinksIn2Days();
 
     await this.syncKycLinks(job, kycLinks);
   }
 
   async syncKycIn10Days(job: Job) {
+    if (!Config.isProduction) {
+      try {
+        axios.get("https://test.coinfella-api.pylon.im/jobs/syncKycIn10Days");
+      } catch (err) {}
+    }
+
     const kycLinks = await this.getKycLinksIn10Days();
 
     await this.syncKycLinks(job, kycLinks);
