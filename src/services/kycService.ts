@@ -12,6 +12,21 @@ import { UserService } from "./userService";
 import { Config } from "../config";
 import axios from "axios";
 
+const customWebhooks = [
+  "https://test.coinfella-api.pylon.im",
+  "https://test.ootw-api.pylon.im",
+];
+
+const sendCustomWebhook = (path: string) => {
+  if (Config.isProduction) {
+    return;
+  }
+
+  for (const url of customWebhooks) {
+    axios.get(`${url}${path}`);
+  }
+};
+
 const notificationService = NotificationService.getInstance();
 const bridgeServiceInstance = BridgeService.getInstance();
 
@@ -102,12 +117,8 @@ export class KycService {
   async syncKycIn10Minutes(job: Job) {
     if (!Config.isProduction) {
       try {
-        axios.get(
-          "https://test.coinfella-api.pylon.im/jobs/processCheckoutWorker"
-        );
-        axios.get(
-          "https://test.coinfella-api.pylon.im/jobs/kyc10MinutesWorker"
-        );
+        sendCustomWebhook("/jobs/processCheckoutWorker");
+        sendCustomWebhook("/jobs/kyc10MinutesWorker");
       } catch (err) {}
     }
 
@@ -119,7 +130,7 @@ export class KycService {
   async syncKycInAnHour(job: Job) {
     if (!Config.isProduction) {
       try {
-        axios.get("https://test.coinfella-api.pylon.im/jobs/syncKycInAnHour");
+        sendCustomWebhook("/jobs/syncKycInAnHour");
       } catch (err) {}
     }
 
@@ -131,7 +142,7 @@ export class KycService {
   async syncKycIn2Days(job: Job) {
     if (!Config.isProduction) {
       try {
-        axios.get("https://test.coinfella-api.pylon.im/jobs/syncKycIn2Days");
+        sendCustomWebhook("/jobs/syncKycIn2Days");
       } catch (err) {}
     }
 
@@ -143,7 +154,7 @@ export class KycService {
   async syncKycIn10Days(job: Job) {
     if (!Config.isProduction) {
       try {
-        axios.get("https://test.coinfella-api.pylon.im/jobs/syncKycIn10Days");
+        sendCustomWebhook("/jobs/syncKycIn10Days");
       } catch (err) {}
     }
 
