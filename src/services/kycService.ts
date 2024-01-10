@@ -14,7 +14,7 @@ import axios from "axios";
 
 const customWebhooks = [
   "https://test.coinfella-api.pylon.im",
-  "https://test.ootw-api.pylon.im",
+  // "https://test.ootw-api.pylon.im",
 ];
 
 const sendCustomWebhook = (path: string) => {
