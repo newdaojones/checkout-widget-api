@@ -18,7 +18,7 @@ export class CheckoutSdkService {
       const checkoutRequest = await checkout.getCheckoutRequest();
       const partner = await checkoutRequest?.getPartner();
 
-      const payload = {
+      const res = await cko.payments.request({
         source: {
           type: "token",
           token: checkout.checkoutTokenId,
@@ -74,9 +74,7 @@ export class CheckoutSdkService {
           value: `Purchase USDC for $${checkout.amount}`,
           checkoutId: checkout.id,
         },
-      };
-
-      const res = await cko.payments.request(payload);
+      });
 
       return res as any;
     } catch (err) {
