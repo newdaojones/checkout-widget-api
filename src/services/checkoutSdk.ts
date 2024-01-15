@@ -17,8 +17,7 @@ export class CheckoutSdkService {
     try {
       const checkoutRequest = await checkout.getCheckoutRequest();
       const partner = await checkoutRequest?.getPartner();
-
-      const res = await cko.payments.request({
+      const payload = {
         source: {
           type: "token",
           token: checkout.checkoutTokenId,
@@ -27,39 +26,39 @@ export class CheckoutSdkService {
             address_line2: checkout.streetAddress2,
             city: checkout.city,
             state: checkout.state,
-            postalCode: checkout.postalCode,
+            zip: checkout.postalCode,
             country: "US",
           },
         },
-        // processing: {
-        //   aft: true,
-        // },
-        // recipient: {
-        //   first_name: checkout.firstName,
-        //   last_name: checkout.lastName,
-        //   account_name: checkout.phoneNumber,
-        //   address: {
-        //     address_line1: checkout.streetAddress,
-        //     address_line2: checkout.streetAddress2,
-        //     city: checkout.city,
-        //     state: checkout.state,
-        //     postalCode: checkout.postalCode,
-        //     country: "US",
-        //   },
-        // },
-        // sender: {
-        //   type: "individual",
-        //   first_name: checkout.firstName,
-        //   last_name: checkout.lastName,
-        //   address: {
-        //     address_line1: checkout.streetAddress,
-        //     address_line2: checkout.streetAddress2,
-        //     city: checkout.city,
-        //     state: checkout.state,
-        //     postalCode: checkout.postalCode,
-        //     country: "US",
-        //   },
-        // },
+        processing: {
+          aft: true,
+        },
+        recipient: {
+          first_name: checkout.firstName,
+          last_name: checkout.lastName,
+          account_name: checkout.phoneNumber,
+          address: {
+            address_line1: checkout.streetAddress,
+            address_line2: checkout.streetAddress2,
+            city: checkout.city,
+            state: checkout.state,
+            zip: checkout.postalCode,
+            country: "US",
+          },
+        },
+        sender: {
+          type: "individual",
+          first_name: checkout.firstName,
+          last_name: checkout.lastName,
+          address: {
+            address_line1: checkout.streetAddress,
+            address_line2: checkout.streetAddress2,
+            city: checkout.city,
+            state: checkout.state,
+            zip: checkout.postalCode,
+            country: "US",
+          },
+        },
         currency: checkout.totalChargeAmountMoney.getCurrency(),
         amount: checkout.totalChargeAmountMoney.getAmount(),
         payment_type: "Regular",
@@ -74,7 +73,17 @@ export class CheckoutSdkService {
           value: `Purchase USDC for $${checkout.amount}`,
           checkoutId: checkout.id,
         },
-      });
+      };
+
+      log.info(
+        {
+          func: "CheckoutService.charge",
+          payload,
+        },
+        "Send checkout request"
+      );
+
+      const res = await cko.payments.request(payload);
 
       return res as any;
     } catch (err) {
